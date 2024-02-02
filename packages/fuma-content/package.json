@@ -1,0 +1,28 @@
+{
+  "name": "fuma-content",
+  "version": "0.0.0",
+  "description": "Write content for web apps",
+  "keywords": [
+    "Content",
+    "Docs"
+  ],
+  "repository": "github:fuma-nama/fuma-content",
+  "license": "MIT",
+  "author": "Fuma Nama",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript-config": "workspace:*",
+    "eslint-config": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
