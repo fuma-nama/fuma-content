@@ -1,99 +1,39 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import loadMDX, { type Options as MDXOptions } from "../loader/mdx";
-import { glob, type Options as GlobOptions } from "fast-glob";
-import type { VFile } from "@mdx-js/mdx/lib/compile";
+import { emit, emitEntry } from "./emit";
+import { createManifest } from "./manifest";
+import type { CompilerOptions, Compiler } from "./types";
+import { compile, compileFile } from "./compile";
+import { globFiles, watch } from "./watch";
 
-export interface CompilerOptions {
-  files: string | string[];
+const defaultOptions = {
+  cwd: process.cwd(),
+  outputDir: "./dist",
+  outputExt: ".js",
+};
 
-  cwd?: string;
-  outputDir?: string;
-  outputExt?: string;
-
-  mdxOptions?: MDXOptions;
-  globOptions?: GlobOptions;
-}
-
-interface OutputEntry {
-  file: string;
-  content: string;
-  vfile: VFile;
-}
-
-export interface Compiler {
-  options: CompilerOptions;
-
-  /**
-   * Files to compile
-   */
-  files: string[];
-  compile: () => Promise<OutputEntry[]>;
-  createManifest: () => Promise<void>;
-  emit: () => Promise<void>;
-
-  _output?: OutputEntry[];
-}
-
-async function compile(this: Compiler): Promise<OutputEntry[]> {
-  const { mdxOptions = {} } = this.options;
-
-  const loads = this.files.map(async (file) => {
-    const content = (await fs.readFile(file)).toString();
-    const output = await loadMDX(file, content, mdxOptions);
-
-    return {
-      file,
-      vfile: output.file,
-      content: output.content,
-    } satisfies OutputEntry;
-  });
-
-  this._output = await Promise.all(loads);
-
-  return this._output;
-}
-
-async function emit(this: Compiler): Promise<void> {
-  const entires = this._output ?? (await this.compile());
-  const {
-    cwd = process.cwd(),
-    outputExt = ".js",
-    outputDir = "./dist",
-  } = this.options;
-
-  const emits = entires.map(async ({ file, content }) => {
-    const outputPath = path.join(
-      cwd,
-      outputDir,
-      path.relative(cwd, path.dirname(file)),
-      `${path.basename(file, path.extname(file))}${outputExt}`
-    );
-
-    await fs.mkdir(path.dirname(outputPath), { recursive: true });
-    await fs.writeFile(outputPath, content);
-  });
-
-  await Promise.all(emits);
-}
-
-async function createManifest(this: Compiler) {}
+export type CreateCompilerOptions = Pick<
+  Partial<CompilerOptions>,
+  keyof typeof defaultOptions
+> &
+  Omit<CompilerOptions, keyof typeof defaultOptions>;
 
 export async function createCompiler(
-  options: CompilerOptions
+  options: CreateCompilerOptions
 ): Promise<Compiler> {
-  const { cwd = process.cwd(), globOptions } = options;
-  const files = await glob(options.files, {
-    cwd,
-    absolute: true,
-    ...globOptions,
-  });
+  const compilerOptions: CompilerOptions = {
+    ...defaultOptions,
+    ...options,
+  };
+  const files = await globFiles(compilerOptions);
 
   return {
     files,
-    options,
+    options: compilerOptions,
     compile,
+    emitEntry,
     createManifest,
+    watch,
     emit,
+    compileFile,
+    _cache: new Map(),
   };
 }

@@ -31,7 +31,7 @@ export default async function loadMDX(
   if (processor === undefined) {
     processor = createProcessor({
       ...options,
-      development: this.mode === "development",
+      development: process.env.NODE_ENV === "development",
       format,
     });
 
