@@ -2,6 +2,7 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import type { Compiler } from "./types";
 import type { OutputEntry } from "./compile";
+import { createEntryPoint } from "./entry-point";
 
 export interface EmitEntry extends OutputEntry {
   outputPath: string;
@@ -12,6 +13,19 @@ export async function emit(this: Compiler): Promise<void> {
   const emits = entires.map(async (entry) => this.emitEntry(entry));
 
   this._emit = await Promise.all(emits);
+  await writeEntryPoint.bind(this)();
+}
+
+async function writeEntryPoint(this: Compiler): Promise<void> {
+  const outputPath = path.join(
+    this.options.cwd,
+    this.options.outputDir,
+    "./index.entry.js"
+  );
+
+  const code = createEntryPoint.bind(this)();
+
+  await fs.writeFile(outputPath, code);
 }
 
 export async function emitEntry(

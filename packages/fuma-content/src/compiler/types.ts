@@ -4,6 +4,7 @@ import type { OutputEntry, compile, compileFile } from "./compile";
 import type { EmitEntry, emit, emitEntry } from "./emit";
 import type { createManifest } from "./manifest";
 import type { watch } from "./watch";
+import type { EntryPointOptions } from "./entry-point";
 
 export interface CompilerOptions {
   files: string[];
@@ -12,6 +13,7 @@ export interface CompilerOptions {
   outputDir: string;
   outputExt: string;
 
+  entryPoint?: EntryPointOptions;
   mdxOptions?: MDXOptions;
   globOptions?: GlobOptions;
 }

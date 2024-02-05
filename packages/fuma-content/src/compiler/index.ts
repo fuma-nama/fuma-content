@@ -1,8 +1,9 @@
+import { globFiles } from "../utils/path";
 import { emit, emitEntry } from "./emit";
 import { createManifest } from "./manifest";
 import type { CompilerOptions, Compiler } from "./types";
 import { compile, compileFile } from "./compile";
-import { globFiles, watch } from "./watch";
+import { watch } from "./watch";
 
 const defaultOptions = {
   cwd: process.cwd(),

@@ -1,7 +1,6 @@
 import { watch as watchFn } from "chokidar";
-import fg from "fast-glob";
-import { getAbsolutePath } from "../utils/path";
-import type { Compiler, CompilerOptions } from "./types";
+import { getAbsolutePath, globFiles } from "../utils/path";
+import type { Compiler } from "./types";
 
 export function watch(this: Compiler): void {
   const watcher = watchFn(this.options.files, { cwd: this.options.cwd });
@@ -23,15 +22,5 @@ export function watch(this: Compiler): void {
         await this.emitEntry(entry);
       });
     }
-  });
-}
-
-export async function globFiles(options: CompilerOptions): Promise<string[]> {
-  const { cwd, globOptions, files } = options;
-
-  return fg.glob(files, {
-    absolute: true,
-    cwd,
-    ...globOptions,
   });
 }
