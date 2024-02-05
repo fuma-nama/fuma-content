@@ -29,9 +29,13 @@ module.exports = {
       },
     },
   },
+  rules: {
+    "import/no-default-export": "off",
+  },
   ignorePatterns: [
     // Ignore dotfiles
     ".*.js",
+    "dist/",
     "node_modules/",
   ],
 };

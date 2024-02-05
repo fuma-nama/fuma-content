@@ -24,9 +24,6 @@ test("Export frontmatter", async () => {
   const compiler = await createCompiler({
     files: ["./fixtures/frontmatter.mdx"],
     cwd,
-    mdxOptions: {
-      remarkPlugins: [[remarkMdxExport, { values: ["frontmatter"] }]],
-    },
   });
 
   const entires = await compiler.compile();

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node ./scripts/index.mjs",
+    "dev": "tsx ./scripts/dev.mts",
+    "build": "tsx ./scripts/build.mts",
     "lint": "eslint"
   },
   "dependencies": {

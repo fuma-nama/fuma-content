@@ -5,6 +5,7 @@ import type {
   VFile,
 } from "@mdx-js/mdx/internal-create-format-aware-processors";
 import { getGitTimestamp } from "../utils/git-timpstamp";
+import { remarkMdxExport } from "../remark-plugins/remark-exports";
 
 export interface Options extends ProcessorOptions {
   /**
@@ -12,6 +13,11 @@ export interface Options extends ProcessorOptions {
    * @defaultValue 'none'
    */
   lastModifiedTime?: "git" | "none";
+
+  /**
+   * @defaultValue `['frontmatter']`
+   */
+  remarkExports?: string[];
 }
 
 const cache = new Map<string, Processor>();
@@ -22,19 +28,28 @@ const cache = new Map<string, Processor>();
 export async function loadMDX(
   filePath: string,
   source: string,
-  { lastModifiedTime, ...options }: Options
+  {
+    lastModifiedTime,
+    format: forceFormat,
+    remarkExports = ["frontmatter"],
+    ...rest
+  }: Options
 ): Promise<{ content: string; file: VFile }> {
   const { content, data: frontmatter } = grayMatter(source);
   const detectedFormat = filePath.endsWith(".mdx") ? "mdx" : "md";
-  const format = options.format ?? detectedFormat;
+  const format = forceFormat ?? detectedFormat;
   let timestamp: number | undefined;
   let processor = cache.get(format);
 
   if (processor === undefined) {
     processor = createProcessor({
-      ...options,
-      development: process.env.NODE_ENV === "development",
       format,
+      development: process.env.NODE_ENV === "development",
+      ...rest,
+      remarkPlugins: [
+        ...(rest.remarkPlugins ?? []),
+        [remarkMdxExport, { values: remarkExports }],
+      ],
     });
 
     cache.set(format, processor);

@@ -1,4 +1,5 @@
 import {jsx as _jsx} from "react/jsx-runtime";
+export const frontmatter = {};
 function _createMdxContent(props) {
   const _components = {
     h1: "h1",
