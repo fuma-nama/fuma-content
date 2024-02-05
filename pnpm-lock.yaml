@@ -4,6 +4,9 @@ importers:
 
   .:
     devDependencies:
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       prettier:
         specifier: ^3.1.1
         version: 3.2.4
@@ -22,6 +25,31 @@ importers:
       vitest:
         specifier: ^1.2.2
         version: 1.2.2
+
+  apps/example:
+    dependencies:
+      fuma-content:
+        specifier: workspace:*
+        version: link:../../packages/fuma-content
+    devDependencies:
+      '@types/eslint':
+        specifier: ^8.56.1
+        version: 8.56.2
+      '@types/node':
+        specifier: ^20.10.6
+        version: 20.11.16
+      eslint:
+        specifier: ^8.56.0
+        version: 8.56.0
+      eslint-config:
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
 
   apps/web:
     dependencies:

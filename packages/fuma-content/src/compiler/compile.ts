@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
-import loadMDX from "../loader/mdx";
-import { Compiler } from "./types";
-import type { VFile } from "@mdx-js/mdx/lib/compile";
+import type { VFile } from "@mdx-js/mdx/internal-create-format-aware-processors";
+import { loadMDX } from "../loader/mdx";
+import type { Compiler } from "./types";
 
 export interface OutputEntry {
   file: string;
@@ -24,7 +24,6 @@ export async function compileFile(
   const cache = this._cache.get(file);
   if (cache) return cache;
 
-  console.log("compile", file);
   const content = (await fs.readFile(file)).toString();
   const output = await loadMDX(file, content, this.options.mdxOptions ?? {});
 

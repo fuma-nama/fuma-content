@@ -5,7 +5,7 @@ export interface Manifest {
   entires: EmitEntry[];
 }
 
-export async function createManifest(this: Compiler): Promise<Manifest> {
+export function createManifest(this: Compiler): Manifest {
   const emit = this._emit;
   if (!emit) throw new Error("You have to run emit() first");
 

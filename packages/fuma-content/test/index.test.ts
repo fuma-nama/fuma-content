@@ -2,7 +2,7 @@ import * as path from "node:path";
 import { createCompiler } from "../src";
 import { test, expect } from "vitest";
 import { fileURLToPath } from "node:url";
-import remarkMdxExport from "../src/remark-plugins/remark-exports";
+import { remarkMdxExport } from "../src/remark-plugins/remark-exports";
 
 const cwd = fileURLToPath(new URL("./", import.meta.url));
 

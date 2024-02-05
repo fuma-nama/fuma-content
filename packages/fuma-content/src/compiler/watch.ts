@@ -1,35 +1,39 @@
 import { resolve } from "node:path";
-import type { Compiler, CompilerOptions } from "./types";
 import { watch as watchFn } from "chokidar";
 import fg from "fast-glob";
+import type { Compiler, CompilerOptions } from "./types";
 
 export function watch(this: Compiler): void {
   const watcher = watchFn(this.options.files, { cwd: this.options.cwd });
 
-  watcher.on("all", async (eventName, path) => {
+  watcher.on("all", (eventName, path) => {
     const absolutePath = getAbsolutePath(this, path);
 
     if (["add", "unlink"].includes(eventName)) {
-      this.files = await globFiles(this.options);
+      void globFiles(this.options).then((files) => {
+        this.files = files;
+      });
     }
 
     if (["add", "change"].includes(eventName)) {
       console.log("update", path);
 
       this._cache.delete(absolutePath);
-      void this.emitEntry(await this.compileFile(absolutePath));
+      void this.compileFile(absolutePath).then(async (entry) => {
+        await this.emitEntry(entry);
+      });
     }
   });
 }
 
-function getAbsolutePath(compiler: Compiler, path: string) {
+function getAbsolutePath(compiler: Compiler, path: string): string {
   return fg.escapePath(resolve(compiler.options.cwd, path));
 }
 
 export async function globFiles(options: CompilerOptions): Promise<string[]> {
   const { cwd, globOptions, files } = options;
 
-  return await fg.glob(files, {
+  return fg.glob(files, {
     absolute: true,
     cwd,
     ...globOptions,

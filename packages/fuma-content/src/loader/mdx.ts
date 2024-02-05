@@ -1,8 +1,10 @@
 import { createProcessor, type ProcessorOptions } from "@mdx-js/mdx";
-import type { Processor } from "@mdx-js/mdx/lib/core";
 import grayMatter from "gray-matter";
+import type {
+  Processor,
+  VFile,
+} from "@mdx-js/mdx/internal-create-format-aware-processors";
 import { getGitTimestamp } from "../utils/git-timpstamp";
-import type { VFile } from "@mdx-js/mdx/lib/compile";
 
 export interface Options extends ProcessorOptions {
   /**
@@ -17,7 +19,7 @@ const cache = new Map<string, Processor>();
 /**
  * Load MDX/markdown files
  */
-export default async function loadMDX(
+export async function loadMDX(
   filePath: string,
   source: string,
   { lastModifiedTime, ...options }: Options

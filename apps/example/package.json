@@ -1,0 +1,20 @@
+{
+  "name": "example-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ./scripts/index.mjs",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "fuma-content": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint-config": "workspace:*",
+    "typescript-config": "workspace:*",
+    "@types/eslint": "^8.56.1",
+    "@types/node": "^20.10.6",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}

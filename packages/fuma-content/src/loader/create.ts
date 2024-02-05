@@ -1,17 +1,17 @@
-interface LoaderOptions {
+interface LoaderParam {
   info: unknown;
   data: unknown;
 }
 
-export interface Options {
+export interface CreateOptions {
   files: string[];
 }
 
-export interface Loader<Options extends LoaderOptions = LoaderOptions> {
+export interface Loader<Options extends LoaderParam = LoaderParam> {
   load: () => LoaderResult<Options>;
 }
 
-interface LoaderResult<Options extends LoaderOptions> {
+interface LoaderResult<Options extends LoaderParam> {
   documents: Document<Options["info"], Options["data"]>[];
 }
 
@@ -29,7 +29,7 @@ export interface Document<Info = unknown, Data = unknown> {
   file: string;
 }
 
-export function createLoader({ files }: Options): Loader {
+export function createLoader(_: CreateOptions): Loader {
   return {
     load() {
       return {

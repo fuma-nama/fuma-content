@@ -1,6 +1,6 @@
-import { Compiler } from "./types";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import type { Compiler } from "./types";
 import type { OutputEntry } from "./compile";
 
 export interface EmitEntry extends OutputEntry {

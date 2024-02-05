@@ -1,6 +1,6 @@
-import type { Root } from 'mdast';
-import type { Transformer } from 'unified';
-import { getMdastExport } from './utils';
+import type { Root } from "mdast";
+import type { Transformer } from "unified";
+import { getMdastExport } from "./utils";
 
 interface Options {
   /**
@@ -23,4 +23,4 @@ function remarkMdxExport({ values }: Options): Transformer<Root, Root> {
   };
 }
 
-export { remarkMdxExport as default, type Options };
+export { remarkMdxExport, type Options };
