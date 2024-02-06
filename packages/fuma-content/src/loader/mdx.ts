@@ -1,11 +1,10 @@
 import { createProcessor, type ProcessorOptions } from "@mdx-js/mdx";
 import grayMatter from "gray-matter";
-import type {
-  Processor,
-  VFile,
-} from "@mdx-js/mdx/internal-create-format-aware-processors";
+import type { Processor } from "@mdx-js/mdx/internal-create-format-aware-processors";
 import { getGitTimestamp } from "../utils/git-timpstamp";
 import { remarkMdxExport } from "../remark-plugins/remark-exports";
+import type { OutputEntry } from "../compiler/compile";
+import type { Compiler } from "../compiler/types";
 
 export interface Options extends ProcessorOptions {
   /**
@@ -26,15 +25,17 @@ const cache = new Map<string, Processor>();
  * Load MDX/markdown files
  */
 export async function loadMDX(
+  this: Compiler,
   filePath: string,
-  source: string,
-  {
+  source: string
+): Promise<OutputEntry> {
+  const {
     lastModifiedTime,
     format: forceFormat,
     remarkExports = ["frontmatter"],
     ...rest
-  }: Options
-): Promise<{ content: string; file: VFile }> {
+  } = this.options.mdxOptions ?? {};
+
   const { content, data: frontmatter } = grayMatter(source);
   const detectedFormat = filePath.endsWith(".mdx") ? "mdx" : "md";
   const format = forceFormat ?? detectedFormat;
@@ -69,6 +70,9 @@ export async function loadMDX(
 
   return {
     content: String(file),
-    file,
+    file: filePath,
+    _mdx: {
+      vfile: file,
+    },
   };
 }

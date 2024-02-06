@@ -1,14 +1,14 @@
-import * as path from "node:path";
 import { createCompiler } from "../src";
 import { test, expect } from "vitest";
 import { fileURLToPath } from "node:url";
-import { remarkMdxExport } from "../src/remark-plugins/remark-exports";
+import { getOutputPath } from "../src/utils/path";
 
 const cwd = fileURLToPath(new URL("./", import.meta.url));
 
 test("Run", async () => {
   const compiler = await createCompiler({
     files: ["./fixtures/index.mdx"],
+    outputDir: "./out/run",
     cwd,
   });
 
@@ -16,20 +16,22 @@ test("Run", async () => {
 
   for (const entry of entires)
     expect(entry.content).toMatchFileSnapshot(
-      `./out/${path.basename(entry.file)}.js`
+      getOutputPath(compiler, entry.file)
     );
 });
 
 test("Export frontmatter", async () => {
   const compiler = await createCompiler({
     files: ["./fixtures/frontmatter.mdx"],
+    outputDir: "./out/frontmatter",
     cwd,
   });
 
   const entires = await compiler.compile();
 
-  for (const entry of entires)
+  for (const entry of entires) {
     expect(entry.content).toMatchFileSnapshot(
-      `./out/${path.basename(entry.file)}.js`
+      getOutputPath(compiler, entry.file)
     );
+  }
 });

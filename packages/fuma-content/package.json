@@ -27,10 +27,13 @@
     "cross-spawn": "^7.0.3",
     "estree-util-value-to-estree": "^3.0.1",
     "fast-glob": "^3.3.2",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/mdast": "^4.0.3",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
     "eslint-config": "workspace:*",
     "typescript-config": "workspace:*",
     "unified": "^11.0.4"

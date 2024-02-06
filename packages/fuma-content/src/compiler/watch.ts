@@ -1,20 +1,27 @@
 import { watch as watchFn } from "chokidar";
-import { getAbsolutePath, globFiles } from "../utils/path";
+import { getAbsolutePath } from "../utils/path";
 import type { Compiler } from "./types";
 
 export function watch(this: Compiler): void {
+  void this.emit();
   const watcher = watchFn(this.options.files, { cwd: this.options.cwd });
 
   watcher.on("all", (eventName, path) => {
     const absolutePath = getAbsolutePath(this.options.cwd, path);
 
-    if (["add", "unlink"].includes(eventName)) {
-      void globFiles(this.options).then((files) => {
-        this.files = files;
-      });
+    if (eventName === "add" && !this.files.includes(absolutePath)) {
+      this.files.push(absolutePath);
+      void this.emit();
     }
 
-    if (["add", "change"].includes(eventName)) {
+    if (eventName === "unlink") {
+      this.files = this.files.filter((file) => file !== absolutePath);
+
+      this._cache.delete(absolutePath);
+      void this.emit();
+    }
+
+    if (eventName === "change") {
       console.log("update", path);
 
       this._cache.delete(absolutePath);
