@@ -41,7 +41,7 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
     const importPath = pathToFileURL(getOutputPath(compiler, entry.file));
     const name = `p_${i}`;
 
-    imports.push(`import ${name} from ${JSON.stringify(importPath)};`);
+    imports.push(`import * as ${name} from ${JSON.stringify(importPath)};`);
 
     const line = `{
 ...${name},

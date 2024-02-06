@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { AnyZodObject } from "zod";
+import type { MDXContent } from "mdx/types";
 
 export interface CreateOptions {
   schema?: AnyZodObject;
@@ -37,7 +38,8 @@ export function source<T extends CreateOptions>(
   fromMap: unknown,
   options: T
 ): Document<
-  T["schema"] extends AnyZodObject ? z.infer<T["schema"]> : DefaultSchema
+  T["schema"] extends AnyZodObject ? z.infer<T["schema"]> : DefaultSchema,
+  MDXContent
 >[] {
   const { schema = defaultSchema } = options;
   const items = fromMap as RawItem[];
@@ -50,7 +52,7 @@ export function source<T extends CreateOptions>(
     return {
       file,
       info: result.data,
-      renderer: render,
+      renderer: render as MDXContent,
       ...rest,
     };
   });

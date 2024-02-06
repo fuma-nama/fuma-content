@@ -2,20 +2,22 @@
   "name": "example-app",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "tsx ./scripts/dev.mts",
-    "build": "tsx ./scripts/build.mts",
+    "dev": "concurrently \"tsx ./scripts/dev.ts\" \"tsx ./index.ts\"",
+    "build": "tsx ./scripts/build.ts",
     "lint": "eslint"
   },
   "dependencies": {
     "fuma-content": "workspace:*"
   },
   "devDependencies": {
-    "eslint-config": "workspace:*",
-    "typescript-config": "workspace:*",
     "@types/eslint": "^8.56.1",
     "@types/node": "^20.10.6",
+    "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
+    "eslint-config": "workspace:*",
+    "typescript": "^5.3.3",
+    "typescript-config": "workspace:*"
   }
 }
