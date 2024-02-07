@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint ."
   },
+  "packageManager": "pnpm@8.8.0",
   "dependencies": {
     "@fuma-content/next": "workspace:*",
     "fuma-content": "workspace:*",
