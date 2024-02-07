@@ -25,6 +25,7 @@ coverage
 .next/
 build
 dist
+.content
 
 # Debug
 npm-debug.log*
@@ -34,3 +35,4 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+next-env.d.ts

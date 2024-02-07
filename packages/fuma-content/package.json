@@ -16,6 +16,23 @@
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./internal": {
+      "import": "./dist/internal.js",
+      "types": "./dist/internal.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "internal": [
+        "./dist/internal.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -37,7 +54,8 @@
     "@types/mdx": "^2.0.11",
     "eslint-config": "workspace:*",
     "typescript-config": "workspace:*",
-    "unified": "^11.0.4"
+    "unified": "^11.0.4",
+    "typescript": "^5.3.3"
   },
   "publishConfig": {
     "access": "public"

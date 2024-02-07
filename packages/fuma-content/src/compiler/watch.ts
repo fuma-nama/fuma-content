@@ -1,8 +1,8 @@
-import { watch as watchFn } from "chokidar";
+import { type FSWatcher, watch as watchFn } from "chokidar";
 import { getAbsolutePath } from "../utils/path";
 import type { Compiler } from "./types";
 
-export function watch(this: Compiler): void {
+export function watch(this: Compiler): FSWatcher {
   void this.emit();
   const watcher = watchFn(this.options.files, { cwd: this.options.cwd });
 
@@ -30,4 +30,6 @@ export function watch(this: Compiler): void {
       });
     }
   });
+
+  return watcher;
 }
