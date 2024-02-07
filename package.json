@@ -1,5 +1,5 @@
 {
-  "name": "fuma-content",
+  "name": "root",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -8,6 +8,7 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
+  "packageManager": "pnpm@8.15.1",
   "devDependencies": {
     "eslint": "^8.56.0",
     "fast-glob": "^3.3.2",
@@ -18,7 +19,6 @@
     "typescript-config": "workspace:*",
     "vitest": "^1.2.2"
   },
-  "packageManager": "pnpm@8.15.1",
   "engines": {
     "node": ">=18"
   }
