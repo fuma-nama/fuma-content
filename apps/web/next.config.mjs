@@ -5,4 +5,5 @@ export default withContent({
     files: ["./content/**/*.md", "./content/**/*.mdx"],
     outputDir: "./.content",
   },
+  eslint: { ignoreDuringBuilds: true },
 });
