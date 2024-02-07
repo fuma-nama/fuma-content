@@ -1,0 +1,39 @@
+---
+title: Hello
+---
+
+## Hello World
+
+I love Next.js <Hide>Joulev</Hide>, and my side projects as well.
+
+this is good!
+
+```js
+import { withContent } from "@fuma-content/next";
+
+export default withContent({
+  content: {
+    files: ["./content/**/*.md"],
+    outputDir: "./.content",
+  },
+});
+```
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "content": ["./.content/index.js"]
+    }
+  }
+}
+```
+
+```js
+import entry from "content";
+import { source } from "fuma-content";
+
+export const documents = source(entry, {});
+```
+
+Feel free to use [Fumadocs](https://fumadocs.vercel.app) if you are looking for a full-powered framework to write docs.
