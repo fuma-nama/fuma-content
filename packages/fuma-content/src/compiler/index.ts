@@ -1,6 +1,8 @@
 import { globFiles } from "../utils/path";
+import { loadMDX } from "../loader/mdx";
+import { loadJson } from "../loader/json";
+import type { Transformer } from "../loader/types";
 import { emit, emitEntry } from "./emit";
-import { createManifest } from "./manifest";
 import type { CompilerOptions, Compiler } from "./types";
 import { compile, compileFile } from "./compile";
 import { watch } from "./watch";
@@ -31,10 +33,21 @@ export async function createCompiler(
     options: compilerOptions,
     compile,
     emitEntry,
-    createManifest,
     watch,
     emit,
     compileFile,
+    loaders: createLoaders(compilerOptions),
     _cache: new Map(),
+  };
+}
+
+function createLoaders(options: CompilerOptions): Record<string, Transformer> {
+  const mdx = loadMDX(options.mdxOptions);
+
+  return {
+    mdx,
+    md: mdx,
+    json: loadJson(),
+    ...options.loaders,
   };
 }

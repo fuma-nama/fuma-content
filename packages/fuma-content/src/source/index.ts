@@ -1,18 +1,24 @@
 import { z } from "zod";
 import type { AnyZodObject } from "zod";
 import type { MDXContent } from "mdx/types";
+import micromatch from "micromatch";
 
 export interface CreateOptions {
   schema?: AnyZodObject;
+
+  /**
+   * Filter file paths
+   */
+  include?: string | string[];
 }
 
-export interface Document<Info = unknown, Render = unknown> {
+export interface Document<Info = unknown> {
   info: Info;
 
   /**
    * Render data, should be accepted by renderer
    */
-  renderer: Render;
+  renderer: MDXContent;
 
   /**
    * File Path
@@ -20,34 +26,52 @@ export interface Document<Info = unknown, Render = unknown> {
   file: string;
 }
 
-const defaultSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().optional(),
-});
+export interface Json<Info = unknown> {
+  info: Info;
 
-type DefaultSchema = z.infer<typeof defaultSchema>;
-
-interface RawItem {
+  /**
+   * File Path
+   */
   file: string;
+}
+
+const defaultSchema = z.record(z.string(), z.unknown());
+
+interface RawFile {
+  file: string;
+  format: string;
+}
+
+interface RawDocument extends RawFile {
   frontmatter: Record<string, unknown>;
   default: () => unknown;
   [key: string]: unknown;
 }
 
-export function source<T extends CreateOptions>(
-  fromMap: unknown,
-  options: T
-): Document<
-  T["schema"] extends AnyZodObject ? z.infer<T["schema"]> : DefaultSchema,
-  MDXContent
->[] {
-  const { schema = defaultSchema } = options;
-  const items = fromMap as RawItem[];
+interface RawJson extends RawFile {
+  default: Record<string, unknown>;
+}
 
-  return items.map((item) => {
-    const { default: render, file, frontmatter, ...rest } = item;
+type GetInfoType<T extends CreateOptions> = T["schema"] extends AnyZodObject
+  ? z.infer<T["schema"]>
+  : Record<string, unknown>;
+
+export function document<T extends CreateOptions>(
+  entryPoint: unknown,
+  options?: T
+): Document<GetInfoType<T>>[] {
+  const { schema = defaultSchema, include } = options ?? {};
+
+  return read<RawDocument>(entryPoint, ["md", "mdx"], include).map((item) => {
+    const {
+      default: render,
+      format: _format,
+      file,
+      frontmatter,
+      ...rest
+    } = item;
     const result = schema.safeParse(frontmatter);
-    if (!result.success) throw result.error;
+    if (!result.success) throw createError(file, result.error);
 
     return {
       file,
@@ -56,4 +80,42 @@ export function source<T extends CreateOptions>(
       ...rest,
     };
   });
+}
+
+export function json<T extends CreateOptions>(
+  entryPoint: unknown,
+  options?: T
+): Json<GetInfoType<T>>[] {
+  const { schema = defaultSchema, include } = options ?? {};
+
+  return read<RawJson>(entryPoint, ["json"], include).map(
+    ({ file, default: data }) => {
+      const result = schema.safeParse(data);
+      if (!result.success) throw createError(file, result.error);
+
+      return {
+        file,
+        info: result.data,
+      };
+    }
+  );
+}
+
+function createError(file: string, err: z.ZodError): Error {
+  return new Error(
+    `${file}:\n${Object.entries(err.flatten().fieldErrors)
+      .map(([k, v]) => `${k}: ${v?.join(", ")}`)
+      .join("\n")}`
+  );
+}
+
+function read<T extends RawFile>(
+  entryPoint: unknown,
+  format: string[],
+  include?: string | string[]
+): T[] {
+  const cast = entryPoint as Record<string, T[]>;
+  const entries = format.flatMap((f) => cast[f] ?? []);
+
+  return entries.filter((e) => !include || micromatch.isMatch(e.file, include));
 }

@@ -40,22 +40,24 @@
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.0.0",
-    "@types/cross-spawn": "^6.0.6",
     "chokidar": "^3.5.3",
     "clipanion": "4.0.0-rc.3",
     "cross-spawn": "^7.0.3",
     "estree-util-value-to-estree": "^3.0.1",
     "fast-glob": "^3.3.2",
     "gray-matter": "^4.0.3",
+    "micromatch": "^4.0.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
     "@types/mdast": "^4.0.3",
     "@types/mdx": "^2.0.11",
+    "@types/micromatch": "^4.0.6",
     "eslint-config": "workspace:*",
+    "typescript": "^5.3.3",
     "typescript-config": "workspace:*",
-    "unified": "^11.0.4",
-    "typescript": "^5.3.3"
+    "unified": "^11.0.4"
   },
   "publishConfig": {
     "access": "public"

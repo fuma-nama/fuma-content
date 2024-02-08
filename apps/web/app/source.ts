@@ -1,4 +1,9 @@
 import entry from "content";
-import { source } from "fuma-content";
+import { document, json } from "fuma-content";
+import { z } from "zod";
 
-export const documents = source(entry, {});
+export const documents = document(entry, {
+  schema: z.object({ title: z.string(), description: z.string().optional() }),
+});
+
+export const jsons = json(entry, { schema: z.object({ title: z.string() }) });

@@ -1,17 +1,16 @@
 import * as fs from "node:fs/promises";
-import type { VFile } from "@mdx-js/mdx/internal-create-format-aware-processors";
-import { loadMDX } from "../loader/mdx";
+import * as path from "node:path";
 import { loadEntryPoint } from "../loader/entry-point";
+import type { Output } from "../loader/types";
 import type { Compiler } from "./types";
 
-export interface OutputEntry {
-  file: string;
-  content: string;
+export interface OutputEntry extends Output {
+  /**
+   * extension of file, like: `md`
+   */
+  format: string;
 
-  _entryPoint?: unknown;
-  _mdx?: {
-    vfile: VFile;
-  };
+  file: string;
 }
 
 export async function compile(this: Compiler): Promise<OutputEntry[]> {
@@ -31,9 +30,22 @@ export async function compileFile(
   const cache = this._cache.get(file);
   if (cache) return cache;
 
+  const format = path.extname(file).slice(1);
   const content = (await fs.readFile(file)).toString();
-  const output = await loadMDX.call(this, file, content);
+  const loader = this.loaders[format];
 
-  this._cache.set(file, output);
-  return output;
+  const output = await loader?.call(this, file, content);
+
+  if (!output) {
+    throw new Error(`Unknown format: ${format}`);
+  }
+
+  const entry: OutputEntry = {
+    file,
+    format,
+    ...output,
+  };
+
+  this._cache.set(file, entry);
+  return entry;
 }

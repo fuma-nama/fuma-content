@@ -5,6 +5,8 @@ import { getAbsolutePath, getOutputPath } from "../utils/path";
 
 export interface EntryPointOptions {
   /**
+   * Notice that `lazy` mode is not supported by `source` function
+   *
    * @defaultValue 'import'
    */
   mode?: "lazy" | "import";
@@ -27,6 +29,7 @@ export function loadEntryPoint(
   }
 
   return {
+    format: "js",
     file: getAbsolutePath(this.options.cwd, "./index.js"),
     content,
     _entryPoint: {},
@@ -34,24 +37,39 @@ export function loadEntryPoint(
 }
 
 function generateImport(compiler: Compiler, output: OutputEntry[]): string {
-  const imports: string[] = [];
-  const entries: string[] = [];
+  const formats = new Map<
+    string,
+    {
+      imports: string[];
+      entries: string[];
+    }
+  >();
 
   output.forEach((entry, i) => {
+    const b = formats.get(entry.format) ?? { imports: [], entries: [] };
+    formats.set(entry.format, b);
+
     const importPath = pathToFileURL(getOutputPath(compiler, entry.file));
     const name = `p_${i}`;
 
-    imports.push(`import * as ${name} from ${JSON.stringify(importPath)};`);
+    b.imports.push(`import * as ${name} from ${JSON.stringify(importPath)};`);
 
-    const line = `{
+    b.entries.push(`{
 ...${name},
+format: ${JSON.stringify(entry.format)},
 file: ${JSON.stringify(entry.file)},
-}`;
-    entries.push(line);
+}`);
   });
 
-  return `${imports.join("\n")}
-export default [${entries.join(",\n")}]`;
+  const imports = Array.from(formats.values())
+    .flatMap((f) => f.imports)
+    .join("\n");
+
+  const entires = Array.from(formats.entries())
+    .map(([k, v]) => `${k}: [${v.entries.join(",")}]`)
+    .join(",");
+
+  return `${imports}\nexport default {${entires}};`;
 }
 
 function generateLazy(compiler: Compiler, output: OutputEntry[]): string {

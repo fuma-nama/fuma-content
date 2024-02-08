@@ -1,6 +1,6 @@
-import { source } from "fuma-content";
+import { document } from "fuma-content";
 import entry from "./dist/index";
 
-const documents = source(entry, {});
+const documents = document(entry);
 
 console.log(documents);

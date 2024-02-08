@@ -3,8 +3,7 @@ import grayMatter from "gray-matter";
 import type { Processor } from "@mdx-js/mdx/internal-create-format-aware-processors";
 import { getGitTimestamp } from "../utils/git-timpstamp";
 import { remarkMdxExport } from "../remark-plugins/remark-exports";
-import type { OutputEntry } from "../compiler/compile";
-import type { Compiler } from "../compiler/types";
+import type { Transformer } from "./types";
 
 export interface Options extends ProcessorOptions {
   /**
@@ -24,55 +23,50 @@ const cache = new Map<string, Processor>();
 /**
  * Load MDX/markdown files
  */
-export async function loadMDX(
-  this: Compiler,
-  filePath: string,
-  source: string
-): Promise<OutputEntry> {
-  const {
-    lastModifiedTime,
-    format: forceFormat,
-    remarkExports = ["frontmatter"],
-    ...rest
-  } = this.options.mdxOptions ?? {};
+export const loadMDX = ({
+  lastModifiedTime,
+  format: forceFormat,
+  remarkExports = ["frontmatter"],
+  ...rest
+}: Options = {}): Transformer => {
+  return async (filePath, source) => {
+    const { content, data: frontmatter } = grayMatter(source);
+    const detectedFormat = filePath.endsWith(".mdx") ? "mdx" : "md";
+    const format = forceFormat ?? detectedFormat;
+    let timestamp: number | undefined;
+    let processor = cache.get(format);
 
-  const { content, data: frontmatter } = grayMatter(source);
-  const detectedFormat = filePath.endsWith(".mdx") ? "mdx" : "md";
-  const format = forceFormat ?? detectedFormat;
-  let timestamp: number | undefined;
-  let processor = cache.get(format);
+    if (processor === undefined) {
+      processor = createProcessor({
+        format,
+        development: process.env.NODE_ENV === "development",
+        ...rest,
+        remarkPlugins: [
+          ...(rest.remarkPlugins ?? []),
+          [remarkMdxExport, { values: remarkExports }],
+        ],
+      });
 
-  if (processor === undefined) {
-    processor = createProcessor({
-      format,
-      development: process.env.NODE_ENV === "development",
-      ...rest,
-      remarkPlugins: [
-        ...(rest.remarkPlugins ?? []),
-        [remarkMdxExport, { values: remarkExports }],
-      ],
+      cache.set(format, processor);
+    }
+
+    if (lastModifiedTime === "git")
+      timestamp = (await getGitTimestamp(filePath))?.getTime();
+
+    const file = await processor.process({
+      value: content,
+      path: filePath,
+      data: {
+        lastModified: timestamp,
+        frontmatter,
+      },
     });
 
-    cache.set(format, processor);
-  }
-
-  if (lastModifiedTime === "git")
-    timestamp = (await getGitTimestamp(filePath))?.getTime();
-
-  const file = await processor.process({
-    value: content,
-    path: filePath,
-    data: {
-      lastModified: timestamp,
-      frontmatter,
-    },
-  });
-
-  return {
-    content: String(file),
-    file: filePath,
-    _mdx: {
-      vfile: file,
-    },
+    return {
+      content: String(file),
+      _mdx: {
+        vfile: file,
+      },
+    };
   };
-}
+};

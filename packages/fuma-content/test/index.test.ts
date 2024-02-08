@@ -1,4 +1,4 @@
-import { createCompiler } from "../src";
+import { createCompiler } from "../src/compiler";
 import { test, expect } from "vitest";
 import { fileURLToPath } from "node:url";
 import { getOutputPath } from "../src/utils/path";

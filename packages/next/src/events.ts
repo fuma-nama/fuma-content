@@ -4,9 +4,7 @@ import {
   type CreateCompilerOptions,
 } from "fuma-content/internal";
 
-export interface NextPluginOptions extends CreateCompilerOptions {
-  configPath?: string | undefined;
-}
+export type NextPluginOptions = CreateCompilerOptions;
 
 let compilerInitialized = false;
 

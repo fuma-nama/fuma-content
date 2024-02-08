@@ -2,7 +2,7 @@ import { withContent } from "@fuma-content/next";
 
 export default withContent({
   content: {
-    files: ["./content/**/*.md", "./content/**/*.mdx"],
+    files: ["./content/**/*"],
     outputDir: "./.content",
   },
   eslint: { ignoreDuringBuilds: true },
