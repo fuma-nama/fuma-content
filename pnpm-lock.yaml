@@ -69,7 +69,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/fuma-content
       next:
-        specifier: ^14.0.4
+        specifier: ^14.1.0
         version: 14.1.0(react-dom@18.2.0)(react@18.2.0)
       react:
         specifier: ^18.2.0
@@ -82,7 +82,7 @@ importers:
         version: 3.22.4
     devDependencies:
       '@next/eslint-plugin-next':
-        specifier: ^14.0.4
+        specifier: ^14.1.0
         version: 14.1.0
       '@tailwindcss/typography':
         specifier: ^0.5.10
@@ -232,7 +232,7 @@ importers:
         specifier: workspace:*
         version: link:../eslint-config
       next:
-        specifier: ^14.0.4
+        specifier: ^14.1.0
         version: 14.1.0(react-dom@18.2.0)(react@18.2.0)
       react:
         specifier: ^18.2.0
