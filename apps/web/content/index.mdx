@@ -79,6 +79,28 @@ export const documents = document(entry, {
 });
 ```
 
+## CLI Tool
+
+Despite the built-in Next.js integration, you can use the CLI tool to work with other frameworks.
+
+```bash
+pnpm i @fuma-content/cli
+```
+
+Create the configuration file.
+
+```js
+export default {
+  files: ["./content/**/*"],
+};
+```
+
+Run watch command.
+
+```bash
+pnpm fuma-content watch
+```
+
 ### Why Fuma Content?
 
 I wrote this library as [Contentlayer has not yet added their official support for Next.js 14](https://github.com/contentlayerdev/contentlayer/issues/575).

@@ -1,4 +1,4 @@
-![banner](./apps/web/public/fuma-content.png)
+![banner](./apps/web/app/opengraph-image.png)
 
 ## Fuma Content
 
