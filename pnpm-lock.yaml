@@ -121,6 +121,25 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
 
+  packages/cli:
+    dependencies:
+      clipanion:
+        specifier: 4.0.0-rc.3
+        version: 4.0.0-rc.3(typanion@3.14.0)
+      fuma-content:
+        specifier: workspace:*
+        version: link:../fuma-content
+    devDependencies:
+      eslint-config:
+        specifier: workspace:*
+        version: link:../eslint-config
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+      typescript-config:
+        specifier: workspace:*
+        version: link:../typescript-config
+
   packages/eslint-config:
     devDependencies:
       '@typescript-eslint/eslint-plugin':
@@ -150,9 +169,6 @@ importers:
       chokidar:
         specifier: ^3.5.3
         version: 3.5.3
-      clipanion:
-        specifier: 4.0.0-rc.3
-        version: 4.0.0-rc.3(typanion@3.14.0)
       cross-spawn:
         specifier: ^7.0.3
         version: 7.0.3

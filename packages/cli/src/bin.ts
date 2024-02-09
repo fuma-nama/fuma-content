@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { Cli, Command, Option } from "clipanion";
-import { createCompiler } from "../compiler";
-import { loadConfig } from "../utils/load-config";
+import { createCompiler } from "fuma-content/internal";
+import { loadConfig } from "./load-config";
 
 class BuildCommand extends Command {
   static paths = [[`build`]];

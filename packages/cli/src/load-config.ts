@@ -1,11 +1,13 @@
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import * as fs from "node:fs";
-import type { CreateCompilerOptions } from "../compiler";
-import { defaultConfig, defaultConfigPath } from "../constants";
+import {
+  type CreateCompilerOptions,
+  defaultConfig,
+} from "fuma-content/internal";
 
 export async function loadConfig(
-  configFile = defaultConfigPath
+  configFile = "./fc.config.js"
 ): Promise<CreateCompilerOptions> {
   const configPath = path.resolve(configFile);
 
