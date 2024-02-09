@@ -19,11 +19,10 @@ export async function emitEntry(
   this: Compiler,
   entry: OutputEntry
 ): Promise<EmitEntry> {
-  const { file, content } = entry;
-  const outputPath = getOutputPath(this, file);
+  const outputPath = getOutputPath(this, entry);
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(outputPath, content);
+  await fs.writeFile(outputPath, entry.content);
 
   return {
     ...entry,

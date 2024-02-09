@@ -15,5 +15,3 @@ export type Transformer = (
   file: string,
   source: string
 ) => Output | Promise<Output>;
-
-export type Loader<T = unknown> = (options: T) => Transformer;

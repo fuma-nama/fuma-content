@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import type { Compiler } from "../compiler/types";
 import type { OutputEntry } from "../compiler/compile";
-import { getAbsolutePath, getOutputPath } from "../utils/path";
+import { getAbsolutePath, getOutputPath, getRelativePath } from "../utils/path";
 
 export interface EntryPointOptions {
   /**
@@ -10,6 +10,13 @@ export interface EntryPointOptions {
    * @defaultValue 'import'
    */
   mode?: "lazy" | "import";
+
+  /**
+   * Use full-path for `file` property
+   *
+   * @defaultValue false
+   */
+  fullPath?: string;
 }
 
 export function loadEntryPoint(
@@ -37,6 +44,7 @@ export function loadEntryPoint(
 }
 
 function generateImport(compiler: Compiler, output: OutputEntry[]): string {
+  const { fullPath = false } = compiler.options.entryPoint ?? {};
   const formats = new Map<
     string,
     {
@@ -49,7 +57,10 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
     const b = formats.get(entry.format) ?? { imports: [], entries: [] };
     formats.set(entry.format, b);
 
-    const importPath = pathToFileURL(getOutputPath(compiler, entry.file));
+    const importPath = pathToFileURL(getOutputPath(compiler, entry));
+    const file = fullPath
+      ? entry.file
+      : getRelativePath(compiler.options.cwd, entry.file);
     const name = `p_${i}`;
 
     b.imports.push(`import * as ${name} from ${JSON.stringify(importPath)};`);
@@ -57,7 +68,7 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
     b.entries.push(`{
 ...${name},
 format: ${JSON.stringify(entry.format)},
-file: ${JSON.stringify(entry.file)},
+file: ${JSON.stringify(file)},
 }`);
   });
 
@@ -77,7 +88,7 @@ function generateLazy(compiler: Compiler, output: OutputEntry[]): string {
 
   for (const entry of output) {
     const fronmatter = entry._mdx ? entry._mdx.vfile.data.frontmatter : {};
-    const importPath = pathToFileURL(getOutputPath(compiler, entry.file));
+    const importPath = pathToFileURL(getOutputPath(compiler, entry));
 
     const line = `{
 file: ${JSON.stringify(entry.file)},

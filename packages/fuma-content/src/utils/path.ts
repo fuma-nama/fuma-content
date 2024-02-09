@@ -1,9 +1,17 @@
 import * as path from "node:path";
 import FastGlob from "fast-glob";
 import type { Compiler, CompilerOptions } from "../compiler/types";
+import type { OutputEntry } from "../compiler/compile";
 
-export function getAbsolutePath(cwd: string, file: string): string {
-  return FastGlob.escapePath(path.join(cwd, file));
+export function getAbsolutePath(cwd: string, relativePath: string): string {
+  return FastGlob.escapePath(path.join(cwd, relativePath));
+}
+
+export function getRelativePath(cwd: string, absolutePath: string): string {
+  return path.join(
+    path.relative(cwd, path.dirname(absolutePath)),
+    path.basename(absolutePath)
+  );
 }
 
 export async function globFiles({
@@ -19,12 +27,12 @@ export async function globFiles({
 
 export function getOutputPath(
   { options }: Compiler,
-  sourceFile: string
+  entry: OutputEntry
 ): string {
   return path.join(
     options.cwd,
     options.outputDir,
-    path.relative(options.cwd, path.dirname(sourceFile)),
-    `${path.basename(sourceFile, path.extname(sourceFile))}${options.outputExt}`
+    path.relative(options.cwd, path.dirname(entry.file)),
+    `${path.basename(entry.file, path.extname(entry.file))}${options.outputExt}`
   );
 }
