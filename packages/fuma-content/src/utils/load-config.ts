@@ -11,7 +11,7 @@ export async function loadConfig(
 
   if (!fs.existsSync(configPath)) return defaultConfig;
   const importPath = pathToFileURL(configPath).href;
-  const result = (await import(`${importPath}?x=${Date.now()}`)) as
+  const result = (await import(importPath)) as
     | CreateCompilerOptions
     | {
         default: CreateCompilerOptions;

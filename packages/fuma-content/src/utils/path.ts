@@ -16,6 +16,14 @@ export function getRelativePath(cwd: string, absolutePath: string): string {
   );
 }
 
+export function getImportPath(absolutePath: string): string {
+  // Normally it should be an url
+  // However, importing a client component with `file:///` prefix causes the component to be missing in React Client Manifest
+  // Using absolute path temporarily fixes the bug
+  // (Next.js 14.0.4)
+  return slash(absolutePath);
+}
+
 export function slash(anyPath: string): string {
   const isExtendedLengthPath = anyPath.startsWith("\\\\?\\");
 

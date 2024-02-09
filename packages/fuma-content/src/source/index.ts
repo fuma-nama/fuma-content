@@ -102,11 +102,11 @@ export function json<T extends CreateOptions>(
 }
 
 function createError(file: string, err: z.ZodError): Error {
-  return new Error(
-    `${file}:\n${Object.entries(err.flatten().fieldErrors)
-      .map(([k, v]) => `${k}: ${v?.join(", ")}`)
-      .join("\n")}`
-  );
+  const message = `${file}:\n${Object.entries(err.flatten().fieldErrors)
+    .map(([k, v]) => `${k}: ${v?.join(", ")}`)
+    .join("\n")}`;
+
+  return new Error(message);
 }
 
 function read<T extends RawFile>(

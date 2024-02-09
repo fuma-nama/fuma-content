@@ -32,3 +32,17 @@ test("Export frontmatter", async () => {
     expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
   }
 });
+
+test("Import paths", async () => {
+  const compiler = await createCompiler({
+    files: ["./fixtures/import.mdx"],
+    outputDir: "./out/import",
+    cwd,
+  });
+
+  const entires = await compiler.compile();
+
+  for (const entry of entires) {
+    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
+  }
+});

@@ -1,7 +1,11 @@
-import { pathToFileURL } from "node:url";
 import type { Compiler } from "../compiler/types";
 import type { OutputEntry } from "../compiler/compile";
-import { getAbsolutePath, getOutputPath, getRelativePath } from "../utils/path";
+import {
+  getAbsolutePath,
+  getImportPath,
+  getOutputPath,
+  getRelativePath,
+} from "../utils/path";
 
 export interface EntryPointOptions {
   /**
@@ -57,7 +61,7 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
     const b = formats.get(entry.format) ?? { imports: [], entries: [] };
     formats.set(entry.format, b);
 
-    const importPath = pathToFileURL(getOutputPath(compiler, entry));
+    const importPath = getImportPath(getOutputPath(compiler, entry));
     const file = fullPath
       ? entry.file
       : getRelativePath(compiler.options.cwd, entry.file);
@@ -88,7 +92,7 @@ function generateLazy(compiler: Compiler, output: OutputEntry[]): string {
 
   for (const entry of output) {
     const fronmatter = entry._mdx ? entry._mdx.vfile.data.frontmatter : {};
-    const importPath = pathToFileURL(getOutputPath(compiler, entry));
+    const importPath = getImportPath(getOutputPath(compiler, entry));
 
     const line = `{
 file: ${JSON.stringify(entry.file)},

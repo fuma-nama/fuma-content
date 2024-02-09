@@ -1,4 +1,5 @@
 import {jsx as _jsx} from "react/jsx-runtime";
+export const lastModified = undefined;
 export const frontmatter = {
   "title": "Hello World",
   "description": "Hey"
