@@ -1,3 +1,5 @@
+![banner](./apps/web/public/fuma-content.png)
+
 ## Fuma Content
 
 Fuma Content is the library for handling content.
