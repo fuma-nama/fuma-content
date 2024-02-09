@@ -1,7 +1,31 @@
 import { notFound } from "next/navigation";
 import { documents } from "./source";
 import Link from "next/link";
-import { Hide } from "@/components/hide";
+import { SVGAttributes } from "react";
+
+function Logo(props: SVGAttributes<SVGSVGElement>): JSX.Element {
+  return (
+    <svg width="360" height="360" viewBox="0 0 360 360" {...props}>
+      <path
+        d="M340 180C340 268.366 268.366 340 180 340C91.6344 340 20 268.366 20 180C20 91.6344 91.6344 20 180 20C180 221 340 91.6344 340 180Z"
+        fill="url(#paint0_radial_89_18)"
+      />
+      <defs>
+        <radialGradient
+          id="paint0_radial_89_18"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(20 35) rotate(45) scale(364)"
+        >
+          <stop offset="0.5" stopColor="#CC00FF" />
+          <stop offset="1" stopColor="#B3FFF6" />
+        </radialGradient>
+      </defs>
+    </svg>
+  );
+}
 
 export default function Page(): JSX.Element {
   const document = documents.find((d) => d.file === "content/index.mdx");
@@ -10,7 +34,8 @@ export default function Page(): JSX.Element {
   return (
     <main className="container p-6 mx-auto max-w-[800px]">
       <nav className="flex flex-row items-center text-sm mb-8 rounded-full border border-neutral-800 p-4 -mx-4 bg-gradient-to-t from-neutral-800">
-        <Link href="/" className="font-medium">
+        <Link href="/" className="inline-flex items-center font-medium">
+          <Logo className="size-5 mr-2" />
           Fuma Content
         </Link>
         <a
@@ -28,7 +53,7 @@ export default function Page(): JSX.Element {
         </a>
       </nav>
       <article className="prose max-w-none prose-sm prose-invert prose-pre:border prose-pre:border-neutral-800 prose-pre:bg-gradient-to-t prose-pre:from-neutral-900 prose-pre:to-neutral-950">
-        <document.renderer components={{ Hide }} />
+        <document.renderer />
       </article>
     </main>
   );
