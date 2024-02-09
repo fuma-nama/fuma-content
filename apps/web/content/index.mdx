@@ -4,9 +4,15 @@ title: Hello
 
 ## Hello World
 
-I love Next.js <Hide>Joulev</Hide>, and my side projects as well.
+Fuma Content is the library for handling content.
 
-this is good!
+### Install
+
+```bash
+pnpm i fuma-content @fuma-content/next
+```
+
+### Usage
 
 ```js
 import { withContent } from "@fuma-content/next";
@@ -31,9 +37,16 @@ export default withContent({
 
 ```js
 import entry from "content";
-import { source } from "fuma-content";
+import { document, json } from "fuma-content";
 
-export const documents = source(entry, {});
+export const documents = document(entry);
+
+// You may use JSON files for organizing documents, for example, sorting pages.
+export const jsons = json(entry);
 ```
+
+### Additional
+
+I love Next.js, <Hide>Joulev</Hide>, and my side projects as well.
 
 Feel free to use [Fumadocs](https://fumadocs.vercel.app) if you are looking for a full-powered framework to write docs.

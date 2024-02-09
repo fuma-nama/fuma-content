@@ -4,14 +4,26 @@ import type { Compiler, CompilerOptions } from "../compiler/types";
 import type { OutputEntry } from "../compiler/compile";
 
 export function getAbsolutePath(cwd: string, relativePath: string): string {
-  return FastGlob.escapePath(path.join(cwd, relativePath));
+  return path.join(cwd, relativePath);
 }
 
 export function getRelativePath(cwd: string, absolutePath: string): string {
-  return path.join(
-    path.relative(cwd, path.dirname(absolutePath)),
-    path.basename(absolutePath)
+  return slash(
+    path.join(
+      path.relative(cwd, path.dirname(absolutePath)),
+      path.basename(absolutePath)
+    )
   );
+}
+
+export function slash(anyPath: string): string {
+  const isExtendedLengthPath = anyPath.startsWith("\\\\?\\");
+
+  if (isExtendedLengthPath) {
+    return anyPath;
+  }
+
+  return anyPath.replaceAll("\\", "/");
 }
 
 export async function globFiles({

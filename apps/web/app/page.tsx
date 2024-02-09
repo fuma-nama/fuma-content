@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Hide } from "@/components/hide";
 
 export default function Page(): JSX.Element {
-  const document = documents.find((d) => d.info);
+  const document = documents.find((d) => d.file === "content/index.mdx");
 
   if (!document) notFound();
   return (

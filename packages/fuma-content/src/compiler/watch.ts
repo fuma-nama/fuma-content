@@ -6,8 +6,8 @@ export function watch(this: Compiler): FSWatcher {
   void this.emit();
   const watcher = watchFn(this.options.files, { cwd: this.options.cwd });
 
-  watcher.on("all", (eventName, path) => {
-    const absolutePath = getAbsolutePath(this.options.cwd, path);
+  watcher.on("all", (eventName, relativePath) => {
+    const absolutePath = getAbsolutePath(this.options.cwd, relativePath);
 
     if (eventName === "add" && !this.files.includes(absolutePath)) {
       this.files.push(absolutePath);
@@ -22,7 +22,7 @@ export function watch(this: Compiler): FSWatcher {
     }
 
     if (eventName === "change") {
-      console.log("update", path);
+      console.log("update", relativePath);
 
       this._cache.delete(absolutePath);
       void this.compileFile(absolutePath).then(async (entry) => {

@@ -14,10 +14,9 @@ test("Run", async () => {
 
   const entires = await compiler.compile();
 
-  for (const entry of entires)
-    expect(entry.content).toMatchFileSnapshot(
-      getOutputPath(compiler, entry.file)
-    );
+  for (const entry of entires) {
+    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
+  }
 });
 
 test("Export frontmatter", async () => {
@@ -30,8 +29,6 @@ test("Export frontmatter", async () => {
   const entires = await compiler.compile();
 
   for (const entry of entires) {
-    expect(entry.content).toMatchFileSnapshot(
-      getOutputPath(compiler, entry.file)
-    );
+    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
   }
 });
