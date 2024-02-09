@@ -10,22 +10,30 @@ Fuma Content is the library for handling content.
 
 ### Install
 
+Use the Next.js integration.
+
 ```bash
 pnpm i fuma-content @fuma-content/next
 ```
 
 ### Usage
 
+Add this to your Next.js configuration.
+
+It must be `next.config.mjs` as `fuma-content` is a ESM module
+
 ```js
 import { withContent } from "@fuma-content/next";
 
 export default withContent({
   content: {
-    files: ["./content/**/*.md"],
+    files: ["./content/**/*"],
     outputDir: "./.content",
   },
 });
 ```
+
+Add import alias to your `tsconfig.json`.
 
 ```json
 {
@@ -37,6 +45,8 @@ export default withContent({
 }
 ```
 
+Import generated documents and json files.
+
 ```js
 import entry from "content";
 import { document, json } from "fuma-content";
@@ -46,6 +56,42 @@ export const documents = document(entry);
 // You may use JSON files for organizing documents, for example, sorting pages.
 export const jsons = json(entry);
 ```
+
+### Type-safe Frontmatter
+
+Install `zod`:
+
+```
+pnpm i zod
+```
+
+Pass your schema through the `schema` option.
+
+```js
+import entry from "content";
+import { z } from "zod";
+import { document } from "fuma-content";
+
+export const documents = document(entry, {
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+```
+
+### Why Fuma Content?
+
+I wrote this library as [Contentlayer has not yet added their official support for Next.js 14](https://github.com/contentlayerdev/contentlayer/issues/575).
+
+You may consider `fuma-content` as an alternative to Contentlayer.
+
+By design, Fuma Content is also:
+
+- Light: It is a light layer over `@mdx-js/mdx`, comparing to a bundler, it is incredibly fast.
+- Type-safe: Support frontmatter validation with **Zod**.
+- App Router Ready: Write **server components** in a MDX file.
+- All in Typescript: Flexible, Powerful, and **Confidence**.
+- Nice MDX support: Transform relative imports into absolute paths, allowing you to import **anything** supported by your loader.
 
 ### Additional
 
