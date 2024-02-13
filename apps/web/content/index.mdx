@@ -1,107 +1,17 @@
 ---
-title: Hello
+title: Introduction
 ---
 
 import { Hide } from "../components/hide.tsx";
 
-## Hello World
-
 Fuma Content is the library for handling content.
 
-### Install
+<Cards>
+<Card href='/docs/next' title="Next.js" description="Integration with Next.js" />
+<Card href='/docs/cli' title="CLI Tool" description="Use Fuma Content in CLI" />
+</Cards>
 
-Use the Next.js integration.
-
-```bash
-pnpm i fuma-content @fuma-content/next
-```
-
-### Usage
-
-Add this to your Next.js configuration.
-
-It must be `next.config.mjs` as `fuma-content` is a ESM module
-
-```js
-import { withContent } from "@fuma-content/next";
-
-export default withContent({
-  content: {
-    files: ["./content/**/*"],
-    outputDir: "./.content",
-  },
-});
-```
-
-Add import alias to your `tsconfig.json`.
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "content": ["./.content/index.js"]
-    }
-  }
-}
-```
-
-Import generated documents and json files.
-
-```js
-import entry from "content";
-import { document, json } from "fuma-content";
-
-export const documents = document(entry);
-
-// You may use JSON files for organizing documents, for example, sorting pages.
-export const jsons = json(entry);
-```
-
-### Type-safe Frontmatter
-
-Install `zod`:
-
-```
-pnpm i zod
-```
-
-Pass your schema through the `schema` option.
-
-```js
-import entry from "content";
-import { z } from "zod";
-import { document } from "fuma-content";
-
-export const documents = document(entry, {
-  schema: z.object({
-    title: z.string(),
-  }),
-});
-```
-
-## CLI Tool
-
-Despite the built-in Next.js integration, you can use the CLI tool to work with other frameworks.
-
-```bash
-pnpm i @fuma-content/cli
-```
-
-Create the configuration file.
-
-```js
-export default {
-  files: ["./content/**/*"],
-};
-```
-
-Run watch command.
-
-```bash
-pnpm fuma-content watch
-```
-
-### Why Fuma Content?
+## Why Fuma Content?
 
 I wrote this library as [Contentlayer has not yet added their official support for Next.js 14](https://github.com/contentlayerdev/contentlayer/issues/575).
 

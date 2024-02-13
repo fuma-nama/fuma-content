@@ -1,0 +1,52 @@
+---
+title: Next.js
+---
+
+Fuma Content provides native support for Next.js.
+
+## Install
+
+```bash
+pnpm i fuma-content @fuma-content/next
+```
+
+## Usage
+
+Add this to your Next.js configuration.
+
+It must be `next.config.mjs` as `fuma-content` is a ESM module
+
+```js
+import { withContent } from "@fuma-content/next";
+
+export default withContent({
+  content: {
+    files: ["./content/**/*"],
+    outputDir: "./.content",
+  },
+});
+```
+
+Add import alias to your `tsconfig.json`.
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "content": ["./.content/index.js"]
+    }
+  }
+}
+```
+
+Import generated documents and json files.
+
+```js
+import entry from "content";
+import { document, json } from "fuma-content";
+
+export const documents = document(entry);
+
+// You may use JSON files for organizing documents, for example, sorting pages.
+export const jsons = json(entry);
+```

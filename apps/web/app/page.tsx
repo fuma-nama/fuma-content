@@ -1,36 +1,7 @@
-import { notFound } from "next/navigation";
-import { documents } from "./source";
 import Link from "next/link";
-import { SVGAttributes } from "react";
-
-function Logo(props: SVGAttributes<SVGSVGElement>): JSX.Element {
-  return (
-    <svg width="360" height="360" viewBox="0 0 360 360" {...props}>
-      <path
-        d="M340 180C340 268.366 268.366 340 180 340C91.6344 340 20 268.366 20 180C20 91.6344 91.6344 20 180 20C180 221 340 91.6344 340 180Z"
-        fill="url(#paint0_radial_89_18)"
-      />
-      <defs>
-        <radialGradient
-          id="paint0_radial_89_18"
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(20 35) rotate(45) scale(364)"
-        >
-          <stop offset="0.5" stopColor="#CC00FF" />
-          <stop offset="1" stopColor="#B3FFF6" />
-        </radialGradient>
-      </defs>
-    </svg>
-  );
-}
+import { Logo } from "@/components/logo";
 
 export default function Page(): JSX.Element {
-  const document = documents.find((d) => d.file === "content/index.mdx");
-
-  if (!document) notFound();
   return (
     <main className="container p-6 mx-auto max-w-[800px]">
       <nav className="flex flex-row items-center text-sm mb-8 rounded-full border border-neutral-800 p-4 -mx-4 bg-gradient-to-t from-neutral-800">
@@ -52,9 +23,20 @@ export default function Page(): JSX.Element {
           </svg>
         </a>
       </nav>
-      <article className="prose max-w-none prose-sm prose-invert prose-pre:border prose-pre:border-neutral-800 prose-pre:bg-gradient-to-t prose-pre:from-neutral-900 prose-pre:to-neutral-950">
-        <document.renderer />
-      </article>
+      <h1 className="font-bold text-2xl mb-2">
+        Handle Content for Developers.
+      </h1>
+      <p className="text-sm text-muted-foreground mb-4">
+        The next Contentlayer Alternative.
+      </p>
+      <div className="border-t pt-4 mb-8">
+        <Link
+          href="/docs"
+          className="bg-secondary text-secondary-foreground border rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary/80"
+        >
+          Getting Started
+        </Link>
+      </div>
     </main>
   );
 }

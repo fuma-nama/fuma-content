@@ -1,11 +1,13 @@
 {
   "extends": "typescript-config/nextjs.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
       "content": ["./.content/index.js"],
     },
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
     "plugins": [
       {
         "name": "next",

@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-neutral-950 text-neutral-50;
-  }
+.dark {
+  --primary: 280 100% 80%;
 }
