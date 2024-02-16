@@ -36,5 +36,4 @@ export interface Compiler {
 
   _output?: OutputEntry[];
   _emit?: EmitEntry[];
-  _cache: Map<string, OutputEntry>;
 }

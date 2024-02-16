@@ -1,6 +1,7 @@
 import { type FSWatcher, watch as watchFn } from "chokidar";
 import { getAbsolutePath } from "../utils/path";
 import type { Compiler } from "./types";
+import * as compile from "./compile";
 
 export function watch(this: Compiler): FSWatcher {
   void this.emit();
@@ -17,14 +18,14 @@ export function watch(this: Compiler): FSWatcher {
     if (eventName === "unlink") {
       this.files = this.files.filter((file) => file !== absolutePath);
 
-      this._cache.delete(absolutePath);
+      compile.removeCache(this, absolutePath);
       void this.emit();
     }
 
     if (eventName === "change") {
       console.log("update", relativePath);
 
-      this._cache.delete(absolutePath);
+      compile.removeCache(this, absolutePath);
       void this.compileFile(absolutePath).then(async (entry) => {
         await this.emitEntry(entry);
       });

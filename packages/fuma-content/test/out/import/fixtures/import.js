@@ -2,7 +2,7 @@ import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";
 export const lastModified = undefined;
 export const frontmatter = {};
 import alias from "@/alias";
-import under from "D:/dev/frameworks/fuma-content/packages/fuma-content/test/fixtures/index.mdx";
+import under from "D:/dev/frameworks/fuma-content/packages/fuma-content/test/out/import/fixtures/index.js";
 import parent from "D:/dev/frameworks/fuma-content/packages/fuma-content/test/index.test.ts";
 function _createMdxContent(props) {
   return _jsx(_Fragment, {

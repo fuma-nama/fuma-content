@@ -2,8 +2,18 @@ import { createCompiler } from "../src/compiler";
 import { test, expect } from "vitest";
 import { fileURLToPath } from "node:url";
 import { getOutputPath } from "../src/utils/path";
+import { OutputEntry } from "../src/compiler/compile";
+import type { Compiler } from "../src/compiler/types";
 
 const cwd = fileURLToPath(new URL("./", import.meta.url));
+
+function check(compiler: Compiler, entries: OutputEntry[]) {
+  for (const entry of entries) {
+    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
+
+    if (entry.dependencies) check(compiler, entry.dependencies);
+  }
+}
 
 test("Run", async () => {
   const compiler = await createCompiler({
@@ -12,11 +22,7 @@ test("Run", async () => {
     cwd,
   });
 
-  const entires = await compiler.compile();
-
-  for (const entry of entires) {
-    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
-  }
+  check(compiler, await compiler.compile());
 });
 
 test("Export frontmatter", async () => {
@@ -26,11 +32,7 @@ test("Export frontmatter", async () => {
     cwd,
   });
 
-  const entires = await compiler.compile();
-
-  for (const entry of entires) {
-    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
-  }
+  check(compiler, await compiler.compile());
 });
 
 test("Import paths", async () => {
@@ -40,9 +42,5 @@ test("Import paths", async () => {
     cwd,
   });
 
-  const entires = await compiler.compile();
-
-  for (const entry of entires) {
-    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
-  }
+  check(compiler, await compiler.compile());
 });

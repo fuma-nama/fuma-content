@@ -71,7 +71,6 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
 
     b.entries.push(`{
 ...${name},
-format: ${JSON.stringify(entry.format)},
 file: ${JSON.stringify(file)},
 }`);
   });

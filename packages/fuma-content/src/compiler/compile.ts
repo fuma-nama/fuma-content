@@ -13,21 +13,33 @@ export interface OutputEntry extends Output {
   file: string;
 }
 
+interface CompilerWithCache extends Compiler {
+  _compileCache?: Map<string, OutputEntry>;
+}
+
 export async function compile(this: Compiler): Promise<OutputEntry[]> {
-  this._output = await Promise.all(
-    this.files.map((file) => this.compileFile(file))
+  const output: OutputEntry[] = [];
+
+  await Promise.all(
+    this.files.map(async (file) => {
+      const entry = await this.compileFile(file);
+
+      output.push(entry);
+    })
   );
 
-  this._output.push(loadEntryPoint.call(this, this._output));
+  output.push(loadEntryPoint.call(this, output));
 
-  return this._output;
+  this._output = output;
+  return output;
 }
 
 export async function compileFile(
-  this: Compiler,
+  this: CompilerWithCache,
   file: string
 ): Promise<OutputEntry> {
-  const cache = this._cache.get(file);
+  this._compileCache ||= new Map();
+  const cache = this._compileCache.get(file);
   if (cache) return cache;
 
   const format = path.extname(file).slice(1);
@@ -46,6 +58,10 @@ export async function compileFile(
     ...output,
   };
 
-  this._cache.set(file, entry);
+  this._compileCache.set(file, entry);
   return entry;
+}
+
+export function removeCache(compiler: CompilerWithCache, file: string): void {
+  compiler._compileCache?.delete(file);
 }

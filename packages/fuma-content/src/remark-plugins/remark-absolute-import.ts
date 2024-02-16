@@ -2,43 +2,67 @@ import * as path from "node:path";
 import type { Root } from "mdast";
 import type { Transformer } from "unified";
 import { visit } from "unist-util-visit";
-import { getImportPath } from "../utils/path";
+import { getImportPath, getOutputPath } from "../utils/path";
+import type { Compiler } from "../compiler/types";
+import type { OutputEntry } from "../compiler/compile";
 
-interface Options {
-  enabled: boolean;
+export interface Options {
+  compiler: Compiler;
+
+  /**
+   * Transform imports with specific extension to its output paths
+   */
+  transformFormats: string[];
 }
 
-/**
- * Export properties from `vfile.data`
- */
-function remarkAbsoluteImport({ enabled }: Options): Transformer<Root, Root> {
-  return (tree, vfile) => {
-    if (!enabled) return;
+export interface Context {
+  dependencies: OutputEntry[];
+}
 
-    visit(tree, ["mdxjsEsm"], (node) => {
-      if (node.type !== "mdxjsEsm") return;
+export function remarkAbsoluteImport({
+  compiler,
+  transformFormats,
+}: Options): Transformer<Root, Root> {
+  return async (tree, vfile) => {
+    const transforms: Promise<OutputEntry>[] = [];
+
+    visit(tree, "mdxjsEsm", (node) => {
       const body = node.data?.estree?.body ?? [];
 
-      body.forEach((statement) => {
+      for (const statement of body) {
         if (
-          statement.type === "ImportDeclaration" &&
-          typeof statement.source.value === "string"
-        ) {
-          const value = statement.source.value;
+          statement.type !== "ImportDeclaration" ||
+          typeof statement.source.value !== "string"
+        )
+          continue;
+        const value = statement.source.value;
 
-          // handles relative nodes
-          if (value.startsWith("./") || value.startsWith("../")) {
-            const replace = getImportPath(
-              path.join(path.dirname(vfile.path), value)
+        if (!value.startsWith("./") && !value.startsWith("../")) continue;
+        const file = path.join(path.dirname(vfile.path), value);
+
+        // transform to output path
+        if (transformFormats.includes(path.extname(file).slice(1))) {
+          const transform = compiler.compileFile(file).then((entry) => {
+            statement.source.value = getImportPath(
+              getOutputPath(compiler, entry)
             );
+            delete statement.source.raw;
 
-            statement.source.value = replace;
-            statement.source.raw = JSON.stringify(replace);
-          }
+            return entry;
+          });
+
+          transforms.push(transform);
+          continue;
         }
-      });
+
+        // transform to absolute path
+        const replace = getImportPath(file);
+
+        statement.source.value = replace;
+        delete statement.source.raw;
+      }
     });
+
+    vfile.data.ctx = { dependencies: await Promise.all(transforms) } as Context;
   };
 }
-
-export { remarkAbsoluteImport, type Options };

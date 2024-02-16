@@ -37,7 +37,6 @@ export async function createCompiler(
     emit,
     compileFile,
     loaders: createLoaders(compilerOptions),
-    _cache: new Map(),
   };
 }
 
