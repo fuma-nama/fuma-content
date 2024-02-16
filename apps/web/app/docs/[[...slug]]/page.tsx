@@ -1,9 +1,9 @@
 import { getPage, getPages } from "@/app/source";
-import type { Metadata } from "next";
 import { DocsPage, DocsBody } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 import mdxComponents from "fumadocs-ui/mdx";
 import { TableOfContents } from "fumadocs-core/server";
+import { createMetadata } from "@/lib/metadata";
 
 export default async function Page({
   params,
@@ -39,8 +39,8 @@ export function generateMetadata({ params }: { params: { slug?: string[] } }) {
 
   if (page == null) notFound();
 
-  return {
+  return createMetadata({
     title: page.data.title,
     description: page.data.description,
-  } satisfies Metadata;
+  });
 }

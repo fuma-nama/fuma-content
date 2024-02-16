@@ -1,19 +1,17 @@
 import { RootProvider } from "fumadocs-ui/provider";
 import "./globals.css";
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { createMetadata } from "@/lib/metadata";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000"
-  ),
-  title: "Fuma Content",
+export const metadata = createMetadata({
+  title: {
+    absolute: "Fuma Content",
+    template: "Fuma Content - %s",
+  },
   description: "The library that handles content",
-};
+});
 
 export default function RootLayout({
   children,
