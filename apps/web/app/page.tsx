@@ -27,7 +27,8 @@ export default function Page(): JSX.Element {
         Handle Content for Developers.
       </h1>
       <p className="text-sm text-muted-foreground mb-4">
-        The next Contentlayer Alternative.
+        The data layer for handling content in Javascript, integrated with major
+        frameworks.
       </p>
       <div className="border-t pt-4 mb-8">
         <Link
