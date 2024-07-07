@@ -58,7 +58,7 @@ type GetInfoType<T extends CreateOptions> = T["schema"] extends AnyZodObject
 
 export function document<T extends CreateOptions>(
   entryPoint: unknown,
-  options?: T
+  options?: T,
 ): Document<GetInfoType<T>>[] {
   const { schema = defaultSchema, include } = options ?? {};
 
@@ -84,7 +84,7 @@ export function document<T extends CreateOptions>(
 
 export function json<T extends CreateOptions>(
   entryPoint: unknown,
-  options?: T
+  options?: T,
 ): Json<GetInfoType<T>>[] {
   const { schema = defaultSchema, include } = options ?? {};
 
@@ -97,13 +97,13 @@ export function json<T extends CreateOptions>(
         file,
         info: result.data,
       };
-    }
+    },
   );
 }
 
 function createError(file: string, err: z.ZodError): Error {
   const message = `${file}:\n${Object.entries(err.flatten().fieldErrors)
-    .map(([k, v]) => `${k}: ${v?.join(", ")}`)
+    .map(([k, v]) => `${k}: ${v?.join(", ") ?? ""}`)
     .join("\n")}`;
 
   return new Error(message);
@@ -112,7 +112,7 @@ function createError(file: string, err: z.ZodError): Error {
 function read<T extends RawFile>(
   entryPoint: unknown,
   format: string[],
-  include?: string | string[]
+  include?: string | string[],
 ): T[] {
   const cast = entryPoint as Record<string, T[]>;
   const entries = format.flatMap((f) => cast[f] ?? []);

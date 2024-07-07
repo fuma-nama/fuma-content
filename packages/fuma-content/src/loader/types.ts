@@ -15,5 +15,5 @@ export interface Output {
 export type Transformer = (
   this: Compiler,
   file: string,
-  source: string
+  source: string,
 ) => Output | Promise<Output>;

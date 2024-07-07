@@ -25,7 +25,7 @@ export interface EntryPointOptions {
 
 export function loadEntryPoint(
   this: Compiler,
-  entries: OutputEntry[]
+  entries: OutputEntry[],
 ): OutputEntry {
   const { mode = "import" } = this.options.entryPoint ?? {};
   let content: string;
@@ -65,7 +65,7 @@ function generateImport(compiler: Compiler, output: OutputEntry[]): string {
     const file = fullPath
       ? entry.file
       : getRelativePath(compiler.options.cwd, entry.file);
-    const name = `p_${i}`;
+    const name = `p_${i.toString()}`;
 
     b.imports.push(`import * as ${name} from ${JSON.stringify(importPath)};`);
 

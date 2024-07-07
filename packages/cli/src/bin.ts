@@ -36,7 +36,7 @@ const [node, app, ...args] = process.argv;
 
 const cli = new Cli({
   binaryLabel: `fuma-content-cli`,
-  binaryName: `${node} ${app}`,
+  binaryName: `${node ?? ""} ${app ?? ""}`,
   binaryVersion: `1.0.0`,
 });
 

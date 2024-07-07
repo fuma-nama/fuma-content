@@ -20,7 +20,7 @@ export type CreateCompilerOptions = Pick<
   Omit<CompilerOptions, keyof typeof defaultOptions>;
 
 export async function createCompiler(
-  options: CreateCompilerOptions
+  options: CreateCompilerOptions,
 ): Promise<Compiler> {
   const compilerOptions: CompilerOptions = {
     ...defaultOptions,

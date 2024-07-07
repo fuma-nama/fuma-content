@@ -21,7 +21,7 @@ export async function emit(this: Compiler): Promise<void> {
 
 export async function emitEntry(
   this: CompilerWithCache,
-  entry: OutputEntry
+  entry: OutputEntry,
 ): Promise<EmitEntry> {
   this._emitCache ||= new WeakMap();
 
@@ -48,7 +48,7 @@ export async function emitEntry(
 
 export function removeCache(
   compiler: CompilerWithCache,
-  entry: OutputEntry
+  entry: OutputEntry,
 ): void {
   compiler._emitCache?.delete(entry);
 }

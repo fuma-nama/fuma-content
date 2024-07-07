@@ -46,7 +46,7 @@ class ContentWebpackPlugin {
           devServerStartedRef,
           mode: compiler.options.mode,
         });
-      }
+      },
     );
   }
 }

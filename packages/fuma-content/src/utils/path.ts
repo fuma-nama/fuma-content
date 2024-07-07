@@ -11,8 +11,8 @@ export function getRelativePath(cwd: string, absolutePath: string): string {
   return slash(
     path.join(
       path.relative(cwd, path.dirname(absolutePath)),
-      path.basename(absolutePath)
-    )
+      path.basename(absolutePath),
+    ),
   );
 }
 
@@ -47,12 +47,12 @@ export async function globFiles({
 
 export function getOutputPath(
   { options }: Compiler,
-  entry: OutputEntry
+  entry: OutputEntry,
 ): string {
   return path.join(
     options.cwd,
     options.outputDir,
     path.relative(options.cwd, path.dirname(entry.file)),
-    `${path.basename(entry.file, path.extname(entry.file))}${options.outputExt}`
+    `${path.basename(entry.file, path.extname(entry.file))}${options.outputExt}`,
   );
 }

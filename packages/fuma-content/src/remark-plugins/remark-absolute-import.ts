@@ -44,7 +44,7 @@ export function remarkAbsoluteImport({
         if (transformFormats.includes(path.extname(file).slice(1))) {
           const transform = compiler.compileFile(file).then((entry) => {
             statement.source.value = getImportPath(
-              getOutputPath(compiler, entry)
+              getOutputPath(compiler, entry),
             );
             delete statement.source.raw;
 

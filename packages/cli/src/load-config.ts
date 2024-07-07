@@ -7,7 +7,7 @@ import {
 } from "fuma-content/internal";
 
 export async function loadConfig(
-  configFile = "./fc.config.js"
+  configFile = "./fc.config.js",
 ): Promise<CreateCompilerOptions> {
   const configPath = path.resolve(configFile);
 

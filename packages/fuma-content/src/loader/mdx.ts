@@ -38,7 +38,7 @@ function pluggable(enable: boolean, value: Pluggable): Pluggable[] {
 
 function getProcessor(
   compiler: CompilerWithCache,
-  options: ProcessorOptions
+  options: ProcessorOptions,
 ): Processor {
   if (!options.format) throw new Error("format is required");
   compiler._mdxCache ||= new Map();

@@ -1,4 +1,4 @@
-import { valueToEstree } from 'estree-util-value-to-estree';
+import { valueToEstree } from "estree-util-value-to-estree";
 
 /**
  * MDX.js first converts javascript (with esm support) into mdast nodes with remark-mdx, then handle the other remark plugins
@@ -7,25 +7,25 @@ import { valueToEstree } from 'estree-util-value-to-estree';
  */
 export function getMdastExport(name: string, value: unknown): object {
   return {
-    type: 'mdxjsEsm',
-    value: '',
+    type: "mdxjsEsm",
+    value: "",
     data: {
       estree: {
-        type: 'Program',
-        sourceType: 'module',
+        type: "Program",
+        sourceType: "module",
         body: [
           {
-            type: 'ExportNamedDeclaration',
+            type: "ExportNamedDeclaration",
             specifiers: [],
             source: null,
             declaration: {
-              type: 'VariableDeclaration',
-              kind: 'const',
+              type: "VariableDeclaration",
+              kind: "const",
               declarations: [
                 {
-                  type: 'VariableDeclarator',
+                  type: "VariableDeclarator",
                   id: {
-                    type: 'Identifier',
+                    type: "Identifier",
                     name,
                   },
                   init: valueToEstree(value),

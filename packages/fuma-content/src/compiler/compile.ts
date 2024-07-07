@@ -25,7 +25,7 @@ export async function compile(this: Compiler): Promise<OutputEntry[]> {
       const entry = await this.compileFile(file);
 
       output.push(entry);
-    })
+    }),
   );
 
   output.push(loadEntryPoint.call(this, output));
@@ -36,7 +36,7 @@ export async function compile(this: Compiler): Promise<OutputEntry[]> {
 
 export async function compileFile(
   this: CompilerWithCache,
-  file: string
+  file: string,
 ): Promise<OutputEntry> {
   this._compileCache ||= new Map();
   const cache = this._compileCache.get(file);
