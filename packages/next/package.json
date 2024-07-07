@@ -1,6 +1,6 @@
 {
   "name": "@fuma-content/next",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Write content for Next.js apps",
   "keywords": [
     "Content",
