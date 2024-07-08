@@ -20,7 +20,7 @@
     "tsx": "^4.7.0",
     "turbo": "^2.0.6",
     "typescript-config": "workspace:*",
-    "vitest": "^1.2.2"
+    "vitest": "^2.0.0"
   },
   "engines": {
     "node": ">=18"
