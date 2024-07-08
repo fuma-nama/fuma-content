@@ -74,10 +74,10 @@ importers:
         version: link:../../packages/fuma-content
       fumadocs-core:
         specifier: ^12.4.1
-        version: 12.4.1(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 12.4.2(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       fumadocs-ui:
         specifier: ^12.4.1
-        version: 12.4.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.4)
+        version: 12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.4)
       next:
         specifier: ^14.2.4
         version: 14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1299,14 +1299,14 @@ packages:
   '@rushstack/eslint-patch@1.10.3':
     resolution: {integrity: sha512-qC/xYId4NMebE6w/V33Fh9gWxLgURiNYgVNObbJl2LZv0GUUItCcCqC5axQSwRaAgaxl2mELq1rMzlswaQ0Zxg==}
 
-  '@shikijs/core@1.10.2':
-    resolution: {integrity: sha512-hCtKSC0PNmidU+TVBUiddE0sF1QsOPVbBBRQlugsKy0QJBfSj9aIQQ/pNEIv58wwM/9cAlWG1yihi+5ovZfYmA==}
+  '@shikijs/core@1.10.3':
+    resolution: {integrity: sha512-D45PMaBaeDHxww+EkcDQtDAtzv00Gcsp72ukBtaLSmqRvh0WgGMq3Al0rl1QQBZfuneO75NXMIzEZGFitThWbg==}
 
-  '@shikijs/rehype@1.10.2':
-    resolution: {integrity: sha512-TwzZ3aX34UD7QYFz18CW3uIYKsvFcP6IXoW2I9cdfq2d6IKh+zRD0A2P+tqhS5paBF00KR1xfpo+SWkDcKUnQQ==}
+  '@shikijs/rehype@1.10.3':
+    resolution: {integrity: sha512-ghLPkqtx+AEL3LNTR8YpVJroAuiGvZZv+2u2CUB5rw5l4gsJ/2SycrC7s3Hpe+5qMuVXDAq/xImFQyhB0nQpuw==}
 
-  '@shikijs/transformers@1.10.2':
-    resolution: {integrity: sha512-gSx8Z4ZIxP0iJlnm8gNolAf3Yxd0KYHJ0OFcT5RFGcZ73/ZhFBJgCfL9OQskHya74qlp3ExpGbrPm7zf7CSidw==}
+  '@shikijs/transformers@1.10.3':
+    resolution: {integrity: sha512-MNjsyye2WHVdxfZUSr5frS97sLGe6G1T+1P41QjyBFJehZphMcr4aBlRLmq6OSPBslYe9byQPVvt/LJCOfxw8Q==}
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
@@ -2408,15 +2408,15 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  fumadocs-core@12.4.1:
-    resolution: {integrity: sha512-xNj7Kx+S+7+qMqStjgHWE2Vuuzab8/zZqa/1EyRT5G/m7ydyFt71Z9wuELfL+jMyFTPBvhUQG5BoY+fPAT23Aw==}
+  fumadocs-core@12.4.2:
+    resolution: {integrity: sha512-TeR9Ay3cbCryfUOLiA/hYP11E6tz3IdkrwHl08P1djbNe6BM4UJRnpi6KDEKJB0x8KbAzqDddfhb8uyIObcqlA==}
     peerDependencies:
       next: '>= 14.1.0'
       react: '>= 18'
       react-dom: '>= 18'
 
-  fumadocs-ui@12.4.1:
-    resolution: {integrity: sha512-FaakbxqEwqMbjfomk+ybs+cwJWo6NDeFDYDHMCCxar0M8fkfgOX2S8tQ+n+VHV5U0VVAarE5w2fSO1rCA9p1MA==}
+  fumadocs-ui@12.4.2:
+    resolution: {integrity: sha512-KEfB2QEmOdBy5PlzCrS8Wtp+ilZYR5NFNMLcmxL5tq6erdAwYUHDZkL18TpBw7j5yZ9YbC2buIMdEG6tuNTfiQ==}
     peerDependencies:
       next: '>= 14.1.0'
       react: '>= 18'
@@ -3553,8 +3553,8 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-medium-image-zoom@5.2.5:
-    resolution: {integrity: sha512-q8C++zcjZ5VMo3siCR4XaO6NMHo+zuykLbzAo2suQNScYA/MIbGOWhD1v2a4gKDV2zQZGinCiefYVe1oRAVKjQ==}
+  react-medium-image-zoom@5.2.7:
+    resolution: {integrity: sha512-I2mC3zQMmJ/JH5D04WIT5cS8jxFvB9Ybr3ORiIIeT3hPWRxT6mnC4dNUyvO1mVxxg158H6249UClr7tXRm5IUQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -3786,8 +3786,8 @@ packages:
   shell-quote@1.8.1:
     resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
 
-  shiki@1.10.2:
-    resolution: {integrity: sha512-wrddjiCJ6D8zB1MuAGZ37G37rGw+6Ntnqqbl2uXh3P8g5JxneJRRhccPnex/gqorJoXkbpTRC2x54QIsdx2b1Q==}
+  shiki@1.10.3:
+    resolution: {integrity: sha512-eneCLncGuvPdTutJuLyUGS8QNPAVFO5Trvld2wgEq1e002mwctAhJKeMGWtWVXOIEzmlcLRqcgPSorR6AVzOmQ==}
 
   side-channel@1.0.6:
     resolution: {integrity: sha512-fDW/EZ6Q9RiO8eFG8Hj+7u/oW+XrPTIChwCOM2+th2A6OblDtYYIpve9m+KvI9Z4C9qSEXlaGR6bTEYHReuglA==}
@@ -3988,8 +3988,8 @@ packages:
     resolution: {integrity: sha512-7RnqIMq572L8PeEzKeBINYEJDDxpcH8JEgLwUqBd3TkofhFRbkq4QLR0u+36avGAhCRbk2nnmjcW9SE531hPDg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  tailwind-merge@2.3.0:
-    resolution: {integrity: sha512-vkYrLpIP+lgR0tQCG6AP7zZXCTLc1Lnv/CCRT3BqJ9CZ3ui2++GPaGb1x/ILsINIMSYqqvrpqjUFsMNLlW99EA==}
+  tailwind-merge@2.4.0:
+    resolution: {integrity: sha512-49AwoOQNKdqKPd9CViyH5wJoSKsCDjUlzL8DxuGp3P1FsGY36NJDAa18jLZcaHAUUuTj+JB8IAo8zWgBNvBF7A==}
 
   tailwindcss@3.4.4:
     resolution: {integrity: sha512-ZoyXOdJjISB7/BcLTR6SEsLgKtDStYyYZVLsUtWChO4Ps20CBad7lfJKVDiejocV4ME1hLmyY0WJE3hSDcmQ2A==}
@@ -5529,22 +5529,22 @@ snapshots:
 
   '@rushstack/eslint-patch@1.10.3': {}
 
-  '@shikijs/core@1.10.2':
+  '@shikijs/core@1.10.3':
     dependencies:
       '@types/hast': 3.0.4
 
-  '@shikijs/rehype@1.10.2':
+  '@shikijs/rehype@1.10.3':
     dependencies:
-      '@shikijs/transformers': 1.10.2
+      '@shikijs/transformers': 1.10.3
       '@types/hast': 3.0.4
       hast-util-to-string: 3.0.0
-      shiki: 1.10.2
+      shiki: 1.10.3
       unified: 11.0.5
       unist-util-visit: 5.0.0
 
-  '@shikijs/transformers@1.10.2':
+  '@shikijs/transformers@1.10.3':
     dependencies:
-      shiki: 1.10.2
+      shiki: 1.10.3
 
   '@sinclair/typebox@0.27.8': {}
 
@@ -6974,11 +6974,11 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@12.4.1(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  fumadocs-core@12.4.2(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@formatjs/intl-localematcher': 0.5.4
-      '@shikijs/rehype': 1.10.2
-      '@shikijs/transformers': 1.10.2
+      '@shikijs/rehype': 1.10.3
+      '@shikijs/transformers': 1.10.3
       flexsearch: 0.7.21
       github-slugger: 2.0.0
       negotiator: 0.6.3
@@ -6991,14 +6991,14 @@ snapshots:
       remark-gfm: 4.0.0
       remark-mdx: 3.0.1
       scroll-into-view-if-needed: 3.1.0
-      shiki: 1.10.2
+      shiki: 1.10.3
       swr: 2.2.5(react@18.3.1)
       unist-util-visit: 5.0.0
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
 
-  fumadocs-ui@12.4.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.4):
+  fumadocs-ui@12.4.2(@types/react-dom@18.3.0)(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.4):
     dependencies:
       '@radix-ui/react-accordion': 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-collapsible': 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -7010,14 +7010,14 @@ snapshots:
       '@tailwindcss/typography': 0.5.13(tailwindcss@3.4.4)
       class-variance-authority: 0.7.0
       cmdk: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      fumadocs-core: 12.4.1(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      fumadocs-core: 12.4.2(@types/react@18.3.3)(next@14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       lucide-react: 0.400.0(react@18.3.1)
       next: 14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-themes: 0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      react-medium-image-zoom: 5.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tailwind-merge: 2.3.0
+      react-medium-image-zoom: 5.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tailwind-merge: 2.4.0
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -8396,7 +8396,7 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-medium-image-zoom@5.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-medium-image-zoom@5.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -8695,9 +8695,9 @@ snapshots:
 
   shell-quote@1.8.1: {}
 
-  shiki@1.10.2:
+  shiki@1.10.3:
     dependencies:
-      '@shikijs/core': 1.10.2
+      '@shikijs/core': 1.10.3
       '@types/hast': 3.0.4
 
   side-channel@1.0.6:
@@ -8910,9 +8910,7 @@ snapshots:
       '@pkgr/core': 0.1.1
       tslib: 2.6.3
 
-  tailwind-merge@2.3.0:
-    dependencies:
-      '@babel/runtime': 7.24.7
+  tailwind-merge@2.4.0: {}
 
   tailwindcss@3.4.4:
     dependencies:
