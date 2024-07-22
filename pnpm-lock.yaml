@@ -43,8 +43,8 @@ importers:
         version: link:../../packages/fuma-content
     devDependencies:
       '@types/eslint':
-        specifier: ^8.56.1
-        version: 8.56.10
+        specifier: ^9.0.0
+        version: 9.6.0
       '@types/node':
         specifier: ^20.10.6
         version: 20.14.11
@@ -98,8 +98,8 @@ importers:
         specifier: ^0.5.10
         version: 0.5.13(tailwindcss@3.4.6)
       '@types/eslint':
-        specifier: ^8.56.1
-        version: 8.56.10
+        specifier: ^9.0.0
+        version: 9.6.0
       '@types/mdx':
         specifier: ^2.0.11
         version: 2.0.13
@@ -1478,8 +1478,8 @@ packages:
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
 
-  '@types/eslint@8.56.10':
-    resolution: {integrity: sha512-Shavhk87gCtY2fhXDctcfS3e6FdxWkCx1iUZ9eEUbh7rTqlZT0/IzOkCOVt0fCjcFuZ9FPYfuezTBImfHCDBGQ==}
+  '@types/eslint@9.6.0':
+    resolution: {integrity: sha512-gi6WQJ7cHRgZxtkQEoyHMppPjq9Kxo5Tjn2prSKDSmZrCz8TZ3jSRCeTJm+WoM+oB0WG37bRqLzaaU3q7JypGg==}
 
   '@types/estree-jsx@1.0.5':
     resolution: {integrity: sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg==}
@@ -5821,10 +5821,10 @@ snapshots:
 
   '@types/eslint-scope@3.7.7':
     dependencies:
-      '@types/eslint': 8.56.10
+      '@types/eslint': 9.6.0
       '@types/estree': 1.0.5
 
-  '@types/eslint@8.56.10':
+  '@types/eslint@9.6.0':
     dependencies:
       '@types/estree': 1.0.5
       '@types/json-schema': 7.0.15
