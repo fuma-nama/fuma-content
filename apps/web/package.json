@@ -11,7 +11,7 @@
   "dependencies": {
     "@fuma-content/next": "workspace:*",
     "fuma-content": "workspace:*",
-    "fumadocs-core": "^12.4.1",
+    "fumadocs-core": "^13.0.0",
     "fumadocs-ui": "^12.4.1",
     "next": "^14.2.4",
     "react": "^18.2.0",
