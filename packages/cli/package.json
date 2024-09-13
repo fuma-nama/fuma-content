@@ -22,7 +22,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "clipanion": "4.0.0-rc.3",
+    "clipanion": "4.0.0-rc.4",
     "fuma-content": "workspace:*"
   },
   "devDependencies": {
