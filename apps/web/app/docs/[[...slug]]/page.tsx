@@ -1,8 +1,8 @@
 import { getPage, getPages } from "@/app/source";
-import { DocsPage, DocsBody } from "fumadocs-ui/page";
+import { DocsPage, DocsBody } from "fumadocs-ui/layouts/docs/page";
 import { notFound } from "next/navigation";
 import mdxComponents from "fumadocs-ui/mdx";
-import { TableOfContents } from "fumadocs-core/server";
+import type { TableOfContents } from "fumadocs-core/toc";
 import { createMetadata } from "@/lib/metadata";
 
 export default async function Page({

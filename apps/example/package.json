@@ -4,20 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"tsx ./scripts/dev.ts\" \"tsx ./index.ts\"",
-    "build": "tsx ./scripts/build.ts",
-    "lint": "eslint"
+    "dev": "concurrently \"bun ./scripts/dev.ts\" \"bun ./index.ts\"",
+    "build": "bun ./scripts/build.ts"
   },
   "dependencies": {
     "fuma-content": "workspace:*"
   },
   "devDependencies": {
-    "@types/eslint": "^8.56.1",
-    "@types/node": "^20.10.6",
-    "concurrently": "^8.2.2",
-    "eslint": "^8.56.0",
-    "eslint-config": "workspace:*",
-    "typescript": "^5.3.3",
+    "@types/node": "^24.10.1",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
     "typescript-config": "workspace:*"
   }
 }

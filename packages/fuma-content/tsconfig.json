@@ -1,5 +1,10 @@
 {
   "extends": "typescript-config/base.json",
-  "include": ["./src/**/*.ts", "./src/**/*.tsx"],
-  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["remark-stringify", "@types/node"]
+  },
+  "exclude": ["node_modules", "dist"]
 }

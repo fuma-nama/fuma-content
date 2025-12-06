@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 export function Hide({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);

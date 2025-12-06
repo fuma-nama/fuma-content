@@ -1,46 +1,227 @@
-import { createCompiler } from "../src/compiler";
-import { test, expect } from "vitest";
-import { fileURLToPath } from "node:url";
-import { getOutputPath } from "../src/utils/path";
-import { OutputEntry } from "../src/compiler/compile";
-import type { Compiler } from "../src/compiler/types";
+import { fileURLToPath } from 'node:url';
+import * as path from 'node:path';
+import { expect, test } from 'vitest';
+import { z } from 'zod';
+import { ValidationError } from '@/utils/validation';
+import { defineCollections, defineConfig } from '@/config';
+import { fumaMatter } from '@/utils/fuma-matter';
+import { buildConfig } from '@/config/build';
+import { createCore } from '@/core';
+import indexFile from '@/plugins/index-file';
+import lastModified from '@/plugins/last-modified';
 
-const cwd = fileURLToPath(new URL("./", import.meta.url));
+test('format errors', async () => {
+  const schema = z.object({
+    text: z.string(),
+    obj: z.object({
+      key: z.number(),
+      value: z.number(),
+    }),
+    value: z.string().max(4),
+  });
 
-function check(compiler: Compiler, entries: OutputEntry[]) {
-  for (const entry of entries) {
-    expect(entry.content).toMatchFileSnapshot(getOutputPath(compiler, entry));
+  const result = await schema['~standard'].validate({
+    text: 4,
+    obj: {
+      value: 'string',
+    },
+    value: 'asfdfsdfsdfsd',
+  });
 
-    if (entry.dependencies) check(compiler, entry.dependencies);
+  if (result.issues) {
+    const error = new ValidationError('in index.mdx:', result.issues);
+
+    expect(error.toString()).toMatchInlineSnapshot(`
+      "Error: in index.mdx::
+        text: Invalid input: expected string, received number
+        obj,key: Invalid input: expected number, received undefined
+        obj,value: Invalid input: expected number, received string
+        value: Too big: expected string to have <=4 characters"
+    `);
   }
+});
+
+const baseDir = path.dirname(fileURLToPath(import.meta.url));
+const cases: {
+  name: string;
+  config: Record<string, unknown>;
+}[] = [
+  {
+    name: 'sync',
+    config: {
+      docs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+      }),
+      blogs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+        postprocess: {
+          extractLinkReferences: true,
+        },
+      }),
+      default: defineConfig({
+        plugins: [
+          lastModified({
+            versionControl: async () => new Date('2025-11-18'),
+          }),
+        ],
+      }),
+    },
+  },
+  {
+    name: 'sync-meta',
+    config: {
+      docs: defineCollections({
+        type: 'meta',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+      }),
+    },
+  },
+  {
+    name: 'async',
+    config: {
+      docs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+        async: true,
+      }),
+      blogs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+        postprocess: {
+          extractLinkReferences: true,
+        },
+        async: true,
+      }),
+    },
+  },
+  {
+    name: 'dynamic',
+    config: {
+      docs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+        dynamic: true,
+      }),
+      blogs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+        postprocess: {
+          extractLinkReferences: true,
+        },
+        dynamic: true,
+      }),
+    },
+  },
+  {
+    name: 'workspace',
+    config: {
+      docs: defineCollections({
+        type: 'doc',
+        dir: path.join(baseDir, './fixtures/generate-index'),
+      }),
+      default: defineConfig({
+        workspaces: {
+          test: {
+            dir: path.join(baseDir, './fixtures/generate-index-2'),
+            config: {
+              docs: defineCollections({
+                type: 'doc',
+                dir: '.',
+                async: true,
+              }),
+            },
+          },
+        },
+      }),
+    },
+  },
+];
+
+for (const { name, config } of cases) {
+  test(`generate JS index file: ${name}`, async () => {
+    const core = createCore({
+      configPath: path.relative(
+        process.cwd(),
+        path.join(baseDir, './fixtures/config.ts'),
+      ),
+      environment: 'test',
+      outDir: path.relative(process.cwd(), path.join(baseDir, './fixtures')),
+      plugins: [indexFile()],
+    });
+
+    await core.init({
+      config: buildConfig(config),
+    });
+
+    const { entries, workspaces } = await core.emit();
+    for (const [name, workspace] of Object.entries(workspaces)) {
+      for (const item of workspace) {
+        item.path = path.join(name, item.path);
+        entries.push(item);
+      }
+    }
+    const markdown = entries
+      .map(
+        (entry) => `\`\`\`ts title="${entry.path}"\n${entry.content}\n\`\`\``,
+      )
+      .join('\n\n');
+
+    await expect(markdown).toMatchFileSnapshot(
+      `./fixtures/index-${name}.output.md`,
+    );
+  });
 }
 
-test("Run", async () => {
-  const compiler = await createCompiler({
-    files: ["./fixtures/index.mdx"],
-    outputDir: "./out/run",
-    cwd,
-  });
+test('parse frontmatter', () => {
+  expect(
+    fumaMatter(
+      '---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool.',
+    ),
+  ).toMatchInlineSnapshot(`
+    {
+      "content": "wow looks cool.",
+      "data": {
+        "description": "I love Fumadocs",
+        "title": "hello world",
+      },
+      "matter": "---
+    title: hello world
+    description: I love Fumadocs
+    ---
+    ",
+    }
+  `);
 
-  check(compiler, await compiler.compile());
-});
+  expect(
+    fumaMatter(
+      '---\r\ntitle: hello world\r\ndescription: I love Fumadocs\r\n---\r\nwow looks cool.',
+    ),
+  ).toMatchInlineSnapshot(`
+    {
+      "content": "wow looks cool.",
+      "data": {
+        "description": "I love Fumadocs",
+        "title": "hello world",
+      },
+      "matter": "---
+    title: hello world
+    description: I love Fumadocs
+    ---
+    ",
+    }
+  `);
 
-test("Export frontmatter", async () => {
-  const compiler = await createCompiler({
-    files: ["./fixtures/frontmatter.mdx"],
-    outputDir: "./out/frontmatter",
-    cwd,
-  });
-
-  check(compiler, await compiler.compile());
-});
-
-test("Import paths", async () => {
-  const compiler = await createCompiler({
-    files: ["./fixtures/import.mdx"],
-    outputDir: "./out/import",
-    cwd,
-  });
-
-  check(compiler, await compiler.compile());
+  expect(fumaMatter('--- \ntitle: hello world\r\n---\r\nwow looks cool.'))
+    .toMatchInlineSnapshot(`
+    {
+      "content": "--- 
+    title: hello world
+    ---
+    wow looks cool.",
+      "data": {},
+      "matter": "",
+    }
+  `);
 });
