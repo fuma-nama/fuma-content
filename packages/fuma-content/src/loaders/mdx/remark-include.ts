@@ -1,4 +1,9 @@
-import { type Processor, type Transformer, unified } from "unified";
+import {
+  type PluggableList,
+  type Processor,
+  type Transformer,
+  unified,
+} from "unified";
 import { visit } from "unist-util-visit";
 import type { Code, Node, Root, RootContent } from "mdast";
 import * as path from "node:path";
@@ -104,10 +109,21 @@ function extractSection(root: Root, section: string): Root | undefined {
     };
 }
 
-const baseProcessor = unified().use(remarkMarkAndUnravel);
+export interface RemarkIncludeOptions {
+  /**
+   * remark plugins to preprocess the MDAST tree before scanning headings/sections.
+   *
+   * e.g. parse headings before extraction.
+   */
+  preprocess?: PluggableList;
+}
 
-export function remarkInclude(this: Processor): Transformer<Root, Root> {
+export function remarkInclude(
+  this: Processor,
+  { preprocess = [] }: RemarkIncludeOptions = {},
+): Transformer<Root, Root> {
   const TagName = "include";
+  const preprocessor = unified().use(remarkMarkAndUnravel).use(preprocess);
 
   const embedContent = async (
     targetPath: string,
@@ -151,10 +167,10 @@ export function remarkInclude(this: Processor): Transformer<Root, Root> {
       },
     });
 
-    let mdast = await baseProcessor.run(parser.parse(targetFile) as Root);
-    if (parent.data._preprocessor)
-      // parse headings before extraction
-      mdast = (await parent.data._preprocessor.run(mdast, targetFile)) as Root;
+    let mdast = await preprocessor.run(
+      parser.parse(targetFile) as Root,
+      targetFile,
+    );
 
     if (heading) {
       const extracted = extractSection(mdast, heading);

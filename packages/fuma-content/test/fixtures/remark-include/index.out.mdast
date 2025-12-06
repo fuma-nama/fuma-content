@@ -30,9 +30,14 @@
             {
               "position": undefined,
               "type": "text",
-              "value": "Hello World [#heading]",
+              "value": "Hello World",
             },
           ],
+          "data": {
+            "hProperties": {
+              "id": "heading",
+            },
+          },
           "depth": 1,
           "position": undefined,
           "type": "heading",
@@ -88,6 +93,11 @@
                   "value": "Nested Heading",
                 },
               ],
+              "data": {
+                "hProperties": {
+                  "id": "nested-heading",
+                },
+              },
               "depth": 3,
               "position": undefined,
               "type": "heading",
@@ -117,6 +127,11 @@
                   "value": "Heading in Directive",
                 },
               ],
+              "data": {
+                "hProperties": {
+                  "id": "heading-in-directive",
+                },
+              },
               "depth": 3,
               "position": undefined,
               "type": "heading",

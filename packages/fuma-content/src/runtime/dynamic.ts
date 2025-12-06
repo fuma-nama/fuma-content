@@ -1,12 +1,14 @@
-import { buildConfig, type DocCollectionItem } from '@/config/build';
-import { buildMDX, type CompiledMDXProperties } from '@/loaders/mdx/build-mdx';
-import { executeMdx } from '@fumadocs/mdx-remote/client';
-import { pathToFileURL } from 'node:url';
-import { fumaMatter } from '@/utils/fuma-matter';
-import fs from 'node:fs/promises';
-import { server, type ServerOptions } from './server';
-import { type CoreOptions, createCore } from '@/core';
-import type { FileInfo, InternalTypeConfig } from './types';
+import { buildConfig, type DocCollectionItem } from "@/config/build";
+import { buildMDX, type CompiledMDXProperties } from "@/loaders/mdx/build-mdx";
+import { pathToFileURL } from "node:url";
+import { fumaMatter } from "@/utils/fuma-matter";
+import fs from "node:fs/promises";
+import { server, type ServerOptions } from "./server";
+import { type CoreOptions, createCore } from "@/core";
+import type { FileInfo, InternalTypeConfig } from "./types";
+import type { MDXComponents } from "mdx/types";
+import type { FC } from "react";
+import jsxRuntimeDefault from "react/jsx-runtime";
 
 export interface LazyEntry<Data = unknown> {
   info: FileInfo;
@@ -36,18 +38,18 @@ export async function dynamic<Config, TC extends InternalTypeConfig>(
     const collection = core.getCollection(name);
     if (!collection) return;
 
-    if (collection.type === 'docs') return collection.docs;
-    else if (collection.type === 'doc') return collection;
+    if (collection.type === "docs") return collection.docs;
+    else if (collection.type === "doc") return collection;
   }
 
   function convertLazyEntries(
     collection: DocCollectionItem,
-    entries: LazyEntry<unknown>[],
+    entries: LazyEntry[],
   ) {
     const head: Record<string, () => unknown> = {};
     const body: Record<string, () => Promise<unknown>> = {};
 
-    async function compile({ info, data }: LazyEntry<unknown>) {
+    async function compile({ info, data }: LazyEntry) {
       let content = (await fs.readFile(info.fullPath)).toString();
       content = fumaMatter(content).content;
 
@@ -56,7 +58,7 @@ export async function dynamic<Config, TC extends InternalTypeConfig>(
         source: content,
         frontmatter: data as Record<string, unknown>,
         isDevelopment: false,
-        environment: 'runtime',
+        environment: "runtime",
       });
 
       return (await executeMdx(String(compiled.value), {
@@ -77,7 +79,7 @@ export async function dynamic<Config, TC extends InternalTypeConfig>(
     async doc<Name extends keyof Config & string>(
       name: Name,
       base: string,
-      entries: LazyEntry<unknown>[],
+      entries: LazyEntry[],
     ) {
       const collection = getDocCollection(name as string);
       if (!collection)
@@ -87,18 +89,35 @@ export async function dynamic<Config, TC extends InternalTypeConfig>(
 
       return create.docLazy(name, base, head, body);
     },
-    async docs<Name extends keyof Config & string>(
-      name: Name,
-      base: string,
-      meta: Record<string, unknown>,
-      entries: LazyEntry<unknown>[],
-    ) {
-      const collection = getDocCollection(name as string);
-      if (!collection)
-        throw new Error(`the doc collection ${name as string} doesn't exist.`);
+  };
+}
 
-      const docs = convertLazyEntries(collection, entries);
-      return create.docsLazy(name, base, meta, docs.head, docs.body);
+export type MdxContent = FC<{ components?: MDXComponents }>;
+
+interface Options {
+  scope?: Record<string, unknown>;
+  baseUrl?: string | URL;
+  jsxRuntime?: unknown;
+}
+
+const AsyncFunction: new (
+  ...args: string[]
+) => (...args: unknown[]) => Promise<unknown> =
+  Object.getPrototypeOf(executeMdx).constructor;
+
+async function executeMdx(compiled: string, options: Options = {}) {
+  const { opts: scopeOpts, ...scope } = options.scope ?? {};
+  const fullScope = {
+    opts: {
+      ...(scopeOpts as object),
+      ...(options.jsxRuntime ?? jsxRuntimeDefault),
+      baseUrl: options.baseUrl,
     },
+    ...scope,
+  };
+
+  const hydrateFn = new AsyncFunction(...Object.keys(fullScope), compiled);
+  return (await hydrateFn.apply(hydrateFn, Object.values(fullScope))) as {
+    default: MdxContent;
   };
 }

@@ -1,6 +1,9 @@
 import { createProcessor } from "@mdx-js/mdx";
 import { VFile } from "vfile";
-import { remarkInclude } from "@/loaders/mdx/remark-include";
+import {
+  remarkInclude,
+  type RemarkIncludeOptions,
+} from "@/loaders/mdx/remark-include";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
 import {
@@ -9,8 +12,11 @@ import {
 } from "@/loaders/mdx/remark-postprocess";
 import type { Core } from "@/core";
 import type { DocCollectionItem } from "@/config/build";
-import type { Processor } from "unified";
-import type { Root } from "mdast";
+import {
+  type PreprocessOptions,
+  remarkPreprocess,
+} from "@/loaders/mdx/remark-preprocess";
+import type { Pluggable } from "unified";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -30,10 +36,6 @@ interface BuildMDXOptions {
 
 export interface CompilerOptions {
   addDependency: (file: string) => void;
-}
-
-export interface PreprocessOptions {
-  preprocessor?: Processor<Root>;
 }
 
 export interface CompiledMDXProperties<Frontmatter = Record<string, unknown>> {
@@ -70,11 +72,6 @@ export interface FumaContentDataMap {
    * [Fuma Content] get internal processor, do not use this on user land.
    */
   _getProcessor?: (format: "md" | "mdx") => MDXProcessor;
-
-  /**
-   * [Fuma Content] get internal processor, do not use this on user land.
-   */
-  _preprocessor?: Processor<Root>;
 }
 
 declare module "vfile" {
@@ -105,9 +102,16 @@ export async function buildMDX(
     let processor = cache.get(key);
 
     if (!processor) {
+      const preprocessPlugin = [
+        remarkPreprocess,
+        preprocess,
+      ] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
         ...collection?.postprocess,
+      };
+      const remarkIncludeOptions: RemarkIncludeOptions = {
+        preprocess: [preprocessPlugin],
       };
 
       processor = createProcessor({
@@ -115,7 +119,8 @@ export async function buildMDX(
         development: isDevelopment,
         ...mdxOptions,
         remarkPlugins: [
-          remarkInclude,
+          preprocessPlugin,
+          [remarkInclude, remarkIncludeOptions],
           ...(mdxOptions.remarkPlugins ?? []),
           [remarkPostprocess, postprocessOptions],
         ],

@@ -4,6 +4,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "noUncheckedIndexedAccess": false,
     "types": ["remark-stringify", "@types/node"]
   },
   "exclude": ["node_modules", "dist"]
