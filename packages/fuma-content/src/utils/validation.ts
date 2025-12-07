@@ -1,4 +1,3 @@
-import type { CollectionSchema } from "@/config";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 export class ValidationError extends Error {
@@ -33,7 +32,7 @@ export class ValidationError extends Error {
 }
 
 export async function validate<Schema extends StandardSchemaV1, Context>(
-  schema: CollectionSchema<Schema, Context>,
+  schema: StandardSchemaV1 | ((context: Context) => StandardSchemaV1),
   data: unknown,
   context: Context,
   errorMessage: string,

@@ -1,9 +1,9 @@
 import type { Loader, LoaderInput } from "@/plugins/with-loader";
-import type { ConfigLoader } from "@/loaders/config";
 import { dump, load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";
 import type { MetaContext } from "@/config/collections/meta";
+import type { DynamicCore } from "@/config/dynamic";
 
 const querySchema = z
   .object({
@@ -16,7 +16,7 @@ const querySchema = z
  * load meta files, fallback to bundler's built-in plugins when ?collection is unspecified.
  */
 export function createMetaLoader(
-  { getCore }: ConfigLoader,
+  { getCore }: DynamicCore,
   resolve: {
     json?: "json" | "js";
     yaml?: "yaml" | "js";

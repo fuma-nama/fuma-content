@@ -1,9 +1,9 @@
 import { _Defaults, createCore } from "@/core";
-import { createStandaloneConfigLoader } from "@/loaders/config";
 import type { LoadFnOutput, LoadHook, LoadHookContext } from "node:module";
 import { createCache } from "@/utils/async-cache";
+import { createDynamicCore } from "@/config/dynamic";
 
-const configLoader = createStandaloneConfigLoader({
+const configLoader = createDynamicCore({
   core: createCore({
     environment: "node",
     configPath: _Defaults.configPath,

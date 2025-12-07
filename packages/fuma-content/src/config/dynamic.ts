@@ -1,11 +1,11 @@
 import type { Core } from "@/core";
 import fs from "node:fs/promises";
 
-export interface ConfigLoader {
-  getCore(): Promise<Core>;
+export interface DynamicCore {
+  getCore(): Core | Promise<Core>;
 }
 
-export function createStandaloneConfigLoader({
+export function createDynamicCore({
   core,
   buildConfig,
   mode,
@@ -19,7 +19,7 @@ export function createStandaloneConfigLoader({
    * In dev mode, the config file is dynamically re-loaded when it's updated.
    */
   mode: "dev" | "production";
-}): ConfigLoader {
+}): DynamicCore {
   let prev:
     | {
         hash: string;
@@ -54,17 +54,6 @@ export function createStandaloneConfigLoader({
       }
 
       await prev.init;
-      return core;
-    },
-  };
-}
-
-/**
- * create config loader from initialized core
- */
-export function createIntegratedConfigLoader(core: Core): ConfigLoader {
-  return {
-    async getCore() {
       return core;
     },
   };

@@ -1,22 +1,21 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createCache } from "@/utils/async-cache";
 
-const map = new Map<string, Promise<string>>();
+const cache = createCache<string>();
 
 export function createFSCache() {
   return {
-    read(file: string): Promise<string> {
+    read(file: string) {
       const fullPath = toFullPath(file);
-      const cached = map.get(fullPath);
-      if (cached) return cached;
 
-      const read = fs.readFile(fullPath).then((s) => s.toString());
-      map.set(fullPath, read);
-      return read;
+      return cache.cached(fullPath, async () => {
+        return (await fs.readFile(fullPath)).toString();
+      });
     },
 
     delete(file: string) {
-      map.delete(toFullPath(file));
+      cache.store.delete(toFullPath(file));
     },
   };
 }

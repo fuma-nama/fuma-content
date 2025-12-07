@@ -1,8 +1,8 @@
 import type { LoaderContext } from "webpack";
-import { createStandaloneConfigLoader } from "@/loaders/config";
 import { getCore, type WebpackLoaderOptions } from "@/webpack";
 import { createMetaLoader } from "@/config/collections/meta/loader";
 import { toWebpack, type WebpackLoader } from "@/plugins/with-loader/webpack";
+import { createDynamicCore } from "@/config/dynamic";
 
 let instance: WebpackLoader | undefined;
 
@@ -18,7 +18,7 @@ export default async function loader(
   if (!instance) {
     instance = toWebpack(
       createMetaLoader(
-        createStandaloneConfigLoader({
+        createDynamicCore({
           core: getCore(options),
           buildConfig: false,
           mode: options.isDev ? "dev" : "production",

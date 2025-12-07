@@ -4,8 +4,8 @@ import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import type { ConfigLoader } from "@/loaders/config";
 import type { Loader } from "@/plugins/with-loader";
+import type { DynamicCore } from "@/config/dynamic";
 
 const querySchema = z
   .object({
@@ -23,7 +23,7 @@ const cacheEntry = z.object({
 
 type CacheEntry = z.infer<typeof cacheEntry>;
 
-export function createMdxLoader({ getCore }: ConfigLoader): Loader {
+export function createMdxLoader({ getCore }: DynamicCore): Loader {
   return {
     async load({
       getSource,

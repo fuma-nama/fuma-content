@@ -133,7 +133,7 @@ export function metaPlugin(): Plugin {
       createLoader: () =>
         import("./meta/loader").then((mod) =>
           mod.createMetaLoader({
-            getCore: async () => core,
+            getCore: () => core,
           }),
         ),
     },

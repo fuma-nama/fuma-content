@@ -166,7 +166,7 @@ export function mdxPlugin(): Plugin {
       createLoader: () =>
         import("./mdx/loader").then((mod) =>
           mod.createMdxLoader({
-            getCore: async () => core,
+            getCore: () => core,
           }),
         ),
     },

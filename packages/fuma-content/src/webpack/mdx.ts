@@ -1,5 +1,5 @@
 import type { LoaderContext } from "webpack";
-import { createStandaloneConfigLoader } from "@/loaders/config";
+import { createDynamicCore } from "@/config/dynamic";
 import { getCore, type WebpackLoaderOptions } from "@/webpack";
 import { createMdxLoader } from "@/config/collections/mdx/loader";
 import { toWebpack, type WebpackLoader } from "@/plugins/with-loader/webpack";
@@ -18,7 +18,7 @@ export default async function loader(
   if (!instance) {
     instance = toWebpack(
       createMdxLoader(
-        createStandaloneConfigLoader({
+        createDynamicCore({
           core: getCore(options),
           buildConfig: false,
           mode: options.isDev ? "dev" : "production",
