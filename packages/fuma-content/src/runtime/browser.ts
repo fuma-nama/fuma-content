@@ -1,15 +1,15 @@
-import { type ReactNode, type FC, lazy, createElement } from 'react';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-import type { DocCollection, DocsCollection } from '@/config/define';
-import type { CompiledMDXProperties } from '@/loaders/mdx/build-mdx';
-import type { InternalTypeConfig } from './types';
+import { type ReactNode, type FC, lazy, createElement } from "react";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { DocCollection, DocsCollection } from "@/config/define";
+import type { CompiledMDXProperties } from "@/config/collections/mdx/build-mdx";
+import type { InternalTypeConfig } from "./types";
 
 type CompiledMDXFile<
   Name extends string,
   Frontmatter,
   TC extends InternalTypeConfig,
 > = CompiledMDXProperties<Frontmatter> &
-  TC['DocData'][Name] &
+  TC["DocData"][Name] &
   Record<string, unknown>;
 
 export interface ClientLoaderOptions<Doc, Props> {
@@ -63,7 +63,7 @@ export function browser<Config, TC extends InternalTypeConfig>() {
       glob: Record<string, () => Promise<unknown>>,
     ) {
       const out: DocCollectionEntry = {
-        raw: glob as DocCollectionEntry['raw'],
+        raw: glob as DocCollectionEntry["raw"],
         createClientLoader({ id = _name as string, ...options }) {
           return createClientLoader(this.raw, { id, ...options });
         },
@@ -92,7 +92,7 @@ export function createClientLoader<
   globEntries: Record<string, () => Promise<Doc>>,
   options: ClientLoaderOptions<Doc, Props>,
 ): ClientLoader<Doc, Props> {
-  const { id = '', component } = options;
+  const { id = "", component } = options;
   const renderers: Record<string, FC<Props>> = {};
   const loaders = new Map<string, () => Promise<Doc>>();
   const store = loaderStore.get(id) ?? {
@@ -101,7 +101,7 @@ export function createClientLoader<
   loaderStore.set(id, store);
 
   for (const k in globEntries) {
-    loaders.set(k.startsWith('./') ? k.slice(2) : k, globEntries[k]);
+    loaders.set(k.startsWith("./") ? k.slice(2) : k, globEntries[k]);
   }
 
   function getLoader(path: string) {

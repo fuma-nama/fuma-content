@@ -1,25 +1,17 @@
 import type { BunPlugin } from "bun";
-import { createMdxLoader } from "@/loaders/mdx";
 import { buildConfig } from "@/config/build";
 import { pathToFileURL } from "node:url";
 import { _Defaults, type CoreOptions, createCore } from "@/core";
-import { createIntegratedConfigLoader } from "@/loaders/config";
-import { createMetaLoader } from "@/loaders/meta";
-import { toBun } from "@/loaders/adapter";
 
-export interface MdxPluginOptions extends Partial<CoreOptions> {
-  /**
-   * Skip meta file transformation step
-   */
-  disableMetaFile?: boolean;
-}
+export type ContentPluginOptions = Partial<CoreOptions>;
 
-export function createMdxPlugin(options: MdxPluginOptions = {}): BunPlugin {
+export function createContentPlugin(
+  options: ContentPluginOptions = {},
+): BunPlugin {
   const {
     environment = "bun",
     outDir = _Defaults.outDir,
     configPath = _Defaults.configPath,
-    disableMetaFile = false,
   } = options;
 
   return {
@@ -36,9 +28,10 @@ export function createMdxPlugin(options: MdxPluginOptions = {}): BunPlugin {
         config: buildConfig(await import(importPath)),
       });
 
-      const configLoader = createIntegratedConfigLoader(core);
-      toBun(createMdxLoader(configLoader))(build);
-      if (!disableMetaFile) toBun(createMetaLoader(configLoader))(build);
+      const ctx = core.getPluginContext();
+      for (const plugin of core.getPlugins(true)) {
+        await plugin.bun?.build?.call(ctx, build);
+      }
     },
   };
 }

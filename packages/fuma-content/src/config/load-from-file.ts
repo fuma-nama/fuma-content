@@ -1,29 +1,29 @@
-import { pathToFileURL } from 'node:url';
-import type { LoadedConfig } from '@/config/build';
-import { buildConfig } from '@/config/build';
-import type { Core } from '@/core';
+import { pathToFileURL } from "node:url";
+import type { LoadedConfig } from "@/config/build";
+import { buildConfig } from "@/config/build";
+import type { Core } from "@/core";
 
 async function compileConfig(core: Core) {
-  const { build } = await import('esbuild');
+  const { build } = await import("esbuild");
   const { configPath, outDir } = core.getOptions();
 
   const transformed = await build({
-    entryPoints: [{ in: configPath, out: 'source.config' }],
+    entryPoints: [{ in: configPath, out: "source.config" }],
     bundle: true,
     outdir: outDir,
-    target: 'node20',
+    target: "node20",
     write: true,
-    platform: 'node',
-    format: 'esm',
-    packages: 'external',
+    platform: "node",
+    format: "esm",
+    packages: "external",
     outExtension: {
-      '.js': '.mjs',
+      ".js": ".mjs",
     },
     allowOverwrite: true,
   });
 
   if (transformed.errors.length > 0) {
-    throw new Error('failed to compile configuration file');
+    throw new Error("failed to compile configuration file");
   }
 }
 
@@ -40,7 +40,7 @@ export async function loadConfig(
 
   const url = pathToFileURL(core.getCompiledConfigPath());
   // always return a new config
-  url.searchParams.set('hash', Date.now().toString());
+  url.searchParams.set("hash", Date.now().toString());
 
   const config = import(url.href).then((loaded) =>
     buildConfig(loaded as Record<string, unknown>),

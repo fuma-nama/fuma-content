@@ -1,9 +1,4 @@
 import type { Core, CoreOptions, Plugin, PluginContext } from "@/core";
-import type {
-  CollectionItem,
-  DocCollectionItem,
-  MetaCollectionItem,
-} from "@/config/build";
 import path from "node:path";
 import { type CodeGen, createCodegen, ident } from "@/utils/codegen";
 import { glob } from "tinyglobby";
@@ -13,6 +8,7 @@ import type { LazyEntry } from "@/runtime/dynamic";
 import type { EmitEntry } from "@/core";
 import { fumaMatter } from "@/utils/fuma-matter";
 import type { ServerOptions } from "@/runtime/server";
+import { Collection } from "@/config/collections";
 
 export interface IndexFilePluginOptions {
   target?: "default" | "vite";
@@ -61,9 +57,9 @@ export default function indexFile(
     browser = true,
     dynamic = true,
   } = options;
-  let dynamicCollections: CollectionItem[];
+  let dynamicCollections: Collection[];
 
-  function isDynamic(collection: CollectionItem) {
+  function isDynamic(collection: Collection) {
     return (
       (collection.type === "docs" && collection.docs.dynamic) ||
       (collection.type === "doc" && collection.dynamic)
@@ -116,7 +112,7 @@ export default function indexFile(
 
         const updatedCollection = this.core
           .getCollections()
-          .find((collection) => collection.hasFile(file));
+          .find((collection) => collection.handlers.fs?.hasFile(file));
 
         if (!updatedCollection) return;
         if (!isDynamic(updatedCollection)) {
@@ -183,7 +179,7 @@ async function generateServerIndexFile(ctx: FileGenContext) {
   );
 
   async function generateCollectionObject(
-    collection: CollectionItem,
+    collection: Collection,
   ): Promise<string | undefined> {
     const base = getBase(collection);
 
@@ -267,13 +263,14 @@ async function generateDynamicIndexFile(ctx: FileGenContext) {
     const fullPath = path.relative(process.cwd(), absolutePath);
     const content = await indexFileCache.read(fullPath).catch(() => "");
     const parsed = fumaMatter(content);
-    const data = await core.transformFrontmatter(
+    const data = await core.compilation.transform(
       {
         collection,
         filePath: fullPath,
         source: content,
       },
       parsed.data as Record<string, unknown>,
+      (plugin, context, data) => plugin.doc?.frontmatter?.call(context, data),
     );
 
     const hash = createHash("md5").update(content).digest("hex");
@@ -347,7 +344,7 @@ async function generateBrowserIndexFile(ctx: FileGenContext) {
   );
 
   async function generateCollectionObject(
-    collection: CollectionItem,
+    collection: Collection,
   ): Promise<string | undefined> {
     switch (collection.type) {
       case "docs": {
@@ -376,13 +373,13 @@ async function generateBrowserIndexFile(ctx: FileGenContext) {
   codegen.lines.push("};", "export default browserCollections;");
 }
 
-function getBase(collection: CollectionItem) {
+function getBase(collection: Collection) {
   return path.relative(process.cwd(), collection.dir);
 }
 
 function generateDocCollectionFrontmatterGlob(
   { codegen, workspace }: FileGenContext,
-  collection: DocCollectionItem,
+  collection: Collection,
   eager = false,
 ) {
   return codegen.generateGlobImport(collection.patterns, {
@@ -399,7 +396,7 @@ function generateDocCollectionFrontmatterGlob(
 
 function generateDocCollectionGlob(
   { codegen, workspace }: FileGenContext,
-  collection: DocCollectionItem,
+  collection: Collection,
   eager = false,
 ) {
   return codegen.generateGlobImport(collection.patterns, {
@@ -414,7 +411,7 @@ function generateDocCollectionGlob(
 
 function generateMetaCollectionGlob(
   { codegen, workspace }: FileGenContext,
-  collection: MetaCollectionItem,
+  collection: Collection,
   eager = false,
 ) {
   return codegen.generateGlobImport(collection.patterns, {

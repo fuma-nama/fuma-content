@@ -1,5 +1,5 @@
-import type { Core } from '@/core';
-import fs from 'node:fs/promises';
+import type { Core } from "@/core";
+import fs from "node:fs/promises";
 
 export interface ConfigLoader {
   getCore(): Promise<Core>;
@@ -18,7 +18,7 @@ export function createStandaloneConfigLoader({
   /**
    * In dev mode, the config file is dynamically re-loaded when it's updated.
    */
-  mode: 'dev' | 'production';
+  mode: "dev" | "production";
 }): ConfigLoader {
   let prev:
     | {
@@ -28,10 +28,10 @@ export function createStandaloneConfigLoader({
     | undefined;
 
   async function getConfigHash(): Promise<string> {
-    if (mode === 'production') return 'static';
+    if (mode === "production") return "static";
 
     const stats = await fs.stat(core.getOptions().configPath).catch(() => {
-      throw new Error('Cannot find config file');
+      throw new Error("Cannot find config file");
     });
 
     return stats.mtime.getTime().toString();
@@ -44,7 +44,7 @@ export function createStandaloneConfigLoader({
         prev = {
           hash,
           init: (async () => {
-            const { loadConfig } = await import('../config/load-from-file');
+            const { loadConfig } = await import("../config/load-from-file");
 
             await core.init({
               config: loadConfig(core, buildConfig),

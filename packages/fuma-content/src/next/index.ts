@@ -1,14 +1,7 @@
 import type { NextConfig } from "next";
-import type { Configuration } from "webpack";
-import type { WebpackLoaderOptions } from "@/webpack";
-import type {
-  TurbopackLoaderOptions,
-  TurbopackOptions,
-} from "next/dist/server/config-shared";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { _Defaults, type Core, createCore } from "@/core";
-import { mdxLoaderGlob, metaLoaderGlob } from "@/loaders";
 import type { IndexFilePluginOptions } from "@/plugins/index-file";
 import indexFile from "@/plugins/index-file";
 
@@ -28,8 +21,6 @@ export interface CreateMDXOptions {
   index?: IndexFilePluginOptions | false;
 }
 
-const defaultPageExtensions = ["mdx", "md", "jsx", "js", "tsx", "ts"];
-
 export function createMDX(createOptions: CreateMDXOptions = {}) {
   const core = createNextCore(applyDefaults(createOptions));
   const isDev = process.env.NODE_ENV === "development";
@@ -41,86 +32,12 @@ export function createMDX(createOptions: CreateMDXOptions = {}) {
   }
 
   return (nextConfig: NextConfig = {}): NextConfig => {
-    const { configPath, outDir } = core.getOptions();
-    const loaderOptions: WebpackLoaderOptions = {
-      configPath,
-      outDir,
-      absoluteCompiledConfigPath: path.resolve(core.getCompiledConfigPath()),
-      isDev,
-    };
+    const ctx = core.getPluginContext();
+    for (const plugin of core.getPlugins(true)) {
+      nextConfig = plugin.next?.config?.call(ctx, nextConfig) ?? nextConfig;
+    }
 
-    const turbopack: TurbopackOptions = {
-      ...nextConfig.turbopack,
-      rules: {
-        ...nextConfig.turbopack?.rules,
-        "*.{md,mdx}": {
-          loaders: [
-            {
-              loader: "fuma-content/loader-mdx",
-              options: loaderOptions as unknown as TurbopackLoaderOptions,
-            },
-          ],
-          as: "*.js",
-        },
-        "*.json": {
-          loaders: [
-            {
-              loader: "fuma-content/loader-meta",
-              options: loaderOptions as unknown as TurbopackLoaderOptions,
-            },
-          ],
-          as: "*.json",
-        },
-        "*.yaml": {
-          loaders: [
-            {
-              loader: "fuma-content/loader-meta",
-              options: loaderOptions as unknown as TurbopackLoaderOptions,
-            },
-          ],
-          as: "*.js",
-        },
-      },
-    };
-
-    return {
-      ...nextConfig,
-      turbopack,
-      pageExtensions: nextConfig.pageExtensions ?? defaultPageExtensions,
-      webpack: (config: Configuration, options) => {
-        config.resolve ||= {};
-
-        config.module ||= {};
-        config.module.rules ||= [];
-
-        config.module.rules.push(
-          {
-            test: mdxLoaderGlob,
-            use: [
-              options.defaultLoaders.babel,
-              {
-                loader: "fuma-content/loader-mdx",
-                options: loaderOptions,
-              },
-            ],
-          },
-          {
-            test: metaLoaderGlob,
-            enforce: "pre",
-            use: [
-              {
-                loader: "fuma-content/loader-meta",
-                options: loaderOptions,
-              },
-            ],
-          },
-        );
-
-        config.plugins ||= [];
-
-        return nextConfig.webpack?.(config, options) ?? config;
-      },
-    };
+    return nextConfig;
   };
 }
 
@@ -142,12 +59,10 @@ async function init(dev: boolean, core: Core): Promise<void> {
     });
 
     watcher.add(configPath);
-    for (const collection of core.getCollections()) {
-      watcher.add(collection.dir);
-    }
-    for (const workspace of core.getWorkspaces().values()) {
-      for (const collection of workspace.getCollections()) {
-        watcher.add(collection.dir);
+    for (const collection of core.getCollections(true)) {
+      const handler = collection.handlers.fs;
+      if (handler) {
+        watcher.add(handler.dir);
       }
     }
 

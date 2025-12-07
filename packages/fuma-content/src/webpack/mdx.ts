@@ -1,15 +1,15 @@
-import type { LoaderContext } from 'webpack';
-import { createMdxLoader } from '@/loaders/mdx';
-import { toWebpack, type WebpackLoader } from '@/loaders/adapter';
-import { createStandaloneConfigLoader } from '@/loaders/config';
-import { getCore, type WebpackLoaderOptions } from '@/webpack';
+import type { LoaderContext } from "webpack";
+import { createStandaloneConfigLoader } from "@/loaders/config";
+import { getCore, type WebpackLoaderOptions } from "@/webpack";
+import { createMdxLoader } from "@/config/collections/mdx/loader";
+import { toWebpack, type WebpackLoader } from "@/plugins/with-loader/webpack";
 
 let instance: WebpackLoader | undefined;
 
 export default async function loader(
   this: LoaderContext<WebpackLoaderOptions>,
   source: string,
-  callback: LoaderContext<WebpackLoaderOptions>['callback'],
+  callback: LoaderContext<WebpackLoaderOptions>["callback"],
 ): Promise<void> {
   const options = this.getOptions();
   this.cacheable(true);
@@ -21,7 +21,7 @@ export default async function loader(
         createStandaloneConfigLoader({
           core: getCore(options),
           buildConfig: false,
-          mode: options.isDev ? 'dev' : 'production',
+          mode: options.isDev ? "dev" : "production",
         }),
       ),
     );

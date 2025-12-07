@@ -1,8 +1,8 @@
 // from internal remark plugins in https://github.com/mdx-js/mdx/blob/main/packages/mdx/lib/plugin/remark-mark-and-unravel.js
 // we need to ensure consistency with MDX.js when parsing embed content in `remark-include`
-import { visit } from 'unist-util-visit';
-import type { Transformer } from 'unified';
-import type { Root, RootContent } from 'mdast';
+import { visit } from "unist-util-visit";
+import type { Transformer } from "unified";
+import type { Root, RootContent } from "mdast";
 
 export function remarkMarkAndUnravel(): Transformer<Root, Root> {
   return (tree) => {
@@ -11,18 +11,18 @@ export function remarkMarkAndUnravel(): Transformer<Root, Root> {
       let all = true;
       let oneOrMore = false;
 
-      if (parent && typeof index === 'number' && node.type === 'paragraph') {
+      if (parent && typeof index === "number" && node.type === "paragraph") {
         const children = node.children;
 
         while (++offset < children.length) {
           const child = children[offset];
 
           if (
-            child.type === 'mdxJsxTextElement' ||
-            child.type === 'mdxTextExpression'
+            child.type === "mdxJsxTextElement" ||
+            child.type === "mdxTextExpression"
           ) {
             oneOrMore = true;
-          } else if (child.type === 'text' && child.value.trim().length === 0) {
+          } else if (child.type === "text" && child.value.trim().length === 0) {
             // Empty.
           } else {
             all = false;
@@ -37,18 +37,18 @@ export function remarkMarkAndUnravel(): Transformer<Root, Root> {
           while (++offset < children.length) {
             const child = children[offset];
 
-            if (child.type === 'mdxJsxTextElement') {
+            if (child.type === "mdxJsxTextElement") {
               // @ts-expect-error: mutate because it is faster; content model is fine.
-              child.type = 'mdxJsxFlowElement';
+              child.type = "mdxJsxFlowElement";
             }
 
-            if (child.type === 'mdxTextExpression') {
+            if (child.type === "mdxTextExpression") {
               // @ts-expect-error: mutate because it is faster; content model is fine.
-              child.type = 'mdxFlowExpression';
+              child.type = "mdxFlowExpression";
             }
 
             if (
-              child.type === 'text' &&
+              child.type === "text" &&
               /^[\t\r\n ]+$/.test(String(child.value))
             ) {
               // Empty.

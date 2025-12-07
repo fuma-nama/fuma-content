@@ -1,12 +1,7 @@
-import type { Plugin } from "vite";
+import type { PluginOption } from "vite";
 import { buildConfig } from "@/config/build";
-import { ValidationError } from "@/utils/validation";
-import { createMdxLoader } from "@/loaders/mdx";
-import { toVite } from "@/loaders/adapter";
 import type { FSWatcher } from "chokidar";
 import { _Defaults, createCore } from "@/core";
-import { createIntegratedConfigLoader } from "@/loaders/config";
-import { createMetaLoader } from "@/loaders/meta";
 import indexFile, { type IndexFilePluginOptions } from "@/plugins/index-file";
 
 export interface PluginOptions {
@@ -37,64 +32,44 @@ export interface PluginOptions {
   outDir?: string;
 }
 
-export default async function mdx(
+export default async function content(
   config: Record<string, unknown>,
   pluginOptions: PluginOptions = {},
-): Promise<Plugin> {
+): Promise<PluginOption> {
   const options = applyDefaults(pluginOptions);
   const core = createViteCore(options);
   await core.init({
     config: buildConfig(config),
   });
 
-  const configLoader = createIntegratedConfigLoader(core);
-  const mdxLoader = toVite(createMdxLoader(configLoader));
-  const metaLoader = toVite(
-    createMetaLoader(configLoader, {
-      // vite has built-in plugin for JSON files
-      json: "json",
-    }),
-  );
-
-  return {
-    name: "fuma-content",
-    // needed, otherwise other plugins will be executed before our `transform`.
-    enforce: "pre",
-    async buildStart() {
-      await core.emit({ write: true });
+  const ctx = core.getPluginContext();
+  return [
+    ...core
+      .getPlugins(true)
+      .map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
+    {
+      name: "fuma-content",
+      // needed, otherwise other plugins will be executed before our `transform`.
+      enforce: "pre",
+      async buildStart() {
+        await core.emit({ write: true });
+      },
+      async configureServer(server) {
+        await core.initServer({
+          watcher: server.watcher as unknown as FSWatcher,
+        });
+      },
     },
-    async configureServer(server) {
-      await core.initServer({
-        watcher: server.watcher as unknown as FSWatcher,
-      });
-    },
-    async transform(value, id) {
-      try {
-        if (metaLoader.filter(id)) {
-          return await metaLoader.transform.call(this, value, id);
-        }
-
-        if (mdxLoader.filter(id)) {
-          return await mdxLoader.transform.call(this, value, id);
-        }
-      } catch (e) {
-        if (e instanceof ValidationError) {
-          throw new Error(await e.toStringFormatted());
-        }
-
-        throw e;
-      }
-    },
-  };
+  ];
 }
 
-export async function postInstall(pluginOptions: PluginOptions = {}) {
+export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
   const { loadConfig } = await import("@/config/load-from-file");
   const core = createViteCore(applyDefaults(pluginOptions));
   await core.init({
     config: loadConfig(core, true),
   });
-  await core.emit({ write: true });
+  return core;
 }
 
 function createViteCore({

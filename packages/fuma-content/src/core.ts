@@ -1,17 +1,11 @@
-import type {
-  CollectionItem,
-  DocCollectionItem,
-  LoadedConfig,
-  MetaCollectionItem,
-} from "@/config/build";
+import type { LoadedConfig } from "@/config/build";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { FSWatcher } from "chokidar";
-import { validate } from "./utils/validation";
-import type { VFile } from "vfile";
-import type { IndexFilePlugin } from "./plugins/index-file";
-import type { PostprocessOptions } from "./config";
-import { ident } from "./utils/codegen";
+import type { Collection } from "@/config/collections";
+import type * as Vite from "vite";
+import type { NextConfig } from "next";
+import type { LoadHook } from "node:module";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -27,17 +21,8 @@ export interface PluginContext {
   core: Core;
 }
 
-export type CompilationContext<Collection> = PluginContext &
-  TransformOptions<Collection>;
-
-export interface TransformOptions<Collection> {
-  collection: Collection;
-  filePath: string;
-  source: string;
-}
-
-export interface Plugin extends IndexFilePlugin {
-  name?: string;
+export interface Plugin {
+  name: string;
 
   /**
    * on config loaded/updated
@@ -60,32 +45,20 @@ export interface Plugin extends IndexFilePlugin {
     server: ServerContext,
   ) => Awaitable<void>;
 
-  meta?: {
-    /**
-     * Transform metadata
-     */
-    transform?: (
-      this: CompilationContext<MetaCollectionItem>,
-      data: unknown,
-    ) => Awaitable<unknown | undefined>;
+  vite?: {
+    createPlugin?: (this: PluginContext) => Vite.PluginOption;
   };
 
-  doc?: {
-    /**
-     * Transform frontmatter
-     */
-    frontmatter?: (
-      this: CompilationContext<DocCollectionItem>,
-      data: Record<string, unknown>,
-    ) => Awaitable<Record<string, unknown> | undefined>;
+  bun?: {
+    build?: (this: PluginContext, build: Bun.PluginBuilder) => Awaitable<void>;
+  };
 
-    /**
-     * Transform `vfile` on compilation stage
-     */
-    vfile?: (
-      this: CompilationContext<DocCollectionItem>,
-      file: VFile,
-    ) => Awaitable<VFile | void | undefined>;
+  next?: {
+    config?: (this: PluginContext, config: NextConfig) => NextConfig;
+  };
+
+  node?: {
+    createLoad?: (this: PluginContext) => Awaitable<LoadHook>;
   };
 }
 
@@ -157,252 +130,171 @@ async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
   return plugins;
 }
 
-export function createCore(options: CoreOptions) {
-  let config: LoadedConfig;
-  let plugins: Plugin[];
-  const workspaces = new Map<string, Core>();
+export class Core {
+  private readonly workspaces = new Map<string, Core>();
+  private readonly options: CoreOptions;
+  private plugins: Plugin[] = [];
+  private config!: LoadedConfig;
 
-  async function transformMetadata<T>(
-    {
-      collection,
-      filePath,
-      source,
-    }: TransformOptions<DocCollectionItem | MetaCollectionItem>,
-    data: unknown,
-  ): Promise<T> {
-    if (collection.schema) {
-      data = await validate(
-        collection.schema,
-        data,
-        { path: filePath, source },
-        collection.type === "doc"
-          ? `invalid frontmatter in ${filePath}`
-          : `invalid data in ${filePath}`,
-      );
-    }
+  /**
+   * Convenient cache store, reset when config changes.
+   *
+   * You can group namespaces in cache key with ":", like `my-plugin:data`
+   */
+  readonly cache = new Map<string, unknown>();
 
-    return data as T;
+  constructor(options: CoreOptions) {
+    this.options = options;
   }
 
-  return {
-    /**
-     * Convenient cache store, reset when config changes
-     */
-    cache: new Map<string, unknown>(),
-    async init({ config: newConfig }: { config: Awaitable<LoadedConfig> }) {
-      config = await newConfig;
-      this.cache.clear();
-      workspaces.clear();
-      plugins = await getPlugins([
-        postprocessPlugin(),
-        options.plugins,
-        config.global.plugins,
-      ]);
+  async init({ config: newConfig }: { config: Awaitable<LoadedConfig> }) {
+    this.config = await newConfig;
+    this.cache.clear();
+    this.workspaces.clear();
+    this.plugins = await getPlugins([
+      this.options.plugins,
+      this.config.global.plugins,
+    ]);
 
-      for (const plugin of plugins) {
-        const out = await plugin.config?.call(this.getPluginContext(), config);
-        if (out) config = out;
-      }
+    for (const plugin of this.plugins) {
+      const out = await plugin.config?.call(
+        this.getPluginContext(),
+        this.config,
+      );
+      if (out) this.config = out;
+    }
 
-      // only support workspaces with max depth 1
-      if (!options.workspace) {
-        await Promise.all(
-          Object.entries(config.workspaces).map(async ([name, workspace]) => {
+    const { workspace, outDir } = this.options;
+    // only support workspaces with max depth 1
+    if (!workspace) {
+      await Promise.all(
+        Object.entries(this.config.workspaces).map(
+          async ([name, workspace]) => {
             const core = createCore({
-              ...options,
-              outDir: path.join(options.outDir, name),
+              ...this.options,
+              outDir: path.join(outDir, name),
               workspace: {
                 name,
                 parent: this,
                 dir: workspace.dir,
               },
             });
+
             await core.init({ config: workspace.config });
-            workspaces.set(name, core);
-          }),
-        );
-      }
-    },
-    getWorkspaces() {
-      return workspaces;
-    },
-    getOptions() {
-      return options;
-    },
-    getConfig(): LoadedConfig {
-      return config;
-    },
-    /**
-     * The file path of compiled config file, the file may not exist (e.g. on Vite, or still compiling)
-     */
-    getCompiledConfigPath(): string {
-      return path.join(options.outDir, "source.config.mjs");
-    },
-    getPlugins() {
-      return plugins;
-    },
-    getCollections(): CollectionItem[] {
-      return Array.from(config.collections.values());
-    },
-    getCollection(name: string): CollectionItem | undefined {
-      return config.collections.get(name);
-    },
-    getPluginContext(): PluginContext {
-      return {
-        core: this,
-      };
-    },
-    async initServer(server: ServerContext): Promise<void> {
-      const ctx = this.getPluginContext();
-      for (const plugin of plugins) {
-        await plugin.configureServer?.call(ctx, server);
-      }
-      for (const workspace of workspaces.values()) {
-        await workspace.initServer(server);
-      }
-    },
-    async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
-      const { filterPlugin, filterWorkspace, write = false } = emitOptions;
-      const start = performance.now();
-      const ctx = this.getPluginContext();
-      const added = new Set<string>();
-      const out: EmitOutput = {
-        entries: [],
-        workspaces: {},
-      };
+            this.workspaces.set(name, core);
+          },
+        ),
+      );
+    }
+  }
 
-      for (const li of await Promise.all(
-        plugins.map((plugin) => {
-          if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit)
-            return null;
-          return plugin.emit.call(ctx);
-        }),
-      )) {
-        if (!li) continue;
-        for (const item of li) {
-          if (added.has(item.path)) continue;
-          out.entries.push(item);
-          added.add(item.path);
-        }
-      }
-
-      if (write) {
-        await Promise.all(
-          out.entries.map(async (entry) => {
-            const file = path.join(options.outDir, entry.path);
-
-            await fs.mkdir(path.dirname(file), { recursive: true });
-            await fs.writeFile(file, entry.content);
-          }),
-        );
-
-        console.log(
-          options.workspace
-            ? `[MDX: ${options.workspace.name}] generated files in ${performance.now() - start}ms`
-            : `[MDX] generated files in ${performance.now() - start}ms`,
-        );
-      }
-
-      for (const [name, workspace] of workspaces) {
-        if (filterWorkspace && !filterWorkspace(name)) continue;
-        out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
-      }
-
-      return out;
-    },
-    async transformMeta(
-      options: TransformOptions<MetaCollectionItem>,
-      data: unknown,
-    ): Promise<unknown> {
-      const ctx = {
-        ...this.getPluginContext(),
-        ...options,
-      };
-
-      data = await transformMetadata(options, data);
-      for (const plugin of plugins) {
-        if (plugin.meta?.transform)
-          data = (await plugin.meta.transform.call(ctx, data)) ?? data;
-      }
-
-      return data;
-    },
-    async transformFrontmatter(
-      options: TransformOptions<DocCollectionItem>,
-      data: Record<string, unknown>,
-    ): Promise<Record<string, unknown>> {
-      const ctx = {
-        ...this.getPluginContext(),
-        ...options,
-      };
-
-      data = await transformMetadata(options, data);
-      for (const plugin of plugins) {
-        if (plugin.doc?.frontmatter)
-          data = (await plugin.doc.frontmatter.call(ctx, data)) ?? data;
-      }
-
-      return data;
-    },
-    async transformVFile(
-      options: TransformOptions<DocCollectionItem>,
-      file: VFile,
-    ): Promise<VFile> {
-      const ctx = {
-        ...this.getPluginContext(),
-        ...options,
-      };
-
-      for (const plugin of plugins) {
-        if (plugin.doc?.vfile)
-          file = (await plugin.doc.vfile.call(ctx, file)) ?? file;
-      }
-
-      return file;
-    },
-  };
-}
-
-function postprocessPlugin(): Plugin {
-  const LinkReferenceTypes = `{
+  getWorkspaces() {
+    return this.workspaces;
+  }
+  getOptions() {
+    return this.options;
+  }
+  getConfig(): LoadedConfig {
+    return this.config;
+  }
   /**
-   * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
+   * The file path of compiled config file, the file may not exist (e.g. on Vite, or still compiling)
    */
-  extractedReferences: import("fuma-content").ExtractedReference[];
-}`;
+  getCompiledConfigPath(): string {
+    return path.join(this.options.outDir, "source.config.mjs");
+  }
+  getPlugins(workspace = false) {
+    if (workspace) {
+      const plugins = [...this.plugins];
+      for (const workspace of this.workspaces.values()) {
+        plugins.push(...workspace.plugins);
+      }
+      return plugins;
+    }
 
-  return {
-    "index-file": {
-      generateTypeConfig() {
-        const lines: string[] = [];
-        lines.push("{");
-        lines.push("  DocData: {");
-        for (const collection of this.core.getCollections()) {
-          let postprocessOptions: Partial<PostprocessOptions> | undefined;
-          switch (collection.type) {
-            case "doc":
-              postprocessOptions = collection.postprocess;
-              break;
-            case "docs":
-              postprocessOptions = collection.docs.postprocess;
-              break;
-          }
+    return this.plugins;
+  }
+  getCollections(workspace = false): Collection[] {
+    if (workspace) {
+      const v = this.getCollections();
+      for (const workspace of this.workspaces.values()) {
+        v.push(...workspace.getCollections());
+      }
+      return v;
+    }
+    return Array.from(this.config.collections.values());
+  }
+  getCollection(name: string): Collection | undefined {
+    return this.config.collections.get(name);
+  }
+  getPluginContext(): PluginContext {
+    return {
+      core: this,
+    };
+  }
+  async initServer(server: ServerContext): Promise<void> {
+    const ctx = this.getPluginContext();
 
-          if (postprocessOptions?.extractLinkReferences) {
-            lines.push(ident(`${collection.name}: ${LinkReferenceTypes},`, 2));
-          }
-        }
-        lines.push("  }");
-        lines.push("}");
-        return lines.join("\n");
-      },
-      serverOptions(options) {
-        options.doc ??= {};
-        options.doc.passthroughs ??= [];
-        options.doc.passthroughs.push("extractedReferences");
-      },
-    },
-  };
+    for (const plugin of this.plugins) {
+      await plugin.configureServer?.call(ctx, server);
+    }
+    for (const workspace of this.workspaces.values()) {
+      await workspace.initServer(server);
+    }
+  }
+
+  async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
+    const { workspace, outDir } = this.options;
+    const { filterPlugin, filterWorkspace, write = false } = emitOptions;
+    const start = performance.now();
+    const ctx = this.getPluginContext();
+    const added = new Set<string>();
+    const out: EmitOutput = {
+      entries: [],
+      workspaces: {},
+    };
+
+    for (const li of await Promise.all(
+      this.plugins.map((plugin) => {
+        if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit)
+          return null;
+        return plugin.emit.call(ctx);
+      }),
+    )) {
+      if (!li) continue;
+      for (const item of li) {
+        if (added.has(item.path)) continue;
+        out.entries.push(item);
+        added.add(item.path);
+      }
+    }
+
+    if (write) {
+      await Promise.all(
+        out.entries.map(async (entry) => {
+          const file = path.join(outDir, entry.path);
+
+          await fs.mkdir(path.dirname(file), { recursive: true });
+          await fs.writeFile(file, entry.content);
+        }),
+      );
+
+      console.log(
+        workspace
+          ? `[MDX: ${workspace.name}] generated files in ${performance.now() - start}ms`
+          : `[MDX] generated files in ${performance.now() - start}ms`,
+      );
+    }
+
+    for (const [name, workspace] of this.workspaces) {
+      if (filterWorkspace && !filterWorkspace(name)) continue;
+      out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
+    }
+
+    return out;
+  }
 }
 
-export type Core = ReturnType<typeof createCore>;
+export function createCore(options: CoreOptions): Core {
+  return new Core(options);
+}

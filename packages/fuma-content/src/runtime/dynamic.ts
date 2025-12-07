@@ -1,5 +1,8 @@
 import { buildConfig, type DocCollectionItem } from "@/config/build";
-import { buildMDX, type CompiledMDXProperties } from "@/loaders/mdx/build-mdx";
+import {
+  buildMDX,
+  type CompiledMDXProperties,
+} from "@/config/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/utils/fuma-matter";
 import fs from "node:fs/promises";

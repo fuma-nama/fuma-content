@@ -13,7 +13,7 @@ import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 
 import { VFile } from "vfile";
 import type { Directives } from "mdast-util-directive";
-import { remarkMarkAndUnravel } from "@/loaders/mdx/remark-unravel";
+import { remarkMarkAndUnravel } from "@/config/collections/mdx/remark-unravel";
 import { flattenNode } from "./mdast-utils";
 
 export interface Params {
@@ -156,7 +156,7 @@ export function remarkInclude(
       } satisfies Code;
     }
 
-    const parser = _getProcessor(ext === ".mdx" ? "mdx" : "md");
+    const parser = await _getProcessor(ext === ".mdx" ? "mdx" : "md");
     const parsed = fumaMatter(content);
     const targetFile = new VFile({
       path: targetPath,

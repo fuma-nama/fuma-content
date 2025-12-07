@@ -1,13 +1,11 @@
 import { fumaMatter } from "@/utils/fuma-matter";
 import type { SourceMap } from "rollup";
-import type { Loader } from "@/loaders/adapter";
 import { z } from "zod";
-import type { DocCollectionItem } from "@/config/build";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import type { ConfigLoader } from "@/loaders/config";
-import { mdxLoaderGlob } from "..";
+import type { Loader } from "@/plugins/with-loader";
 
 const querySchema = z
   .object({
@@ -27,7 +25,6 @@ type CacheEntry = z.infer<typeof cacheEntry>;
 
 export function createMdxLoader({ getCore }: ConfigLoader): Loader {
   return {
-    test: mdxLoaderGlob,
     async load({
       getSource,
       development: isDevelopment,
@@ -75,20 +72,11 @@ export function createMdxLoader({ getCore }: ConfigLoader): Loader {
       const collection = collectionName
         ? core.getCollection(collectionName)
         : undefined;
+      const handler = collection?.handlers.mdx;
 
-      let docCollection: DocCollectionItem | undefined;
-      switch (collection?.type) {
-        case "doc":
-          docCollection = collection;
-          break;
-        case "docs":
-          docCollection = collection.docs;
-          break;
-      }
-
-      if (docCollection) {
-        matter.data = await core.transformFrontmatter(
-          { collection: docCollection, filePath, source: value },
+      if (collection && handler?.frontmatter) {
+        matter.data = await handler.frontmatter.call(
+          { collection, filePath, source: value },
           matter.data as Record<string, unknown>,
         );
       }
@@ -103,8 +91,8 @@ export function createMdxLoader({ getCore }: ConfigLoader): Loader {
       // ensure the line number is correct in dev mode
       const lineOffset = isDevelopment ? countLines(matter.matter) : 0;
 
-      const { buildMDX } = await import("@/loaders/mdx/build-mdx");
-      const compiled = await buildMDX(core, docCollection, {
+      const { buildMDX } = await import("@/config/collections/mdx/build-mdx");
+      const compiled = await buildMDX(core, collection, {
         isDevelopment,
         source: "\n".repeat(lineOffset) + matter.content,
         filePath,

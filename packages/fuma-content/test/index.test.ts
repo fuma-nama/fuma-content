@@ -1,16 +1,16 @@
-import { fileURLToPath } from 'node:url';
-import * as path from 'node:path';
-import { expect, test } from 'vitest';
-import { z } from 'zod';
-import { ValidationError } from '@/utils/validation';
-import { defineCollections, defineConfig } from '@/config';
-import { fumaMatter } from '@/utils/fuma-matter';
-import { buildConfig } from '@/config/build';
-import { createCore } from '@/core';
-import indexFile from '@/plugins/index-file';
-import lastModified from '@/plugins/last-modified';
+import { fileURLToPath } from "node:url";
+import * as path from "node:path";
+import { expect, test } from "vitest";
+import { z } from "zod";
+import { ValidationError } from "@/utils/validation";
+import { defineCollections, defineConfig } from "@/config";
+import { fumaMatter } from "@/utils/fuma-matter";
+import { buildConfig } from "@/config/build";
+import { createCore } from "@/core";
+import indexFile from "@/plugins/index-file";
+import lastModified from "@/plugins/last-modified";
 
-test('format errors', async () => {
+test("format errors", async () => {
   const schema = z.object({
     text: z.string(),
     obj: z.object({
@@ -20,16 +20,16 @@ test('format errors', async () => {
     value: z.string().max(4),
   });
 
-  const result = await schema['~standard'].validate({
+  const result = await schema["~standard"].validate({
     text: 4,
     obj: {
-      value: 'string',
+      value: "string",
     },
-    value: 'asfdfsdfsdfsd',
+    value: "asfdfsdfsdfsd",
   });
 
   if (result.issues) {
-    const error = new ValidationError('in index.mdx:', result.issues);
+    const error = new ValidationError("in index.mdx:", result.issues);
 
     expect(error.toString()).toMatchInlineSnapshot(`
       "Error: in index.mdx::
@@ -47,15 +47,15 @@ const cases: {
   config: Record<string, unknown>;
 }[] = [
   {
-    name: 'sync',
+    name: "sync",
     config: {
       docs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
       }),
       blogs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
         postprocess: {
           extractLinkReferences: true,
         },
@@ -63,32 +63,32 @@ const cases: {
       default: defineConfig({
         plugins: [
           lastModified({
-            versionControl: async () => new Date('2025-11-18'),
+            versionControl: async () => new Date("2025-11-18"),
           }),
         ],
       }),
     },
   },
   {
-    name: 'sync-meta',
+    name: "sync-meta",
     config: {
       docs: defineCollections({
-        type: 'meta',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "meta",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
       }),
     },
   },
   {
-    name: 'async',
+    name: "async",
     config: {
       docs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
         async: true,
       }),
       blogs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
         postprocess: {
           extractLinkReferences: true,
         },
@@ -97,16 +97,16 @@ const cases: {
     },
   },
   {
-    name: 'dynamic',
+    name: "dynamic",
     config: {
       docs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
         dynamic: true,
       }),
       blogs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
         postprocess: {
           extractLinkReferences: true,
         },
@@ -115,20 +115,20 @@ const cases: {
     },
   },
   {
-    name: 'workspace',
+    name: "workspace",
     config: {
       docs: defineCollections({
-        type: 'doc',
-        dir: path.join(baseDir, './fixtures/generate-index'),
+        type: "doc",
+        dir: path.join(baseDir, "./fixtures/generate-index"),
       }),
       default: defineConfig({
         workspaces: {
           test: {
-            dir: path.join(baseDir, './fixtures/generate-index-2'),
+            dir: path.join(baseDir, "./fixtures/generate-index-2"),
             config: {
               docs: defineCollections({
-                type: 'doc',
-                dir: '.',
+                type: "doc",
+                dir: ".",
                 async: true,
               }),
             },
@@ -144,10 +144,10 @@ for (const { name, config } of cases) {
     const core = createCore({
       configPath: path.relative(
         process.cwd(),
-        path.join(baseDir, './fixtures/config.ts'),
+        path.join(baseDir, "./fixtures/config.ts"),
       ),
-      environment: 'test',
-      outDir: path.relative(process.cwd(), path.join(baseDir, './fixtures')),
+      environment: "test",
+      outDir: path.relative(process.cwd(), path.join(baseDir, "./fixtures")),
       plugins: [indexFile()],
     });
 
@@ -166,7 +166,7 @@ for (const { name, config } of cases) {
       .map(
         (entry) => `\`\`\`ts title="${entry.path}"\n${entry.content}\n\`\`\``,
       )
-      .join('\n\n');
+      .join("\n\n");
 
     await expect(markdown).toMatchFileSnapshot(
       `./fixtures/index-${name}.output.md`,
@@ -174,10 +174,10 @@ for (const { name, config } of cases) {
   });
 }
 
-test('parse frontmatter', () => {
+test("parse frontmatter", () => {
   expect(
     fumaMatter(
-      '---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool.',
+      "---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool.",
     ),
   ).toMatchInlineSnapshot(`
     {
@@ -196,7 +196,7 @@ test('parse frontmatter', () => {
 
   expect(
     fumaMatter(
-      '---\r\ntitle: hello world\r\ndescription: I love Fumadocs\r\n---\r\nwow looks cool.',
+      "---\r\ntitle: hello world\r\ndescription: I love Fumadocs\r\n---\r\nwow looks cool.",
     ),
   ).toMatchInlineSnapshot(`
     {
@@ -213,7 +213,7 @@ test('parse frontmatter', () => {
     }
   `);
 
-  expect(fumaMatter('--- \ntitle: hello world\r\n---\r\nwow looks cool.'))
+  expect(fumaMatter("--- \ntitle: hello world\r\n---\r\nwow looks cool."))
     .toMatchInlineSnapshot(`
     {
       "content": "--- 

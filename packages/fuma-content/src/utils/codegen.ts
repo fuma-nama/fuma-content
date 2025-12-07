@@ -1,5 +1,5 @@
-import path from 'node:path';
-import { glob } from 'tinyglobby';
+import path from "node:path";
+import { glob } from "tinyglobby";
 
 export interface GlobImportOptions {
   base: string;
@@ -9,7 +9,7 @@ export interface GlobImportOptions {
 }
 
 export interface CodeGenOptions {
-  target: 'default' | 'vite';
+  target: "default" | "vite";
   outDir: string;
   /**
    * add .js extenstion to imports
@@ -24,15 +24,15 @@ export type CodeGen = ReturnType<typeof createCodegen>;
  * Code generator (one instance per file)
  */
 export function createCodegen({
-  target = 'default',
-  outDir = '',
+  target = "default",
+  outDir = "",
   jsExtension = false,
   globCache = new Map(),
 }: Partial<CodeGenOptions>) {
   let eagerImportId = 0;
-  const banner: string[] = ['// @ts-nocheck'];
+  const banner: string[] = ["// @ts-nocheck"];
 
-  if (target === 'vite') {
+  if (target === "vite") {
     banner.push('/// <reference types="vite/client" />');
   }
 
@@ -57,7 +57,7 @@ export function createCodegen({
       patterns: string | string[],
       options: GlobImportOptions,
     ): Promise<string> {
-      if (target === 'vite') {
+      if (target === "vite") {
         return this.generateViteGlobImport(patterns, options);
       }
 
@@ -68,7 +68,7 @@ export function createCodegen({
       patterns: string | string[],
       { base, ...rest }: GlobImportOptions,
     ): string {
-      patterns = (typeof patterns === 'string' ? [patterns] : patterns).map(
+      patterns = (typeof patterns === "string" ? [patterns] : patterns).map(
         normalizeViteGlobPath,
       );
 
@@ -99,7 +99,7 @@ export function createCodegen({
         globCache.set(cacheKey, files);
       }
 
-      let code: string = '{';
+      let code: string = "{";
       for (const item of await files) {
         const fullPath = path.join(base, item);
         const searchParams = new URLSearchParams();
@@ -108,8 +108,7 @@ export function createCodegen({
           if (v !== undefined) searchParams.set(k, v);
         }
 
-        const importPath =
-          `${this.formatImportPath(fullPath)}?${searchParams.toString()}`;
+        const importPath = `${this.formatImportPath(fullPath)}?${searchParams.toString()}`;
         if (eager) {
           const name = `__fd_glob_${eagerImportId++}`;
           this.lines.unshift(
@@ -129,25 +128,25 @@ export function createCodegen({
         }
       }
 
-      code += '}';
+      code += "}";
       return code;
     },
     formatImportPath(file: string) {
       const ext = path.extname(file);
       let filename: string;
 
-      if (ext === '.ts') {
+      if (ext === ".ts") {
         filename = file.substring(0, file.length - ext.length);
-        if (jsExtension) filename += '.js';
+        if (jsExtension) filename += ".js";
       } else {
         filename = file;
       }
 
       const importPath = slash(path.relative(outDir, filename));
-      return importPath.startsWith('.') ? importPath : `./${importPath}`;
+      return importPath.startsWith(".") ? importPath : `./${importPath}`;
     },
     toString() {
-      return [...banner, ...this.lines].join('\n');
+      return [...banner, ...this.lines].join("\n");
     },
   };
 }
@@ -157,25 +156,25 @@ export function createCodegen({
  */
 function normalizeViteGlobPath(file: string) {
   file = slash(file);
-  if (file.startsWith('./')) return file;
-  if (file.startsWith('/')) return `.${file}`;
+  if (file.startsWith("./")) return file;
+  if (file.startsWith("/")) return `.${file}`;
 
   return `./${file}`;
 }
 
 export function slash(path: string): string {
-  const isExtendedLengthPath = path.startsWith('\\\\?\\');
+  const isExtendedLengthPath = path.startsWith("\\\\?\\");
 
   if (isExtendedLengthPath) {
     return path;
   }
 
-  return path.replaceAll('\\', '/');
+  return path.replaceAll("\\", "/");
 }
 
 export function ident(code: string, tab: number = 1) {
   return code
-    .split('\n')
-    .map((v) => '  '.repeat(tab) + v)
-    .join('\n');
+    .split("\n")
+    .map((v) => "  ".repeat(tab) + v)
+    .join("\n");
 }

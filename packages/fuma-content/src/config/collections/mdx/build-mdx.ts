@@ -3,20 +3,21 @@ import { VFile } from "vfile";
 import {
   remarkInclude,
   type RemarkIncludeOptions,
-} from "@/loaders/mdx/remark-include";
+} from "@/config/collections/mdx/remark-include";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
 import {
   type PostprocessOptions,
   remarkPostprocess,
-} from "@/loaders/mdx/remark-postprocess";
+} from "@/config/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
-import type { DocCollectionItem } from "@/config/build";
 import {
   type PreprocessOptions,
   remarkPreprocess,
-} from "@/loaders/mdx/remark-preprocess";
+} from "@/config/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
+import type { Collection } from "@/config/collections";
+import { createCache } from "@/utils/async-cache";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -32,6 +33,7 @@ interface BuildMDXOptions {
   isDevelopment: boolean;
   _compiler?: CompilerOptions;
   preprocess?: PreprocessOptions;
+  postprocess?: PostprocessOptions;
 }
 
 export interface CompilerOptions {
@@ -71,7 +73,9 @@ export interface FumaContentDataMap {
   /**
    * [Fuma Content] get internal processor, do not use this on user land.
    */
-  _getProcessor?: (format: "md" | "mdx") => MDXProcessor;
+  _getProcessor?: (
+    format: "md" | "mdx",
+  ) => MDXProcessor | Promise<MDXProcessor>;
 }
 
 declare module "vfile" {
@@ -81,7 +85,7 @@ declare module "vfile" {
 
 export async function buildMDX(
   core: Core,
-  collection: DocCollectionItem | undefined,
+  collection: Collection | undefined,
   {
     filePath,
     frontmatter,
@@ -89,54 +93,49 @@ export async function buildMDX(
     _compiler,
     environment,
     isDevelopment,
+    postprocess,
     preprocess,
   }: BuildMDXOptions,
 ): Promise<VFile> {
-  const mdxOptions = await core
-    .getConfig()
-    .getMDXOptions(collection, environment);
+  const handler = collection?.handlers.mdx;
+  const processorCache = createCache(core.cache as Map<string, MDXProcessor>);
 
   function getProcessor(format: "md" | "mdx") {
-    const cache = core.cache as Map<string, MDXProcessor>;
     const key = `build-mdx:${collection?.name ?? "global"}:${format}`;
-    let processor = cache.get(key);
 
-    if (!processor) {
+    return processorCache.cached(key, async () => {
+      const mdxOptions = await handler?.getMDXOptions?.(environment);
       const preprocessPlugin = [
         remarkPreprocess,
         preprocess,
       ] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
-        ...collection?.postprocess,
+        ...postprocess,
       };
       const remarkIncludeOptions: RemarkIncludeOptions = {
         preprocess: [preprocessPlugin],
       };
 
-      processor = createProcessor({
+      return createProcessor({
         outputFormat: "program",
         development: isDevelopment,
         ...mdxOptions,
         remarkPlugins: [
           preprocessPlugin,
           [remarkInclude, remarkIncludeOptions],
-          ...(mdxOptions.remarkPlugins ?? []),
+          ...(mdxOptions?.remarkPlugins ?? []),
           [remarkPostprocess, postprocessOptions],
         ],
         format,
       });
-
-      cache.set(key, processor);
-    }
-
-    return processor;
+    });
   }
 
   let vfile = new VFile({
     value: source,
     path: filePath,
-    cwd: collection?.cwd,
+    cwd: handler?.cwd,
     data: {
       frontmatter,
       _compiler,
@@ -145,9 +144,18 @@ export async function buildMDX(
     },
   });
 
-  if (collection) {
-    vfile = await core.transformVFile({ collection, filePath, source }, vfile);
+  if (collection && handler?.vfile) {
+    vfile = await handler.vfile.call(
+      {
+        collection,
+        filePath,
+        source,
+      },
+      vfile,
+    );
   }
 
-  return getProcessor(filePath.endsWith(".mdx") ? "mdx" : "md").process(vfile);
+  return (await getProcessor(filePath.endsWith(".mdx") ? "mdx" : "md")).process(
+    vfile,
+  );
 }

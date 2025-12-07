@@ -1,8 +1,7 @@
-import type { EmitEntry, Plugin } from '@/core';
-import type { DocsCollectionItem, MetaCollectionItem } from '@/config/build';
-import { z } from 'zod';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import type { EmitEntry, Plugin } from "@/core";
+import fs from "node:fs/promises";
+import path from "node:path";
+import type { Collection } from "@/config/collections";
 
 export interface JSONSchemaOptions {
   /**
@@ -11,6 +10,10 @@ export interface JSONSchemaOptions {
    * @defaultValue false
    */
   insert?: boolean;
+}
+
+export interface JSONSchemaHandler {
+  create?: () => object | undefined | Promise<object | undefined>;
 }
 
 /**
@@ -26,21 +29,19 @@ export default function jsonSchema({
   }
 
   return {
+    name: "json-schema",
     configureServer(server) {
       const { outDir } = this.core.getOptions();
       if (!server.watcher || !insert) return;
 
-      server.watcher.on('add', async (file) => {
-        let parent: DocsCollectionItem | undefined;
-        let match: MetaCollectionItem | undefined;
+      server.watcher.on("add", async (file) => {
+        let match: Collection | undefined;
         for (const collection of this.core.getCollections()) {
-          if (collection.type === 'meta' && collection.hasFile(file)) {
+          const handler = collection.handlers.fs;
+          if (!handler) return;
+
+          if (handler.hasFile(file)) {
             match = collection;
-            break;
-          }
-          if (collection.type === 'docs' && collection.meta.hasFile(file)) {
-            parent = collection;
-            match = collection.meta;
             break;
           }
         }
@@ -54,7 +55,7 @@ export default function jsonSchema({
           return;
         }
 
-        if ('$schema' in obj) return;
+        if ("$schema" in obj) return;
         const schemaPath = path.join(
           outDir,
           getSchemaPath(parent ? `${parent.name}.meta` : match.name),
@@ -67,33 +68,19 @@ export default function jsonSchema({
         await fs.writeFile(file, JSON.stringify(updated, null, 2));
       });
     },
-    emit() {
+    async emit() {
       const files: EmitEntry[] = [];
 
-      function onSchema(name: string, schema: z.ZodSchema) {
-        files.push({
-          path: getSchemaPath(name),
-          content: JSON.stringify(
-            z.toJSONSchema(schema, {
-              io: 'input',
-              unrepresentable: 'any',
-            }),
-          ),
-        });
-      }
-
       for (const collection of this.core.getCollections()) {
-        if (collection.type === 'docs') {
-          if (collection.meta.schema instanceof z.ZodType) {
-            onSchema(`${collection.name}.meta`, collection.meta.schema);
-          }
+        const handler = collection.handlers["json-schema"];
+        if (!handler) continue;
 
-          if (collection.docs.schema instanceof z.ZodType) {
-            onSchema(`${collection.name}.docs`, collection.docs.schema);
-          }
-        } else if (collection.schema instanceof z.ZodType) {
-          onSchema(collection.name, collection.schema);
-        }
+        const jsonSchema = await handler.create?.();
+        if (!jsonSchema) continue;
+        files.push({
+          path: getSchemaPath(collection.name),
+          content: JSON.stringify(jsonSchema, null, 2),
+        });
       }
 
       return files;

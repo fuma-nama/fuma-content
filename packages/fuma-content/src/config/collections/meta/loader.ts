@@ -1,9 +1,9 @@
-import type { Loader, LoaderInput } from '@/loaders/adapter';
-import type { ConfigLoader } from '@/loaders/config';
-import { dump, load } from 'js-yaml';
-import { z } from 'zod';
-import { metaLoaderGlob } from '.';
-import type { MetaCollectionItem } from '@/config/build';
+import type { Loader, LoaderInput } from "@/plugins/with-loader";
+import type { ConfigLoader } from "@/loaders/config";
+import { dump, load } from "js-yaml";
+import { z } from "zod";
+import { validate } from "@/utils/validation";
+import type { MetaContext } from "@/config/collections/meta";
 
 const querySchema = z
   .object({
@@ -18,16 +18,16 @@ const querySchema = z
 export function createMetaLoader(
   { getCore }: ConfigLoader,
   resolve: {
-    json?: 'json' | 'js';
-    yaml?: 'yaml' | 'js';
+    json?: "json" | "js";
+    yaml?: "yaml" | "js";
   } = {},
 ): Loader {
-  const { json: resolveJson = 'js', yaml: resolveYaml = 'js' } = resolve;
+  const { json: resolveJson = "js", yaml: resolveYaml = "js" } = resolve;
 
   function parse(filePath: string, source: string) {
     try {
-      if (filePath.endsWith('.json')) return JSON.parse(source);
-      if (filePath.endsWith('.yaml')) return load(source);
+      if (filePath.endsWith(".json")) return JSON.parse(source);
+      if (filePath.endsWith(".yaml")) return load(source);
     } catch (e) {
       throw new Error(`invalid data in ${filePath}`, { cause: e });
     }
@@ -47,49 +47,45 @@ export function createMetaLoader(
       }
 
       const collection = core.getCollection(collectionName);
-      let metaCollection: MetaCollectionItem | undefined;
+      const handler = collection?.handlers.meta;
+      let data: unknown = parse(filePath, source);
+      if (!handler) return data;
 
-      switch (collection?.type) {
-        case 'meta':
-          metaCollection = collection;
-          break;
-        case 'docs':
-          metaCollection = collection.meta;
-          break;
+      const context: MetaContext = {
+        path: filePath,
+        source,
+      };
+
+      if (handler.schema) {
+        data = await validate(
+          handler.schema,
+          data,
+          context,
+          `invalid data in ${filePath}`,
+        );
       }
 
-      const data = parse(filePath, source);
-
-      if (!metaCollection) return data;
-      return core.transformMeta(
-        {
-          collection: metaCollection,
-          filePath,
-          source,
-        },
-        data,
-      );
+      return handler.transform?.call(context, data);
     };
   }
 
   return {
-    test: metaLoaderGlob,
     async load(input) {
       const result = onMeta(await input.getSource(), input);
       if (result === null) return null;
       const data = await result();
 
-      if (input.filePath.endsWith('.json')) {
+      if (input.filePath.endsWith(".json")) {
         return {
           code:
-            resolveJson === 'json'
+            resolveJson === "json"
               ? JSON.stringify(data)
               : `export default ${JSON.stringify(data)}`,
         };
       } else {
         return {
           code:
-            resolveYaml === 'yaml'
+            resolveYaml === "yaml"
               ? dump(data)
               : `export default ${JSON.stringify(data)}`,
         };
@@ -100,12 +96,12 @@ export function createMetaLoader(
         const result = onMeta(source, input);
         if (result === null)
           return {
-            loader: 'object',
+            loader: "object",
             exports: parse(input.filePath, source),
           };
 
         return result().then((data) => ({
-          loader: 'object',
+          loader: "object",
           exports: { default: data },
         }));
       },
