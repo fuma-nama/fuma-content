@@ -7,7 +7,7 @@ import { defineCollections, defineConfig } from "@/config";
 import { fumaMatter } from "@/utils/fuma-matter";
 import { buildConfig } from "@/config/build";
 import { createCore } from "@/core";
-import indexFile from "@/plugins/index-file";
+import entryFile from "@/plugins/entry-file";
 import lastModified from "@/plugins/last-modified";
 
 test("format errors", async () => {
@@ -148,7 +148,7 @@ for (const { name, config } of cases) {
       ),
       environment: "test",
       outDir: path.relative(process.cwd(), path.join(baseDir, "./fixtures")),
-      plugins: [indexFile()],
+      plugins: [entryFile()],
     });
 
     await core.init({

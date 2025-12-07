@@ -13,7 +13,7 @@ export interface JSONSchemaOptions {
 }
 
 export interface JSONSchemaHandler {
-  create?: () => object | undefined | Promise<object | undefined>;
+  create: () => object | undefined | Promise<object | undefined>;
 }
 
 /**
@@ -75,7 +75,7 @@ export default function jsonSchema({
         const handler = collection.handlers["json-schema"];
         if (!handler) continue;
 
-        const jsonSchema = await handler.create?.();
+        const jsonSchema = await handler.create();
         if (!jsonSchema) continue;
         files.push({
           path: getSchemaPath(collection.name),

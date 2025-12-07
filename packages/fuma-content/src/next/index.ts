@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { _Defaults, type Core, createCore } from "@/core";
-import type { IndexFilePluginOptions } from "@/plugins/index-file";
-import indexFile from "@/plugins/index-file";
+import type { IndexFilePluginOptions } from "@/plugins/entry-file";
+import entryFile from "@/plugins/entry-file";
 
 export interface CreateMDXOptions {
   /**
@@ -120,6 +120,6 @@ function createNextCore(options: Required<CreateMDXOptions>): Core {
     environment: "next",
     outDir: options.outDir,
     configPath: options.configPath,
-    plugins: [options.index && indexFile(options.index)],
+    plugins: [options.index && entryFile(options.index)],
   });
 }

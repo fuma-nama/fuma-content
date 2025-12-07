@@ -1,6 +1,6 @@
-import type { Core, CoreOptions, Plugin, PluginContext } from "@/core";
+import type { Core, CoreOptions, Plugin } from "@/core";
 import path from "node:path";
-import { type CodeGen, createCodegen, ident } from "@/utils/codegen";
+import { CodeGenerator, ident } from "@/utils/code-generator";
 import { glob } from "tinyglobby";
 import { createFSCache } from "@/utils/fs-cache";
 import { createHash } from "node:crypto";
@@ -8,7 +8,7 @@ import type { LazyEntry } from "@/runtime/dynamic";
 import type { EmitEntry } from "@/core";
 import { fumaMatter } from "@/utils/fuma-matter";
 import type { ServerOptions } from "@/runtime/server";
-import { Collection } from "@/config/collections";
+import type { Collection } from "@/config/collections";
 
 export interface IndexFilePluginOptions {
   target?: "default" | "vite";
@@ -31,24 +31,21 @@ export interface IndexFilePluginOptions {
   dynamic?: boolean;
 }
 
-export interface IndexFilePlugin {
-  "index-file"?: {
-    generateTypeConfig?: (this: PluginContext) => string | undefined;
-    serverOptions?: (this: PluginContext, options: ServerOptions) => void;
-  };
+export interface EntryFileHandler {
+  generate?: (context: EntryFileContext) => void | Promise<void>;
 }
 
-interface FileGenContext {
+export interface EntryFileContext {
   core: Core;
   workspace?: string;
-  codegen: CodeGen;
+  codegen: CodeGenerator;
   serverOptions: ServerOptions;
   tc: string;
 }
 
 const indexFileCache = createFSCache();
 
-export default function indexFile(
+export default function entryFile(
   options: IndexFilePluginOptions = {},
 ): Plugin {
   const {
@@ -133,7 +130,7 @@ export default function indexFile(
       const { serverOptions, tc } = generateConfigs(this.core);
       const toEmitEntry = async (
         path: string,
-        content: (ctx: FileGenContext) => Promise<void>,
+        content: (ctx: EntryFileContext) => Promise<void>,
       ): Promise<EmitEntry> => {
         const codegen = createCodegen({
           target,
@@ -169,7 +166,7 @@ export default function indexFile(
   };
 }
 
-async function generateServerIndexFile(ctx: FileGenContext) {
+async function generateServerIndexFile(ctx: EntryFileContext) {
   const { core, codegen, serverOptions, tc } = ctx;
   codegen.lines.push(
     `import { server } from 'fuma-content/runtime/server';`,
@@ -205,22 +202,6 @@ async function generateServerIndexFile(ctx: FileGenContext) {
         return `await create.docs("${collection.name}", "${base}", ${metaGlob}, ${docGlob})`;
       }
       case "doc":
-        if (collection.dynamic) return;
-
-        if (collection.async) {
-          const [headGlob, bodyGlob] = await Promise.all([
-            generateDocCollectionFrontmatterGlob(ctx, collection, true),
-            generateDocCollectionGlob(ctx, collection),
-          ]);
-
-          return `await create.docLazy("${collection.name}", "${base}", ${headGlob}, ${bodyGlob})`;
-        }
-
-        return `await create.doc("${collection.name}", "${base}", ${await generateDocCollectionGlob(
-          ctx,
-          collection,
-          true,
-        )})`;
       case "meta":
         return `await create.meta("${collection.name}", "${base}", ${await generateMetaCollectionGlob(
           ctx,
@@ -240,7 +221,7 @@ async function generateServerIndexFile(ctx: FileGenContext) {
   );
 }
 
-async function generateDynamicIndexFile(ctx: FileGenContext) {
+async function generateDynamicIndexFile(ctx: EntryFileContext) {
   const { core, codegen, serverOptions, tc } = ctx;
   const { configPath, environment, outDir } = core.getOptions();
   // serializable config options
@@ -334,7 +315,7 @@ async function generateDynamicIndexFile(ctx: FileGenContext) {
   );
 }
 
-async function generateBrowserIndexFile(ctx: FileGenContext) {
+async function generateBrowserIndexFile(ctx: EntryFileContext) {
   const { core, codegen, tc } = ctx;
   codegen.lines.push(
     `import { browser } from 'fuma-content/runtime/browser';`,
@@ -377,40 +358,8 @@ function getBase(collection: Collection) {
   return path.relative(process.cwd(), collection.dir);
 }
 
-function generateDocCollectionFrontmatterGlob(
-  { codegen, workspace }: FileGenContext,
-  collection: Collection,
-  eager = false,
-) {
-  return codegen.generateGlobImport(collection.patterns, {
-    query: {
-      collection: collection.name,
-      only: "frontmatter",
-      workspace,
-    },
-    import: "frontmatter",
-    base: collection.dir,
-    eager,
-  });
-}
-
-function generateDocCollectionGlob(
-  { codegen, workspace }: FileGenContext,
-  collection: Collection,
-  eager = false,
-) {
-  return codegen.generateGlobImport(collection.patterns, {
-    query: {
-      collection: collection.name,
-      workspace,
-    },
-    base: collection.dir,
-    eager,
-  });
-}
-
 function generateMetaCollectionGlob(
-  { codegen, workspace }: FileGenContext,
+  { codegen, workspace }: EntryFileContext,
   collection: Collection,
   eager = false,
 ) {

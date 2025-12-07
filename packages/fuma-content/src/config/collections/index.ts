@@ -3,6 +3,7 @@ import type { JSONSchemaHandler } from "@/plugins/json-schema";
 import type { FIleCollectionHandler } from "@/config/collections/fs";
 import type { MDXCollectionHandler } from "@/config/collections/mdx";
 import type { MetaCollectionHandler } from "@/config/collections/meta";
+import type { EntryFileHandler } from "@/plugins/entry-file";
 
 export interface InitOptions {
   name: string;
@@ -18,6 +19,7 @@ export interface Collection {
     mdx?: MDXCollectionHandler;
     meta?: MetaCollectionHandler;
     "json-schema"?: JSONSchemaHandler;
+    "entry-file"?: EntryFileHandler;
   };
 }
 

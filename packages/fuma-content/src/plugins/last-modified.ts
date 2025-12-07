@@ -1,7 +1,7 @@
 import path from "node:path";
 import { x } from "tinyexec";
 import type { Plugin } from "@/core";
-import { ident } from "@/utils/codegen";
+import { ident } from "@/utils/code-generator";
 
 const cache = new Map<string, Promise<Date | null>>();
 type VersionControlFn = (filePath: string) => Promise<Date | null | undefined>;
@@ -76,20 +76,28 @@ export default function lastModified(
         default:
           fn = versionControl;
       }
-    },
-    doc: {
-      async vfile(file) {
-        if (!filter(this.collection.name)) return;
 
-        const timestamp = await fn(this.filePath);
-        if (timestamp) {
-          file.data["mdx-export"] ??= [];
-          file.data["mdx-export"].push({
-            name: "lastModified",
-            value: timestamp,
-          });
+      for (const collection of this.core.getCollections()) {
+        if (!filter(collection.name)) continue;
+
+        const mdxHandler = collection.handlers.mdx;
+        if (mdxHandler) {
+          const inherited = mdxHandler.vfile;
+
+          mdxHandler.vfile = async function (vfile) {
+            const timestamp = await fn(vfile.path);
+            if (timestamp) {
+              vfile.data["mdx-export"] ??= [];
+              vfile.data["mdx-export"].push({
+                name: "lastModified",
+                value: timestamp,
+              });
+            }
+            if (inherited) return inherited.call(this, vfile);
+            return vfile;
+          };
         }
-      },
+      }
     },
   };
 }

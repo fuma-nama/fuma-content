@@ -23,6 +23,7 @@ export interface FIleCollectionHandler {
   dir: string;
   hasFile: (filePath: string) => boolean;
   isFileSupported: (filePath: string) => boolean;
+  patterns: string[];
 }
 
 export function buildFileHandler(
@@ -34,6 +35,7 @@ export function buildFileHandler(
   let matcher: picomatch.Matcher;
 
   return {
+    patterns,
     dir: workspace ? path.resolve(workspace.dir, config.dir) : config.dir,
     isFileSupported(filePath) {
       return supportedFormats.some((format) => filePath.endsWith(`.${format}`));

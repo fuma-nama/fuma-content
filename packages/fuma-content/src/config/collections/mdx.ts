@@ -4,7 +4,7 @@ import {
   type FileHandlerConfig,
 } from "@/config/collections/fs";
 import type { PostprocessOptions } from "@/config/collections/mdx/remark-postprocess";
-import { ident } from "@/utils/codegen";
+import { ident } from "@/utils/code-generator";
 import type { Core, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
 import path from "node:path";
@@ -16,6 +16,7 @@ import type {
 import type { Configuration } from "webpack";
 import type { WebpackLoaderOptions } from "@/webpack";
 import { withLoader } from "@/plugins/with-loader";
+import { ListGenerator } from "@/runtime/list/generator";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -51,9 +52,11 @@ export interface MDXCollectionConfig extends FileHandlerConfig {
   postprocess?: Partial<PostprocessOptions>;
 
   options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
+  async?: boolean;
 }
 
 export function defineMDX(config: MDXCollectionConfig): Collection {
+  const { async = false } = config;
   return createCollection({
     init(options) {
       this.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
@@ -63,6 +66,56 @@ export function defineMDX(config: MDXCollectionConfig): Collection {
           : process.cwd(),
         postprocess: config.postprocess,
         getMDXOptions: config.options,
+      };
+      this.handlers["entry-file"] = {
+        generate: async (context) => {
+          if (!this.handlers.fs) return;
+          const fsHandler = this.handlers.fs;
+          const generator = new ListGenerator(context);
+
+          const generateDocCollectionFrontmatterGlob = (eager = false) => {
+            return context.codegen.generateGlobImport(fsHandler.patterns, {
+              query: {
+                collection: this.name,
+                only: "frontmatter",
+                workspace: options.workspace?.name,
+              },
+              import: "frontmatter",
+              base: fsHandler.dir,
+              eager,
+            });
+          };
+
+          const generateDocCollectionGlob = (eager = false) => {
+            return context.codegen.generateGlobImport(fsHandler.patterns, {
+              query: {
+                collection: this.name,
+                workspace: options.workspace?.name,
+              },
+              base: fsHandler.dir,
+              eager,
+            });
+          };
+
+          if (async) {
+            const [headGlob, bodyGlob] = await Promise.all([
+              generateDocCollectionFrontmatterGlob(true),
+              generateDocCollectionGlob(),
+            ]);
+
+            generator.create(
+              this.name,
+              `{\n  head: ${headGlob},\n  body: ${bodyGlob}\n}`,
+            );
+          } else {
+            generator.create(
+              this.name,
+              `{\n  body: ${await generateDocCollectionGlob(true)}\n}`,
+            );
+          }
+
+          generator.flush();
+        },
       };
     },
   });
