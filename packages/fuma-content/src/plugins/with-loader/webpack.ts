@@ -3,12 +3,30 @@ import { parse } from "node:querystring";
 import { ValidationError } from "@/utils/validation";
 import path from "node:path";
 import type { Loader } from "@/plugins/with-loader";
+import { type Core, createCore } from "@/core";
 
 export type WebpackLoader = (
   this: LoaderContext<unknown>,
   source: string,
   callback: LoaderContext<unknown>["callback"],
 ) => Promise<void>;
+
+export interface WebpackLoaderOptions {
+  absoluteCompiledConfigPath: string;
+  configPath: string;
+  outDir: string;
+  isDev: boolean;
+}
+
+let core: Core;
+
+export function getCore(options: WebpackLoaderOptions) {
+  return (core ??= createCore({
+    environment: "webpack",
+    outDir: options.outDir,
+    configPath: options.configPath,
+  }));
+}
 
 /**
  * need to handle the `test` regex in Webpack config instead.

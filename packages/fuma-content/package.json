@@ -12,8 +12,6 @@
   "homepage": "https://fuma-content.vercel.app",
   "type": "module",
   "exports": {
-    "./loader-mdx": "./loader-mdx.cjs",
-    "./loader-meta": "./loader-meta.cjs",
     "./config": {
       "import": "./dist/config/index.js",
       "types": "./dist/config/index.d.ts"
@@ -31,9 +29,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./runtime/*": {
-      "import": "./dist/runtime/*.js",
-      "types": "./dist/runtime/*.d.ts"
+    "./collections/*": {
+      "import": "./dist/collections/*.js",
+      "default": "./dist/collections/*.js",
+      "types": "./dist/collections/*.d.ts"
     },
     "./node/loader": {
       "import": "./dist/node/loader.js",

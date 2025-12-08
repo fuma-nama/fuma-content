@@ -27,7 +27,7 @@ export interface PluginOptions {
   /**
    * Output directory of generated files
    *
-   * @defaultValue '.source'
+   * @defaultValue '.content'
    */
   outDir?: string;
 }

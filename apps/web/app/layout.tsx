@@ -1,26 +1,15 @@
-import { RootProvider } from "fumadocs-ui/provider";
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { createMetadata } from "@/lib/metadata";
+import { RootProvider } from 'fumadocs-ui/provider/next';
+import './global.css';
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata = createMetadata({
-  title: {
-    absolute: "Fuma Content",
-    template: "Fuma Content - %s",
-  },
-  description: "The library that handles content",
+const inter = Inter({
+  subsets: ['latin'],
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}): JSX.Element {
+export default function Layout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <body className="flex flex-col min-h-screen">
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

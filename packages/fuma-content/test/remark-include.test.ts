@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import remarkMdx from "remark-mdx";
-import { remarkInclude } from "@/config/collections/mdx/remark-include";
+import { remarkInclude } from "@/collections/mdx/remark-include";
 import remarkDirective from "remark-directive";
 
 import fs from "node:fs/promises";

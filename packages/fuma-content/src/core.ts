@@ -2,10 +2,12 @@ import type { LoadedConfig } from "@/config/build";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { FSWatcher } from "chokidar";
-import type { Collection } from "@/config/collections";
+import type { Collection } from "@/collections";
 import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
+import { mdxPlugin } from "@/collections/mdx";
+import { metaPlugin } from "@/collections/meta";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -115,7 +117,7 @@ export interface EmitOutput {
 
 export const _Defaults = {
   configPath: "source.config.ts",
-  outDir: ".source",
+  outDir: ".content",
 };
 
 async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
@@ -153,7 +155,9 @@ export class Core {
     this.workspaces.clear();
     this.plugins = await getPlugins([
       this.options.plugins,
-      this.config.global.plugins,
+      this.config.plugins,
+      mdxPlugin(),
+      metaPlugin(),
     ]);
 
     for (const plugin of this.plugins) {

@@ -5,7 +5,7 @@ import { _Defaults, type Core, createCore } from "@/core";
 import type { IndexFilePluginOptions } from "@/plugins/entry-file";
 import entryFile from "@/plugins/entry-file";
 
-export interface CreateMDXOptions {
+export interface NextOptions {
   /**
    * Path to source configuration file
    */
@@ -14,21 +14,24 @@ export interface CreateMDXOptions {
   /**
    * Directory for output files
    *
-   * @defaultValue '.source'
+   * @defaultValue '.content'
    */
   outDir?: string;
 
   index?: IndexFilePluginOptions | false;
 }
 
-export function createMDX(createOptions: CreateMDXOptions = {}) {
-  const core = createNextCore(applyDefaults(createOptions));
-  const isDev = process.env.NODE_ENV === "development";
+export async function createContent(nextOptions: NextOptions = {}) {
+  const core = createNextCore(applyDefaults(nextOptions));
+  await core.init({
+    config: loadConfig(core, true),
+  });
 
   if (process.env._FUMADOCS_MDX !== "1") {
     process.env._FUMADOCS_MDX = "1";
 
-    void init(isDev, core);
+    await core.emit({ write: true });
+    await init(process.env.NODE_ENV === "development", core);
   }
 
   return (nextConfig: NextConfig = {}): NextConfig => {
@@ -42,7 +45,7 @@ export function createMDX(createOptions: CreateMDXOptions = {}) {
 }
 
 async function init(dev: boolean, core: Core): Promise<void> {
-  async function initOrReload() {
+  async function update() {
     await core.init({
       config: loadConfig(core, true),
     });
@@ -77,7 +80,7 @@ async function init(dev: boolean, core: Core): Promise<void> {
         watcher.removeAllListeners();
 
         await watcher.close();
-        await initOrReload();
+        await update();
         console.log("[MDX] restarting dev server");
         await devServer();
       }
@@ -93,21 +96,20 @@ async function init(dev: boolean, core: Core): Promise<void> {
     await core.initServer({ watcher });
   }
 
-  await initOrReload();
   if (dev) {
     await devServer();
   }
 }
 
-export async function postInstall(options: CreateMDXOptions) {
+export async function createStandaloneCore(options: NextOptions) {
   const core = createNextCore(applyDefaults(options));
   await core.init({
     config: loadConfig(core, true),
   });
-  await core.emit({ write: true });
+  return core;
 }
 
-function applyDefaults(options: CreateMDXOptions): Required<CreateMDXOptions> {
+function applyDefaults(options: NextOptions): Required<NextOptions> {
   return {
     index: {},
     outDir: options.outDir ?? _Defaults.outDir,
@@ -115,7 +117,7 @@ function applyDefaults(options: CreateMDXOptions): Required<CreateMDXOptions> {
   };
 }
 
-function createNextCore(options: Required<CreateMDXOptions>): Core {
+function createNextCore(options: Required<NextOptions>): Core {
   return createCore({
     environment: "next",
     outDir: options.outDir,

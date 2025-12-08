@@ -1,7 +1,7 @@
 import type { EmitEntry, Plugin } from "@/core";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Collection } from "@/config/collections";
+import type { Collection } from "@/collections";
 
 export interface JSONSchemaOptions {
   /**

@@ -1,46 +1,55 @@
-import { getPage, getPages } from "@/app/source";
-import { DocsPage, DocsBody } from "fumadocs-ui/layouts/docs/page";
+import { getPageImage, source } from "@/lib/source";
+import {
+  DocsBody,
+  DocsDescription,
+  DocsPage,
+  DocsTitle,
+} from "fumadocs-ui/layouts/docs/page";
 import { notFound } from "next/navigation";
-import mdxComponents from "fumadocs-ui/mdx";
-import type { TableOfContents } from "fumadocs-core/toc";
-import { createMetadata } from "@/lib/metadata";
+import { getMDXComponents } from "@/mdx-components";
+import type { Metadata } from "next";
+import { createRelativeLink } from "fumadocs-ui/mdx";
+import { docs } from "content/server";
 
-export default async function Page({
-  params,
-}: {
-  params: { slug?: string[] };
-}) {
-  const page = getPage(params.slug);
+export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
+  const params = await props.params;
+  const page = source.getPage(params.slug);
+  if (!page) notFound();
 
-  if (page == null) {
-    notFound();
-  }
-
-  const MDX = page.data.renderer;
+  const MDX = page.data.compiled.default;
 
   return (
-    <DocsPage toc={page.data.toc as TableOfContents}>
-      <DocsBody className="prose-sm text-muted-foreground">
-        <h1>{page.data.title}</h1>
-        <MDX components={{ ...mdxComponents }} />
+    <DocsPage toc={page.data.toc} full={page.data.full}>
+      <DocsTitle>{page.data.title}</DocsTitle>
+      <DocsDescription>{page.data.description}</DocsDescription>
+      <DocsBody>
+        <MDX
+          components={getMDXComponents({
+            // this allows you to link to other pages with relative file paths
+            a: createRelativeLink(source, page),
+          })}
+        />
       </DocsBody>
     </DocsPage>
   );
 }
 
 export async function generateStaticParams() {
-  return getPages().map((page) => ({
-    slug: page.slugs,
-  }));
+  return source.generateParams();
 }
 
-export function generateMetadata({ params }: { params: { slug?: string[] } }) {
-  const page = getPage(params.slug);
+export async function generateMetadata(
+  props: PageProps<"/docs/[[...slug]]">,
+): Promise<Metadata> {
+  const params = await props.params;
+  const page = source.getPage(params.slug);
+  if (!page) notFound();
 
-  if (page == null) notFound();
-
-  return createMetadata({
+  return {
     title: page.data.title,
     description: page.data.description,
-  });
+    openGraph: {
+      images: getPageImage(page).url,
+    },
+  };
 }

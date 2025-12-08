@@ -1,7 +1,10 @@
 import type { Plugin } from "@/core";
-import type { CompilerOptions } from "@/config/collections/mdx/build-mdx";
 
 type Awaitable<T> = T | Promise<T>;
+
+export interface CompilerOptions {
+  addDependency: (file: string) => void;
+}
 
 export interface Loader {
   /**

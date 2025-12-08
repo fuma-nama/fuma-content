@@ -11,8 +11,9 @@ async function start() {
     existsSync("next.config.ts");
 
   if (isNext) {
-    const { postInstall } = await import("./next");
-    await postInstall({ configPath, outDir });
+    const { createStandaloneCore } = await import("./next");
+    const core = await createStandaloneCore({ configPath, outDir });
+    await core.emit({ write: true });
   } else {
     const { createStandaloneCore } = await import("./vite");
     const core = await createStandaloneCore({ configPath, outDir });

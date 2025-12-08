@@ -13,7 +13,7 @@ export function toBun(test: RegExp = /.+/, loader: Loader) {
     };
   }
 
-  return (build: Bun.PluginBuilder) => {
+  return (build: Bun.PluginBuilder): void => {
     // avoid using async here, because it will cause dynamic require() to fail
     build.onLoad({ filter: test }, (args) => {
       const [filePath, query = ""] = args.path.split("?", 2);

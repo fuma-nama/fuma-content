@@ -1,20 +1,11 @@
-import { withContent } from "@fuma-content/next";
-import {
-  rehypeCode,
-  remarkHeading,
-  remarkGfm,
-  remarkStructure,
-} from "fumadocs-core/mdx-plugins";
+import { createContent } from "fuma-content/next";
 
-export default withContent({
-  content: {
-    files: ["./content/**/*"],
-    outputDir: "./.content",
-    mdxOptions: {
-      remarkExports: ["frontmatter", "lastModified", "toc", "structuredData"],
-      remarkPlugins: [remarkGfm, remarkHeading, remarkStructure],
-      rehypePlugins: [rehypeCode],
-    },
-  },
-  eslint: { ignoreDuringBuilds: true },
-});
+/** @type {import('next').NextConfig} */
+const config = {
+  reactStrictMode: true,
+};
+
+export default async () => {
+  const withContent = await createContent();
+  return withContent(config);
+};

@@ -1,9 +1,11 @@
-import type { GlobalConfig, WorkspaceConfig } from "@/config/define";
-import type { Collection } from "@/config/collections";
+import type { GlobalConfig, WorkspaceConfig } from "@/config/index";
+import type { Collection } from "@/collections";
 
-export interface LoadedConfig {
+export interface LoadedConfig extends Omit<
+  GlobalConfig,
+  "workspaces" | "collections"
+> {
   collections: Map<string, Collection>;
-  global: GlobalConfig;
   workspaces: Record<
     string,
     {
@@ -19,31 +21,17 @@ export function buildConfig(
 ): LoadedConfig {
   const collections = new Map<string, Collection>();
   const loaded: GlobalConfig = {};
+  const globalConfig = (config.default ?? config) as GlobalConfig;
 
-  for (const [k, v] of Object.entries(config)) {
-    if (!v) {
-      continue;
+  if (globalConfig.collections) {
+    for (const [name, collection] of Object.entries(globalConfig.collections)) {
+      collection.init?.({ name, workspace });
+      collections.set(name, collection);
     }
-
-    if (k === "default" && v) {
-      Object.assign(loaded, v);
-      continue;
-    }
-
-    if (typeof v === "object") {
-      const casted = v as unknown as Collection;
-      casted.init?.({ name: k, workspace });
-      collections.set(k, casted);
-      continue;
-    }
-
-    throw new Error(
-      `Unknown export "${k}", you can only export collections from configuration file.`,
-    );
   }
 
   return {
-    global: loaded,
+    ...globalConfig,
     collections,
     workspaces: Object.fromEntries(
       Object.entries(loaded.workspaces ?? {}).map(([key, value]) => {
@@ -51,7 +39,10 @@ export function buildConfig(
           key,
           {
             dir: value.dir,
-            config: buildConfig(value.config, { ...value, name: key }),
+            config: buildConfig(value.config as Record<string, unknown>, {
+              ...value,
+              name: key,
+            }),
           },
         ];
       }),

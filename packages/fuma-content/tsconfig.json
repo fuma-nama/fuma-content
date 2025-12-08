@@ -5,7 +5,8 @@
       "@/*": ["./src/*"]
     },
     "noUncheckedIndexedAccess": false,
-    "types": ["remark-stringify", "@types/node"]
+    "types": ["remark-stringify", "@types/node", "bun"]
   },
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

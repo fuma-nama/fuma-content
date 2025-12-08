@@ -1,21 +1,10 @@
-import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import type { ReactNode } from "react";
-import { pageTree } from "../source";
-import { Logo } from "@/components/logo";
+import { source } from '@/lib/source';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { baseOptions } from '@/lib/layout.shared';
 
-export default function RootDocsLayout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: LayoutProps<'/docs'>) {
   return (
-    <DocsLayout
-      tree={pageTree}
-      nav={{
-        title: (
-          <>
-            <Logo className="size-5 mr-2" />
-            Fuma Content
-          </>
-        ),
-      }}
-    >
+    <DocsLayout tree={source.pageTree} {...baseOptions()}>
       {children}
     </DocsLayout>
   );

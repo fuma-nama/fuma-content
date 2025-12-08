@@ -7,10 +7,14 @@ export default defineConfig([
     entry: [
       "./src/{index,bin}.ts",
       "./src/{config,next,vite,bun}/index.ts",
-      "./src/webpack/{mdx,meta}.ts",
       "./src/node/loader.ts",
-      "./src/runtime/*.ts",
+
+      "./src/collections/*.ts",
+      "./src/collections/*/{index,loader-webpack,runtime}.ts",
+
       "./src/plugins/*.ts",
+      "./src/plugins/last-modified/*.ts",
+      "./src/plugins/with-loader/{index,webpack}.ts",
     ],
     format: "esm",
     external,
