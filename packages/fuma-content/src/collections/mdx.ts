@@ -74,18 +74,6 @@ export function defineMDX<C extends MDXCollectionConfig>(
         : process.cwd(),
       postprocess: config.postprocess,
       getMDXOptions: config.options,
-      onGenerateList(list) {
-        const mdxHandler = collection.handlers.mdx;
-        if (!mdxHandler) return;
-
-        if (mdxHandler.postprocess?.extractLinkReferences) {
-          this.codegen.addNamedImport(
-            ["composerExtractedReferences"],
-            "fuma-content/collections/mdx/runtime",
-          );
-          list.composer("composerExtractedReferences()");
-        }
-      },
     };
     collection.handlers["last-modified"] = {
       config({ getLastModified }) {
@@ -117,8 +105,9 @@ export function defineMDX<C extends MDXCollectionConfig>(
       },
     };
     collection.handlers["entry-file"] = {
-      async generate(context) {
-        if (!collection.handlers.fs) return;
+      async server(context) {
+        const mdxHandler = collection.handlers.mdx;
+        if (!collection.handlers.fs || !mdxHandler) return;
         const fsHandler = collection.handlers.fs;
         const { codegen } = context;
 
@@ -170,7 +159,15 @@ export function defineMDX<C extends MDXCollectionConfig>(
         }
 
         const list = new CollectionListGenerator(initializer);
-        collection.handlers.mdx?.onGenerateList?.call(context, list);
+        if (mdxHandler.postprocess?.extractLinkReferences) {
+          codegen.addNamedImport(
+            ["composerExtractedReferences"],
+            "fuma-content/collections/mdx/runtime",
+          );
+          list.composer("composerExtractedReferences()");
+        }
+
+        mdxHandler.onGenerateList?.call(context, list);
         codegen.push(`export const ${collection.name} = ${list.flush()};`);
       },
     };
@@ -219,10 +216,7 @@ export function mdxPlugin(): Plugin {
               },
             },
             pageExtensions: [
-              ...(nextConfig.pageExtensions ?? []),
-              "js",
-              "jsx",
-              "tsx",
+              ...(nextConfig.pageExtensions ?? ["js", "jsx", "tsx", "ts"]),
               "mdx",
               "md",
             ],
@@ -249,12 +243,12 @@ export function mdxPlugin(): Plugin {
     },
     {
       test: mdxLoaderGlob,
-      createLoader: () =>
-        import("./mdx/loader").then((mod) =>
-          mod.createMdxLoader({
-            getCore: () => core,
-          }),
-        ),
+      async createLoader() {
+        const { createMdxLoader } = await import("./mdx/loader");
+        return createMdxLoader({
+          getCore: () => core,
+        });
+      },
     },
   );
 }

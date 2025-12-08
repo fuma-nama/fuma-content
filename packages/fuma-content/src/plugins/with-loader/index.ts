@@ -6,6 +6,8 @@ export interface CompilerOptions {
   addDependency: (file: string) => void;
 }
 
+type LoaderEnvironment = "vite" | "bun" | "node";
+
 export interface Loader {
   /**
    * Transform input into JavaScript.
@@ -47,7 +49,7 @@ export interface WithLoaderConfig {
    */
   test?: RegExp;
 
-  createLoader: () => Promise<Loader>;
+  createLoader: (environment: LoaderEnvironment) => Promise<Loader>;
 }
 
 /**
@@ -60,27 +62,27 @@ export function withLoader(
   { test, createLoader }: WithLoaderConfig,
 ): Plugin {
   let loader: Promise<Loader> | undefined;
-  function getLoader() {
-    return (loader ??= createLoader());
+  function getLoader(environment: LoaderEnvironment) {
+    return (loader ??= createLoader(environment));
   }
 
   return {
     bun: {
       async build(build) {
         const { toBun } = await import("./bun");
-        toBun(test, await getLoader())(build);
+        toBun(test, await getLoader("bun"))(build);
       },
     },
     node: {
       async createLoad() {
         const { toNode } = await import("./node");
-        return toNode(test, await getLoader());
+        return toNode(test, await getLoader("node"));
       },
     },
     vite: {
       async createPlugin() {
         const { toVite } = await import("./vite");
-        return toVite(plugin.name, test, await getLoader());
+        return toVite(plugin.name, test, await getLoader("vite"));
       },
     },
     ...plugin,

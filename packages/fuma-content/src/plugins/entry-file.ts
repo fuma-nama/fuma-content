@@ -25,7 +25,9 @@ export interface IndexFilePluginOptions {
 }
 
 export interface EntryFileHandler {
-  generate: (context: EntryFileContext) => void | Promise<void>;
+  server?: (context: EntryFileContext) => void | Promise<void>;
+  browser?: (context: EntryFileContext) => void | Promise<void>;
+
   rerunOnFileChange?: boolean;
 }
 
@@ -119,6 +121,6 @@ async function generateServerIndexFile(ctx: EntryFileContext) {
     const handler = collection.handlers["entry-file"];
     if (!handler) continue;
 
-    await handler.generate(ctx);
+    await handler.server?.(ctx);
   }
 }

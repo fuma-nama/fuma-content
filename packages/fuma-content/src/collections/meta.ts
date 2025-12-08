@@ -65,7 +65,7 @@ export function defineMeta<Schema extends StandardSchemaV1>(
       },
     };
     handlers["entry-file"] = {
-      async generate(context) {
+      async server(context) {
         const fsHandler = handlers.fs;
         if (!fsHandler) return;
 
@@ -97,82 +97,84 @@ export function metaPlugin(): Plugin {
   const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
   let core: Core;
 
-  return withLoader(
-    {
-      name: "meta",
-      config() {
-        core = this.core;
-      },
-      next: {
-        config(nextConfig) {
-          const { configPath, outDir } = this.core.getOptions();
-          const loaderPath = "fuma-content/collections/meta/loader-webpack";
-          const loaderOptions: WebpackLoaderOptions = {
-            configPath,
-            outDir,
-            absoluteCompiledConfigPath: path.resolve(
-              this.core.getCompiledConfigPath(),
-            ),
-            isDev: process.env.NODE_ENV === "development",
-          };
+  const base: Plugin = {
+    name: "meta",
+    config() {
+      core = this.core;
+    },
+    next: {
+      config(nextConfig) {
+        const { configPath, outDir } = this.core.getOptions();
+        const loaderPath = "fuma-content/collections/meta/loader-webpack";
+        const loaderOptions: WebpackLoaderOptions = {
+          configPath,
+          outDir,
+          absoluteCompiledConfigPath: path.resolve(
+            this.core.getCompiledConfigPath(),
+          ),
+          isDev: process.env.NODE_ENV === "development",
+        };
 
-          return {
-            ...nextConfig,
-            turbopack: {
-              ...nextConfig.turbopack,
-              rules: {
-                ...nextConfig.turbopack?.rules,
-                "*.json": {
-                  loaders: [
-                    {
-                      loader: loaderPath,
-                      options:
-                        loaderOptions as unknown as TurbopackLoaderOptions,
-                    },
-                  ],
-                  as: "*.json",
-                },
-                "*.yaml": {
-                  loaders: [
-                    {
-                      loader: loaderPath,
-                      options:
-                        loaderOptions as unknown as TurbopackLoaderOptions,
-                    },
-                  ],
-                  as: "*.js",
-                },
-              },
-            },
-            webpack: (config: Configuration, options) => {
-              config.resolve ||= {};
-              config.module ||= {};
-              config.module.rules ||= [];
-              config.module.rules.push({
-                test: metaLoaderGlob,
-                enforce: "pre",
-                use: [
+        return {
+          ...nextConfig,
+          turbopack: {
+            ...nextConfig.turbopack,
+            rules: {
+              ...nextConfig.turbopack?.rules,
+              "*.json": {
+                loaders: [
                   {
                     loader: loaderPath,
-                    options: loaderOptions,
+                    options: loaderOptions as unknown as TurbopackLoaderOptions,
                   },
                 ],
-              });
-
-              return nextConfig.webpack?.(config, options) ?? config;
+                as: "*.json",
+              },
+              "*.yaml": {
+                loaders: [
+                  {
+                    loader: loaderPath,
+                    options: loaderOptions as unknown as TurbopackLoaderOptions,
+                  },
+                ],
+                as: "*.js",
+              },
             },
-          };
-        },
+          },
+          webpack(config: Configuration, options) {
+            config.resolve ||= {};
+            config.module ||= {};
+            config.module.rules ||= [];
+            config.module.rules.push({
+              test: metaLoaderGlob,
+              enforce: "pre",
+              use: [
+                {
+                  loader: loaderPath,
+                  options: loaderOptions,
+                },
+              ],
+            });
+
+            return nextConfig.webpack?.(config, options) ?? config;
+          },
+        };
       },
     },
-    {
-      test: metaLoaderGlob,
-      createLoader: () =>
-        import("./meta/loader").then((mod) =>
-          mod.createMetaLoader({
-            getCore: () => core,
-          }),
-        ),
+  };
+
+  return withLoader(base, {
+    test: metaLoaderGlob,
+    async createLoader(environment) {
+      const { createMetaLoader } = await import("./meta/loader");
+      return createMetaLoader(
+        {
+          getCore: () => core,
+        },
+        {
+          json: environment === "vite" ? "json" : "js",
+        },
+      );
     },
-  );
+  });
 }
