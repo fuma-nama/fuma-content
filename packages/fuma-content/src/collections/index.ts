@@ -4,6 +4,7 @@ import type { FIleCollectionHandler } from "@/collections/file-list";
 import type { MDXCollectionHandler } from "@/collections/mdx";
 import type { MetaCollectionHandler } from "@/collections/meta";
 import type { EntryFileHandler } from "@/plugins/entry-file";
+import type { LastModifiedHandler } from "@/plugins/last-modified";
 
 export interface InitOptions {
   name: string;
@@ -14,26 +15,27 @@ export interface Collection {
   name: string;
   init?: (options: InitOptions) => void;
 
-  readonly handlers: {
-    fs?: FIleCollectionHandler;
-    mdx?: MDXCollectionHandler;
-    meta?: MetaCollectionHandler;
-    "json-schema"?: JSONSchemaHandler;
-    "entry-file"?: EntryFileHandler;
-  };
+  readonly handlers: CollectionHandlers;
 }
 
-export function createCollection({
-  init,
-}: {
-  init: (this: Collection, options: InitOptions) => void;
-}): Collection {
+export interface CollectionHandlers {
+  fs?: FIleCollectionHandler;
+  mdx?: MDXCollectionHandler;
+  meta?: MetaCollectionHandler;
+  "json-schema"?: JSONSchemaHandler;
+  "entry-file"?: EntryFileHandler;
+  "last-modified"?: LastModifiedHandler;
+}
+
+export function createCollection(
+  init: (collection: Collection, options: InitOptions) => void,
+): Collection {
   return {
     name: "",
     handlers: {},
     init(options) {
       this.name = options.name;
-      init.call(this, options);
+      init(this, options);
     },
   };
 }

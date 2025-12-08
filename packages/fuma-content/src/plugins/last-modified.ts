@@ -1,9 +1,18 @@
 import path from "node:path";
 import { x } from "tinyexec";
 import type { Plugin } from "@/core";
+import { createCache } from "@/utils/async-cache";
 
-const cache = new Map<string, Promise<Date | null>>();
+const cache = createCache<Date | null>();
+
 type VersionControlFn = (filePath: string) => Promise<Date | null | undefined>;
+
+export interface LastModifiedHandler {
+  /**
+   * called on collections with last-modified plugin configured.
+   */
+  config: (context: { getLastModified: VersionControlFn }) => void;
+}
 
 export interface LastModifiedPluginOptions {
   /**
@@ -51,31 +60,9 @@ export default function lastModified(
     collection(collection) {
       if (!filter(collection.name)) return;
 
-      const mdxHandler = collection.handlers.mdx;
-      if (mdxHandler) {
-        const { onGenerateList, vfile } = mdxHandler;
-        mdxHandler.onGenerateList = function (list) {
-          this.codegen.addNamedImport(
-            ["composerLastModified"],
-            "fuma-content/plugins/last-modified/runtime",
-          );
-          list.composer("composerLastModified()");
-          return onGenerateList?.call(this, list);
-        };
-
-        mdxHandler.vfile = async function (file) {
-          const timestamp = await fn(file.path);
-          if (timestamp) {
-            file.data["mdx-export"] ??= [];
-            file.data["mdx-export"].push({
-              name: "lastModified",
-              value: timestamp,
-            });
-          }
-          if (vfile) return vfile?.call(this, file);
-          return file;
-        };
-      }
+      const handler = collection.handlers["last-modified"];
+      if (!handler) return;
+      handler.config({ getLastModified: fn });
     },
   };
 }
@@ -84,10 +71,7 @@ async function getGitTimestamp(
   file: string,
   cwd: string,
 ): Promise<Date | null> {
-  const cached = cache.get(file);
-  if (cached) return cached;
-
-  const timePromise = (async () => {
+  return cache.cached(file, async () => {
     const out = await x(
       "git",
       ["log", "-1", '--pretty="%ai"', path.relative(cwd, file)],
@@ -101,8 +85,5 @@ async function getGitTimestamp(
     if (out.exitCode !== 0) return null;
     const date = new Date(out.stdout);
     return Number.isNaN(date.getTime()) ? null : date;
-  })();
-
-  cache.set(file, timePromise);
-  return timePromise;
+  });
 }

@@ -119,11 +119,21 @@ export function composerAttachCompiled<Add>() {
         : T[];
 }
 
-export function extractedReferencesComposer() {
+export function composerExtractedReferences() {
   return composerAttachCompiled<{
     /**
      * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
      */
     extractedReferences: ExtractedReference[];
+  }>();
+}
+
+export function composerLastModified() {
+  return composerAttachCompiled<{
+    /**
+     * Last modified date of document file, obtained from version control.
+     *
+     */
+    lastModified?: Date;
   }>();
 }

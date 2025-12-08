@@ -47,52 +47,49 @@ export function defineMeta<Schema extends StandardSchemaV1>(
     ? StandardSchemaV1.InferOutput<Schema>
     : Record<string, unknown>
 > {
-  return createCollection({
-    init(options) {
-      const collection = this;
-      const handlers = this.handlers;
-      handlers.fs = buildFileHandler(options, config, ["json", "yaml"]);
-      handlers.meta = {
-        schema: config.schema,
-      };
-      handlers["json-schema"] = {
-        async create() {
-          const { z, ZodType } = await import("zod");
+  return createCollection((collection, options) => {
+    const handlers = collection.handlers;
+    handlers.fs = buildFileHandler(options, config, ["json", "yaml"]);
+    handlers.meta = {
+      schema: config.schema,
+    };
+    handlers["json-schema"] = {
+      async create() {
+        const { z, ZodType } = await import("zod");
 
-          if (config.schema instanceof ZodType)
-            return z.toJSONSchema(config.schema, {
-              io: "input",
-              unrepresentable: "any",
-            });
-        },
-      };
-      handlers["entry-file"] = {
-        async generate(context) {
-          const fsHandler = handlers.fs;
-          if (!fsHandler) return;
-
-          const { codegen } = context;
-          codegen.addNamedImport(
-            ["metaList"],
-            "fuma-content/collections/meta/runtime",
-          );
-          const base = path.relative(process.cwd(), fsHandler.dir);
-          const glob = await codegen.generateGlobImport(fsHandler.patterns, {
-            query: {
-              collection: collection.name,
-              workspace: options.workspace?.name,
-            },
-            import: "default",
-            base: fsHandler.dir,
-            eager: true,
+        if (config.schema instanceof ZodType)
+          return z.toJSONSchema(config.schema, {
+            io: "input",
+            unrepresentable: "any",
           });
-          const list = new CollectionListGenerator(
-            `metaList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`,
-          );
-          codegen.push(`export const ${collection.name} = ${list.flush()};`);
-        },
-      };
-    },
+      },
+    };
+    handlers["entry-file"] = {
+      async generate(context) {
+        const fsHandler = handlers.fs;
+        if (!fsHandler) return;
+
+        const { codegen } = context;
+        codegen.addNamedImport(
+          ["metaList"],
+          "fuma-content/collections/meta/runtime",
+        );
+        const base = path.relative(process.cwd(), fsHandler.dir);
+        const glob = await codegen.generateGlobImport(fsHandler.patterns, {
+          query: {
+            collection: collection.name,
+            workspace: options.workspace?.name,
+          },
+          import: "default",
+          base: fsHandler.dir,
+          eager: true,
+        });
+        const list = new CollectionListGenerator(
+          `metaList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`,
+        );
+        codegen.push(`export const ${collection.name} = ${list.flush()};`);
+      },
+    };
   });
 }
 

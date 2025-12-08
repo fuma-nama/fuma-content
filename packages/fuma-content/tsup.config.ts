@@ -13,7 +13,6 @@ export default defineConfig([
       "./src/collections/*/{index,loader-webpack,runtime}.ts",
 
       "./src/plugins/*.ts",
-      "./src/plugins/last-modified/*.ts",
       "./src/plugins/with-loader/{index,webpack}.ts",
     ],
     format: "esm",

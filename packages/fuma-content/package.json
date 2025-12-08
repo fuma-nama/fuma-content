@@ -29,6 +29,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./collections": {
+      "import": "./dist/collections/index.js",
+      "types": "./dist/collections/index.d.ts"
+    },
     "./collections/*": {
       "import": "./dist/collections/*.js",
       "types": "./dist/collections/*.d.ts",
@@ -41,10 +45,6 @@
     "./bun": {
       "import": "./dist/bun/index.js",
       "types": "./dist/bun/index.d.ts"
-    },
-    "./plugins/last-modified": {
-      "import": "./dist/plugins/last-modified/index.js",
-      "types": "./dist/plugins/last-modified/index.d.ts"
     },
     "./plugins/with-loader": {
       "import": "./dist/plugins/with-loader/index.js",

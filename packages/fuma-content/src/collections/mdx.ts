@@ -8,10 +8,7 @@ import type { Core, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
 import path from "node:path";
 import type { VFile } from "vfile";
-import type {
-  TurbopackLoaderOptions,
-  TurbopackOptions,
-} from "next/dist/server/config-shared";
+import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { Configuration } from "webpack";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
@@ -69,88 +66,114 @@ export function defineMDX<C extends MDXCollectionConfig>(
   config: C,
 ): MDXCollection<C> {
   const { async = false } = config;
-  return createCollection({
-    init(options) {
-      const collection = this;
-      collection.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
-      collection.handlers.mdx = {
-        cwd: options.workspace
-          ? path.resolve(options.workspace.dir)
-          : process.cwd(),
-        postprocess: config.postprocess,
-        getMDXOptions: config.options,
-        onGenerateList(list) {
-          const mdxHandler = collection.handlers.mdx;
-          if (!mdxHandler) return;
+  return createCollection((collection, options) => {
+    collection.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
+    collection.handlers.mdx = {
+      cwd: options.workspace
+        ? path.resolve(options.workspace.dir)
+        : process.cwd(),
+      postprocess: config.postprocess,
+      getMDXOptions: config.options,
+      onGenerateList(list) {
+        const mdxHandler = collection.handlers.mdx;
+        if (!mdxHandler) return;
 
-          if (mdxHandler.postprocess?.extractLinkReferences) {
-            this.codegen.addNamedImport(
-              ["extractedReferencesComposer"],
-              "fuma-content/collections/mdx/runtime",
-            );
-            list.composer("extractedReferencesComposer()");
-          }
-        },
-      };
-      collection.handlers["entry-file"] = {
-        async generate(context) {
-          if (!collection.handlers.fs) return;
-          const fsHandler = collection.handlers.fs;
-          const { codegen } = context;
+        if (mdxHandler.postprocess?.extractLinkReferences) {
+          this.codegen.addNamedImport(
+            ["composerExtractedReferences"],
+            "fuma-content/collections/mdx/runtime",
+          );
+          list.composer("composerExtractedReferences()");
+        }
+      },
+    };
+    collection.handlers["last-modified"] = {
+      config({ getLastModified }) {
+        const mdxHandler = collection.handlers.mdx;
+        if (!mdxHandler) return;
 
-          function generateDocCollectionFrontmatterGlob(eager = false) {
-            return codegen.generateGlobImport(fsHandler.patterns, {
-              query: {
-                collection: collection.name,
-                only: "frontmatter",
-                workspace: options.workspace?.name,
-              },
-              import: "frontmatter",
-              base: fsHandler.dir,
-              eager,
+        const { onGenerateList, vfile } = mdxHandler;
+        mdxHandler.onGenerateList = function (list) {
+          this.codegen.addNamedImport(
+            ["composerLastModified"],
+            "fuma-content/plugins/last-modified/runtime",
+          );
+          list.composer("composerLastModified()");
+          return onGenerateList?.call(this, list);
+        };
+
+        mdxHandler.vfile = async function (file) {
+          const timestamp = await getLastModified(file.path);
+          if (timestamp) {
+            file.data["mdx-export"] ??= [];
+            file.data["mdx-export"].push({
+              name: "lastModified",
+              value: timestamp,
             });
           }
+          if (vfile) return vfile?.call(this, file);
+          return file;
+        };
+      },
+    };
+    collection.handlers["entry-file"] = {
+      async generate(context) {
+        if (!collection.handlers.fs) return;
+        const fsHandler = collection.handlers.fs;
+        const { codegen } = context;
 
-          function generateDocCollectionGlob(eager = false) {
-            return codegen.generateGlobImport(fsHandler.patterns, {
-              query: {
-                collection: collection.name,
-                workspace: options.workspace?.name,
-              },
-              base: fsHandler.dir,
-              eager,
-            });
-          }
+        function generateDocCollectionFrontmatterGlob(eager = false) {
+          return codegen.generateGlobImport(fsHandler.patterns, {
+            query: {
+              collection: collection.name,
+              only: "frontmatter",
+              workspace: options.workspace?.name,
+            },
+            import: "frontmatter",
+            base: fsHandler.dir,
+            eager,
+          });
+        }
 
-          const base = path.relative(process.cwd(), fsHandler.dir);
-          let initializer: string;
+        function generateDocCollectionGlob(eager = false) {
+          return codegen.generateGlobImport(fsHandler.patterns, {
+            query: {
+              collection: collection.name,
+              workspace: options.workspace?.name,
+            },
+            base: fsHandler.dir,
+            eager,
+          });
+        }
 
-          if (async) {
-            codegen.addNamedImport(
-              ["mdxListLazy"],
-              "fuma-content/collections/mdx/runtime",
-            );
-            const [headGlob, bodyGlob] = await Promise.all([
-              generateDocCollectionFrontmatterGlob(true),
-              generateDocCollectionGlob(),
-            ]);
+        const base = path.relative(process.cwd(), fsHandler.dir);
+        let initializer: string;
 
-            initializer = `mdxListLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
-          } else {
-            codegen.addNamedImport(
-              ["mdxList"],
-              "fuma-content/collections/mdx/runtime",
-            );
+        if (async) {
+          codegen.addNamedImport(
+            ["mdxListLazy"],
+            "fuma-content/collections/mdx/runtime",
+          );
+          const [headGlob, bodyGlob] = await Promise.all([
+            generateDocCollectionFrontmatterGlob(true),
+            generateDocCollectionGlob(),
+          ]);
 
-            initializer = `mdxList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
-          }
+          initializer = `mdxListLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
+        } else {
+          codegen.addNamedImport(
+            ["mdxList"],
+            "fuma-content/collections/mdx/runtime",
+          );
 
-          const list = new CollectionListGenerator(initializer);
-          collection.handlers.mdx?.onGenerateList?.call(context, list);
-          codegen.push(`export const ${collection.name} = ${list.flush()};`);
-        },
-      };
-    },
+          initializer = `mdxList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
+        }
+
+        const list = new CollectionListGenerator(initializer);
+        collection.handlers.mdx?.onGenerateList?.call(context, list);
+        codegen.push(`export const ${collection.name} = ${list.flush()};`);
+      },
+    };
   });
 }
 
