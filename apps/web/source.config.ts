@@ -1,6 +1,7 @@
 import { defineMDX } from "fuma-content/collections/mdx";
 import { z } from "zod";
 import { defineConfig } from "fuma-content/config";
+import lastModified from "fuma-content/plugins/last-modified";
 
 export default defineConfig({
   collections: {
@@ -14,4 +15,5 @@ export default defineConfig({
       },
     }),
   },
+  plugins: [lastModified()],
 });

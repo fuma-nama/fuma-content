@@ -34,6 +34,8 @@ export interface Plugin {
     config: LoadedConfig,
   ) => Awaitable<void | LoadedConfig>;
 
+  collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
+
   /**
    * Generate files (e.g. types, index file, or JSON schemas)
    */
@@ -137,6 +139,7 @@ export class Core {
   private readonly options: CoreOptions;
   private plugins: Plugin[] = [];
   private config!: LoadedConfig;
+  private collections!: Collection[];
 
   /**
    * Convenient cache store, reset when config changes.
@@ -160,11 +163,9 @@ export class Core {
       metaPlugin(),
     ]);
 
+    const ctx = this.getPluginContext();
     for (const plugin of this.plugins) {
-      const out = await plugin.config?.call(
-        this.getPluginContext(),
-        this.config,
-      );
+      const out = await plugin.config?.call(ctx, this.config);
       if (out) this.config = out;
     }
 
@@ -189,6 +190,12 @@ export class Core {
           },
         ),
       );
+    }
+
+    for (const collection of this.config.collections.values()) {
+      for (const plugin of this.plugins) {
+        await plugin.collection?.call(ctx, collection);
+      }
     }
   }
 

@@ -31,8 +31,8 @@
     },
     "./collections/*": {
       "import": "./dist/collections/*.js",
-      "default": "./dist/collections/*.js",
-      "types": "./dist/collections/*.d.ts"
+      "types": "./dist/collections/*.d.ts",
+      "default": "./dist/collections/*.js"
     },
     "./node/loader": {
       "import": "./dist/node/loader.js",
@@ -41,6 +41,14 @@
     "./bun": {
       "import": "./dist/bun/index.js",
       "types": "./dist/bun/index.d.ts"
+    },
+    "./plugins/last-modified": {
+      "import": "./dist/plugins/last-modified/index.js",
+      "types": "./dist/plugins/last-modified/index.d.ts"
+    },
+    "./plugins/with-loader": {
+      "import": "./dist/plugins/with-loader/index.js",
+      "types": "./dist/plugins/with-loader/index.d.ts"
     },
     "./plugins/*": {
       "import": "./dist/plugins/*.js",

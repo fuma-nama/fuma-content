@@ -47,35 +47,34 @@ export default function lastModified(
         default:
           fn = versionControl;
       }
+    },
+    collection(collection) {
+      if (!filter(collection.name)) return;
 
-      for (const collection of this.core.getCollections()) {
-        if (!filter(collection.name)) continue;
+      const mdxHandler = collection.handlers.mdx;
+      if (mdxHandler) {
+        const { onGenerateList, vfile } = mdxHandler;
+        mdxHandler.onGenerateList = function (list) {
+          this.codegen.addNamedImport(
+            ["composerLastModified"],
+            "fuma-content/plugins/last-modified/runtime",
+          );
+          list.composer("composerLastModified()");
+          return onGenerateList?.call(this, list);
+        };
 
-        const mdxHandler = collection.handlers.mdx;
-        if (mdxHandler) {
-          const { onGenerateList, vfile } = mdxHandler;
-          mdxHandler.onGenerateList = function (gen) {
-            this.codegen.addNamedImport(
-              ["composerLastModified"],
-              "fuma-content/plugins/last-modified/runtime",
-            );
-            gen.composer("composerLastModified()");
-            return onGenerateList?.call(this, gen);
-          };
-
-          mdxHandler.vfile = async function (file) {
-            const timestamp = await fn(file.path);
-            if (timestamp) {
-              file.data["mdx-export"] ??= [];
-              file.data["mdx-export"].push({
-                name: "lastModified",
-                value: timestamp,
-              });
-            }
-            if (vfile) return vfile?.call(this, file);
-            return file;
-          };
-        }
+        mdxHandler.vfile = async function (file) {
+          const timestamp = await fn(file.path);
+          if (timestamp) {
+            file.data["mdx-export"] ??= [];
+            file.data["mdx-export"].push({
+              name: "lastModified",
+              value: timestamp,
+            });
+          }
+          if (vfile) return vfile?.call(this, file);
+          return file;
+        };
       }
     },
   };
