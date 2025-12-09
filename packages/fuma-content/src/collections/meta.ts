@@ -2,13 +2,12 @@ import { type Collection, createCollection } from "@/collections/index";
 import {
   buildFileHandler,
   type FileHandlerConfig,
-} from "@/collections/file-list";
+} from "@/collections/handlers/fs";
 import type { Core, Plugin } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
-import { CollectionListGenerator } from "@/collections/list";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 
@@ -71,7 +70,7 @@ export function defineMeta<Schema extends StandardSchemaV1>(
 
         const { codegen } = context;
         codegen.addNamedImport(
-          ["metaList"],
+          ["metaStore"],
           "fuma-content/collections/meta/runtime",
         );
         const base = path.relative(process.cwd(), fsHandler.dir);
@@ -84,10 +83,8 @@ export function defineMeta<Schema extends StandardSchemaV1>(
           base: fsHandler.dir,
           eager: true,
         });
-        const list = new CollectionListGenerator(
-          `metaList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`,
-        );
-        codegen.push(`export const ${collection.name} = ${list.flush()};`);
+        const initializer = `metaList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
+        codegen.push(`export const ${collection.name} = ${initializer};`);
       },
     };
   });

@@ -10,7 +10,8 @@ export default defineConfig([
       "./src/node/loader.ts",
 
       "./src/collections/*.ts",
-      "./src/collections/*/{index,loader-webpack,runtime}.ts",
+      "./src/collections/{handlers,runtime}/*.ts",
+      "./src/collections/*/{loader-webpack,runtime}.ts",
 
       "./src/plugins/*.ts",
       "./src/plugins/with-loader/{index,webpack}.ts",

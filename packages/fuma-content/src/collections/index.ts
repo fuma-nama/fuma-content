@@ -1,6 +1,6 @@
 import type { WorkspaceConfig } from "@/config";
 import type { JSONSchemaHandler } from "@/plugins/json-schema";
-import type { FIleCollectionHandler } from "@/collections/file-list";
+import type { FIleCollectionHandler } from "@/collections/handlers/fs";
 import type { MDXCollectionHandler } from "@/collections/mdx";
 import type { MetaCollectionHandler } from "@/collections/meta";
 import type { EntryFileHandler } from "@/plugins/entry-file";

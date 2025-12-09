@@ -2,7 +2,7 @@ import { type Collection, createCollection } from "@/collections";
 import {
   buildFileHandler,
   type FileHandlerConfig,
-} from "@/collections/file-list";
+} from "@/collections/handlers/fs";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { Core, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
@@ -13,7 +13,6 @@ import type { Configuration } from "webpack";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { CollectionListGenerator } from "@/collections/list";
 import type { EntryFileContext } from "@/plugins/entry-file";
 
 type Awaitable<T> = T | Promise<T>;
@@ -45,26 +44,31 @@ export interface MDXCollectionHandler {
    */
   vfile?: (this: CompilationContext, file: VFile) => Awaitable<VFile>;
 
-  onGenerateList?: (
-    this: EntryFileContext,
-    gen: CollectionListGenerator,
-  ) => Awaitable<void>;
+  onGenerateStore?: (this: EntryFileContext, initializer: string) => string;
 }
 
-export interface MDXCollectionConfig extends FileHandlerConfig {
+export interface MDXCollectionConfig<
+  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
+> extends FileHandlerConfig {
   postprocess?: Partial<PostprocessOptions>;
-  frontmatter?: StandardSchemaV1;
+  frontmatter?: FrontmatterSchema;
   options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
   async?: boolean;
 }
 
-export type MDXCollection<_Config extends MDXCollectionConfig> = Collection & {
-  _?: _Config;
+export type MDXCollection<Frontmatter> = Collection & {
+  _frontmatter?: Frontmatter;
 };
 
-export function defineMDX<C extends MDXCollectionConfig>(
-  config: C,
-): MDXCollection<C> {
+export function defineMDX<
+  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
+>(
+  config: MDXCollectionConfig<FrontmatterSchema>,
+): MDXCollection<
+  FrontmatterSchema extends StandardSchemaV1
+    ? StandardSchemaV1.InferOutput<FrontmatterSchema>
+    : Record<string, unknown>
+> {
   const { async = false } = config;
   return createCollection((collection, options) => {
     collection.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
@@ -80,14 +84,15 @@ export function defineMDX<C extends MDXCollectionConfig>(
         const mdxHandler = collection.handlers.mdx;
         if (!mdxHandler) return;
 
-        const { onGenerateList, vfile } = mdxHandler;
-        mdxHandler.onGenerateList = function (list) {
+        const { onGenerateStore, vfile } = mdxHandler;
+        mdxHandler.onGenerateStore = function (initializer) {
           this.codegen.addNamedImport(
-            ["composerLastModified"],
+            ["$lastModified"],
             "fuma-content/plugins/last-modified/runtime",
           );
-          list.composer("composerLastModified()");
-          return onGenerateList?.call(this, list);
+
+          initializer += ".$data($lastModified())";
+          return onGenerateStore?.call(this, initializer) ?? initializer;
         };
 
         mdxHandler.vfile = async function (file) {
@@ -140,7 +145,7 @@ export function defineMDX<C extends MDXCollectionConfig>(
 
         if (async) {
           codegen.addNamedImport(
-            ["mdxListLazy"],
+            ["mdxStoreLazy"],
             "fuma-content/collections/mdx/runtime",
           );
           const [headGlob, bodyGlob] = await Promise.all([
@@ -151,24 +156,24 @@ export function defineMDX<C extends MDXCollectionConfig>(
           initializer = `mdxListLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
         } else {
           codegen.addNamedImport(
-            ["mdxList"],
+            ["mdxStore"],
             "fuma-content/collections/mdx/runtime",
           );
 
           initializer = `mdxList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
         }
 
-        const list = new CollectionListGenerator(initializer);
         if (mdxHandler.postprocess?.extractLinkReferences) {
           codegen.addNamedImport(
-            ["composerExtractedReferences"],
+            ["$extractedReferences"],
             "fuma-content/collections/mdx/runtime",
           );
-          list.composer("composerExtractedReferences()");
+          initializer += ".$data($extractedReferences())";
         }
 
-        mdxHandler.onGenerateList?.call(context, list);
-        codegen.push(`export const ${collection.name} = ${list.flush()};`);
+        initializer =
+          mdxHandler.onGenerateStore?.call(context, initializer) ?? initializer;
+        codegen.push(`export const ${collection.name} = ${initializer};`);
       },
     };
   });

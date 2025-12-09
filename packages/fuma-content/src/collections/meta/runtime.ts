@@ -1,27 +1,26 @@
 import type { GetCollectionConfig } from "@/types";
-import type { CollectionList } from "@/collections/list/runtime";
-import { type FileInfo, globToFileList } from "@/collections/file-list/runtime";
+import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { MetaCollection } from "@/collections/meta";
 
-export interface MetaListEntry<Data> extends FileInfo {
-  data: Data;
-}
-
-export function metaList<Config, Name extends string>(
+export function metaStore<Config, Name extends string>(
   _name: Name,
   base: string,
   input: Record<string, unknown>,
-) {
+): FileCollectionStore<{
+  data: GetCollectionConfig<Config, Name> extends MetaCollection<infer Data>
+    ? Data
+    : never;
+}> {
   type Metadata =
     GetCollectionConfig<Config, Name> extends MetaCollection<infer Data>
       ? Data
       : never;
-  const merged: Record<
+  const merged = input as Record<
     string,
     {
       data: Metadata;
     }
-  > = {};
+  >;
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
@@ -29,9 +28,5 @@ export function metaList<Config, Name extends string>(
     };
   }
 
-  const list: CollectionList<MetaListEntry<Metadata>> = globToFileList(
-    base,
-    merged,
-  );
-  return list;
+  return new FileCollectionStore(base, merged);
 }

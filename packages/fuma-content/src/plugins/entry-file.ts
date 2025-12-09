@@ -102,15 +102,24 @@ export default function entryFile(
       };
 
       const out: Promise<EmitEntry>[] = [
-        toEmitEntry("server.ts", generateServerIndexFile),
+        toEmitEntry("server.ts", (ctx) => generateEntryFile(ctx, "server")),
       ];
+
+      if (browser) {
+        out.push(
+          toEmitEntry("browser.ts", (ctx) => generateEntryFile(ctx, "browser")),
+        );
+      }
 
       return await Promise.all(out);
     },
   };
 }
 
-async function generateServerIndexFile(ctx: EntryFileContext) {
+async function generateEntryFile(
+  ctx: EntryFileContext,
+  variant: "server" | "browser",
+) {
   const { core, codegen } = ctx;
   codegen.addNamedImport(
     ["default as Config"],
@@ -121,6 +130,6 @@ async function generateServerIndexFile(ctx: EntryFileContext) {
     const handler = collection.handlers["entry-file"];
     if (!handler) continue;
 
-    await handler.server?.(ctx);
+    await handler[variant]?.(ctx);
   }
 }
