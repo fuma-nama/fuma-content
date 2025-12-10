@@ -19,36 +19,43 @@ export type CompiledMDXProperties<Frontmatter = Record<string, unknown>> = {
   _mdast?: string;
 } & Record<string, unknown>;
 
+export interface MDXStoreData<Frontmatter> {
+  id: string;
+  compiled: CompiledMDXProperties<Frontmatter>;
+}
+
 export function mdxStore<Config, Name extends string>(
   _name: Name,
   base: string,
   _input: Record<string, unknown>,
-): FileCollectionStore<{
-  compiled: CompiledMDXProperties<
+): FileCollectionStore<
+  MDXStoreData<
     GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
       ? Frontmatter
       : never
-  >;
-}> {
+  >
+> {
   type Frontmatter =
     GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
       ? _Frontmatter
       : never;
   const input = _input as Record<string, CompiledMDXProperties<Frontmatter>>;
-  const merged = input as unknown as Record<
-    string,
-    {
-      compiled: CompiledMDXProperties<Frontmatter>;
-    }
-  >;
+  const merged = input as unknown as Record<string, MDXStoreData<Frontmatter>>;
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
+      id: key,
       compiled: value,
     };
   }
 
   return new FileCollectionStore(base, merged);
+}
+
+export interface MDXStoreLazyData<Frontmatter> {
+  id: string;
+  frontmatter: Frontmatter;
+  load: () => Promise<CompiledMDXProperties<Frontmatter>>;
 }
 
 export function mdxStoreLazy<Config, Name extends string>(
@@ -58,20 +65,13 @@ export function mdxStoreLazy<Config, Name extends string>(
     head: Record<string, unknown>;
     body: Record<string, () => Promise<unknown>>;
   },
-): FileCollectionStore<{
-  frontmatter: GetCollectionConfig<Config, Name> extends MDXCollection<
-    infer Frontmatter
+): FileCollectionStore<
+  MDXStoreLazyData<
+    GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
+      ? Frontmatter
+      : never
   >
-    ? Frontmatter
-    : never;
-  load: () => Promise<
-    CompiledMDXProperties<
-      GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
-        ? Frontmatter
-        : never
-    >
-  >;
-}> {
+> {
   type Frontmatter =
     GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
       ? _Frontmatter
@@ -81,16 +81,11 @@ export function mdxStoreLazy<Config, Name extends string>(
     body: Record<string, () => Promise<CompiledMDXProperties<Frontmatter>>>;
   };
 
-  const merged: Record<
-    string,
-    {
-      frontmatter: Frontmatter;
-      load: () => Promise<CompiledMDXProperties<Frontmatter>>;
-    }
-  > = {};
+  const merged: Record<string, MDXStoreLazyData<Frontmatter>> = {};
 
   for (const [key, value] of Object.entries(input.head)) {
     merged[key] = {
+      id: key,
       frontmatter: value,
       load: input.body[key],
     };
@@ -101,11 +96,11 @@ export function mdxStoreLazy<Config, Name extends string>(
 
 export function $attachCompiled<Add>() {
   return <T>(data: T) =>
-    data as T extends { compiled: unknown }
+    data as T extends MDXStoreData<unknown>
       ? T & {
           compiled: Add;
         }
-      : T extends { load: () => Promise<unknown> }
+      : T extends MDXStoreLazyData<unknown>
         ? T & {
             load: () => Promise<Awaited<ReturnType<T["load"]>> & Add>;
           }

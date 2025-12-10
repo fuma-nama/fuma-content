@@ -8,7 +8,7 @@ async function compileConfig(core: Core) {
   const { configPath, outDir } = core.getOptions();
 
   const transformed = await build({
-    entryPoints: [{ in: configPath, out: "source.config" }],
+    entryPoints: [{ in: configPath, out: "content.config" }],
     bundle: true,
     outdir: outDir,
     target: "node20",

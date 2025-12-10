@@ -13,7 +13,7 @@ export interface PluginOptions {
   index?: boolean | IndexFilePluginOptions;
 
   /**
-   * @defaultValue source.config.ts
+   * @defaultValue content.config.ts
    */
   configPath?: string;
 
@@ -35,7 +35,8 @@ export interface PluginOptions {
 export default async function content(
   config: Record<string, unknown>,
   pluginOptions: PluginOptions = {},
-): Promise<PluginOption> {
+  // @ts-expect-error `PluginOption` is compatible with Promise
+): PluginOption {
   const options = applyDefaults(pluginOptions);
   const core = createViteCore(options);
   await core.init({

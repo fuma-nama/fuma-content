@@ -116,7 +116,7 @@ export interface EmitOutput {
 }
 
 export const _Defaults = {
-  configPath: "source.config.ts",
+  configPath: "content.config.ts",
   outDir: ".content",
 };
 
@@ -216,7 +216,7 @@ export class Core {
    * The file path of compiled config file, the file may not exist (e.g. on Vite, or still compiling)
    */
   getCompiledConfigPath(): string {
-    return path.join(this.options.outDir, "source.config.mjs");
+    return path.join(this.options.outDir, "content.config.mjs");
   }
   getPlugins(workspace = false) {
     if (workspace) {
