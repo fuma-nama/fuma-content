@@ -1,7 +1,7 @@
 import type { BunPlugin } from "bun";
 import { buildConfig } from "@/config/build";
 import { pathToFileURL } from "node:url";
-import { _Defaults, type CoreOptions, createCore } from "@/core";
+import { _Defaults, type CoreOptions, Core } from "@/core";
 
 export type ContentPluginOptions = Partial<CoreOptions>;
 
@@ -18,7 +18,7 @@ export function createContentPlugin(
     name: "fuma-content",
     async setup(build) {
       const importPath = pathToFileURL(configPath).href;
-      const core = createCore({
+      const core = new Core({
         environment,
         outDir,
         configPath,

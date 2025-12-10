@@ -5,6 +5,7 @@ import type { MDXCollectionHandler } from "@/collections/mdx";
 import type { MetaCollectionHandler } from "@/collections/meta";
 import type { EntryFileHandler } from "@/plugins/entry-file";
 import type { LastModifiedHandler } from "@/plugins/last-modified";
+import type { PluginOption } from "@/core";
 
 export interface InitOptions {
   name: string;
@@ -16,6 +17,25 @@ export interface Collection {
   init?: (options: InitOptions) => void;
 
   readonly handlers: CollectionHandlers;
+
+  /**
+   * information for the collection type, can be shared for all collections of same type.
+   */
+  readonly typeInfo: CollectionTypeInfo;
+}
+
+export interface CollectionTypeInfo {
+  /**
+   * ID for collection type.
+   *
+   * @example `my-package:my-collection-type`
+   */
+  readonly id: string;
+
+  /**
+   * plugins to register, registered once for each collection type.
+   */
+  readonly plugins?: PluginOption;
 }
 
 export interface CollectionHandlers {
@@ -28,6 +48,7 @@ export interface CollectionHandlers {
 }
 
 export function createCollection(
+  info: CollectionTypeInfo,
   init: (collection: Collection, options: InitOptions) => void,
 ): Collection {
   return {
@@ -37,5 +58,6 @@ export function createCollection(
       this.name = options.name;
       init(this, options);
     },
+    typeInfo: info,
   };
 }

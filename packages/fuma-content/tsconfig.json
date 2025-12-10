@@ -5,6 +5,7 @@
       "@/*": ["./src/*"]
     },
     "noUncheckedIndexedAccess": false,
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
     "types": ["remark-stringify", "@types/node", "bun"]
   },
   "include": ["src"],

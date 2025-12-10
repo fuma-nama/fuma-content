@@ -6,8 +6,6 @@ import type { Collection } from "@/collections";
 import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
-import { mdxPlugin } from "@/collections/mdx";
-import { metaPlugin } from "@/collections/meta";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -139,7 +137,6 @@ export class Core {
   private readonly options: CoreOptions;
   private plugins: Plugin[] = [];
   private config!: LoadedConfig;
-  private collections!: Collection[];
 
   /**
    * Convenient cache store, reset when config changes.
@@ -156,11 +153,16 @@ export class Core {
     this.config = await newConfig;
     this.cache.clear();
     this.workspaces.clear();
+    const loadedCollectionTypeIds = new Set<string>();
     this.plugins = await getPlugins([
       this.options.plugins,
       this.config.plugins,
-      mdxPlugin(),
-      metaPlugin(),
+      ...this.config.collections.values().map(({ typeInfo }) => {
+        if (loadedCollectionTypeIds.has(typeInfo.id)) return false;
+
+        loadedCollectionTypeIds.add(typeInfo.id);
+        return typeInfo.plugins;
+      }),
     ]);
 
     const ctx = this.getPluginContext();
@@ -175,7 +177,7 @@ export class Core {
       await Promise.all(
         Object.entries(this.config.workspaces).map(
           async ([name, workspace]) => {
-            const core = createCore({
+            const child = new Core({
               ...this.options,
               outDir: path.join(outDir, name),
               workspace: {
@@ -185,18 +187,20 @@ export class Core {
               },
             });
 
-            await core.init({ config: workspace.config });
-            this.workspaces.set(name, core);
+            await child.init({ config: workspace.config });
+            this.workspaces.set(name, child);
           },
         ),
       );
     }
 
-    for (const collection of this.config.collections.values()) {
-      for (const plugin of this.plugins) {
-        await plugin.collection?.call(ctx, collection);
-      }
-    }
+    await Promise.all(
+      this.config.collections.values().map(async (collection) => {
+        for (const plugin of this.plugins) {
+          await plugin.collection?.call(ctx, collection);
+        }
+      }),
+    );
   }
 
   getWorkspaces() {
@@ -226,14 +230,13 @@ export class Core {
     return this.plugins;
   }
   getCollections(workspace = false): Collection[] {
+    const list = Array.from(this.config.collections.values());
     if (workspace) {
-      const v = this.getCollections();
       for (const workspace of this.workspaces.values()) {
-        v.push(...workspace.getCollections());
+        list.push(...workspace.getCollections());
       }
-      return v;
     }
-    return Array.from(this.config.collections.values());
+    return list;
   }
   getCollection(name: string): Collection | undefined {
     return this.config.collections.get(name);
@@ -243,15 +246,18 @@ export class Core {
       core: this,
     };
   }
-  async initServer(server: ServerContext): Promise<void> {
+  async initServer(server: ServerContext) {
     const ctx = this.getPluginContext();
+    const promises: Awaitable<void>[] = [];
 
     for (const plugin of this.plugins) {
-      await plugin.configureServer?.call(ctx, server);
+      promises.push(plugin.configureServer?.call(ctx, server));
     }
     for (const workspace of this.workspaces.values()) {
-      await workspace.initServer(server);
+      promises.push(workspace.initServer(server));
     }
+
+    await Promise.all(promises);
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
@@ -297,15 +303,13 @@ export class Core {
       );
     }
 
-    for (const [name, workspace] of this.workspaces) {
-      if (filterWorkspace && !filterWorkspace(name)) continue;
-      out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
-    }
+    await Promise.all(
+      this.workspaces.entries().map(async ([name, workspace]) => {
+        if (filterWorkspace && !filterWorkspace(name)) return;
+        out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
+      }),
+    );
 
     return out;
   }
-}
-
-export function createCore(options: CoreOptions): Core {
-  return new Core(options);
 }

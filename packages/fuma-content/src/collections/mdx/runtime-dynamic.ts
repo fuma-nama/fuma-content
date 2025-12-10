@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/utils/fuma-matter";
 import fs from "node:fs/promises";
 import { server, type ServerOptions } from "./server";
-import { type CoreOptions, createCore } from "@/core";
+import { type CoreOptions, Core } from "@/core";
 import type { FileInfo, InternalTypeConfig } from "./types";
 import type { MDXComponents } from "mdx/types";
 import type { FC } from "react";
@@ -30,7 +30,7 @@ export async function dynamic<Config, TC extends InternalTypeConfig>(
   coreOptions: CoreOptions,
   serverOptions?: ServerOptions,
 ) {
-  const core = createCore(coreOptions);
+  const core = new Core(coreOptions);
   await core.init({
     config: buildConfig(configExports as Record<string, unknown>),
   });

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
-import { _Defaults, type Core, createCore } from "@/core";
+import { _Defaults, Core } from "@/core";
 import type { IndexFilePluginOptions } from "@/plugins/entry-file";
 import entryFile from "@/plugins/entry-file";
 
@@ -118,7 +118,7 @@ function applyDefaults(options: NextOptions): Required<NextOptions> {
 }
 
 function createNextCore(options: Required<NextOptions>): Core {
-  return createCore({
+  return new Core({
     environment: "next",
     outDir: options.outDir,
     configPath: options.configPath,

@@ -1,4 +1,8 @@
-import { type Collection, createCollection } from "@/collections";
+import {
+  type Collection,
+  type CollectionTypeInfo,
+  createCollection,
+} from "@/collections";
 import {
   buildFileHandler,
   type FileHandlerConfig,
@@ -54,10 +58,16 @@ export interface MDXCollectionConfig<
   frontmatter?: FrontmatterSchema;
   options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
   async?: boolean;
+  dynamic?: boolean;
 }
 
 export type MDXCollection<Frontmatter> = Collection & {
   _frontmatter?: Frontmatter;
+};
+
+const mdxTypeInfo: CollectionTypeInfo = {
+  id: "mdx",
+  plugins: [plugin()],
 };
 
 export function defineMDX<
@@ -69,8 +79,8 @@ export function defineMDX<
     ? StandardSchemaV1.InferOutput<FrontmatterSchema>
     : Record<string, unknown>
 > {
-  const { async = false } = config;
-  return createCollection((collection, options) => {
+  const { async = false, dynamic = false } = config;
+  return createCollection(mdxTypeInfo, (collection, options) => {
     collection.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
     collection.handlers.mdx = {
       cwd: options.workspace
@@ -88,7 +98,7 @@ export function defineMDX<
         mdxHandler.onGenerateStore = function (initializer) {
           this.codegen.addNamedImport(
             ["$lastModified"],
-            "fuma-content/plugins/last-modified/runtime",
+            "fuma-content/collections/mdx/runtime",
           );
 
           initializer += ".$data($lastModified())";
@@ -110,6 +120,7 @@ export function defineMDX<
       },
     };
     collection.handlers["entry-file"] = {
+      rerunOnFileChange: dynamic,
       async server(context) {
         const mdxHandler = collection.handlers.mdx;
         if (!collection.handlers.fs || !mdxHandler) return;
@@ -153,14 +164,14 @@ export function defineMDX<
             generateDocCollectionGlob(),
           ]);
 
-          initializer = `mdxListLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
+          initializer = `mdxStoreLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
         } else {
           codegen.addNamedImport(
             ["mdxStore"],
             "fuma-content/collections/mdx/runtime",
           );
 
-          initializer = `mdxList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
+          initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
         }
 
         if (mdxHandler.postprocess?.extractLinkReferences) {
@@ -179,16 +190,12 @@ export function defineMDX<
   });
 }
 
-export function mdxPlugin(): Plugin {
+function plugin(): Plugin {
   const mdxLoaderGlob = /\.mdx?(\?.+?)?$/;
-  let core: Core;
 
   return withLoader(
     {
       name: "mdx",
-      config() {
-        core = this.core;
-      },
       next: {
         config(nextConfig) {
           const { configPath, outDir } = this.core.getOptions();
@@ -225,8 +232,7 @@ export function mdxPlugin(): Plugin {
               "mdx",
               "md",
             ],
-            webpack: (config: Configuration, options) => {
-              config.resolve ||= {};
+            webpack(config: Configuration, options) {
               config.module ||= {};
               config.module.rules ||= [];
               config.module.rules.push({
@@ -251,7 +257,7 @@ export function mdxPlugin(): Plugin {
       async createLoader() {
         const { createMdxLoader } = await import("./mdx/loader");
         return createMdxLoader({
-          getCore: () => core,
+          getCore: () => this.core,
         });
       },
     },

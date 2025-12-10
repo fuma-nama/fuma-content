@@ -15,12 +15,12 @@ export const source = loader(mySource(), {
 
 function mySource(): Source<{
   metaData: MetaData;
-  pageData: (typeof docs)[number]["compiled"]["frontmatter"] & {
-    compiled: (typeof docs)[number]["compiled"];
+  pageData: (typeof docs)["$inferData"]["compiled"]["frontmatter"] & {
+    compiled: (typeof docs)["$inferData"]["compiled"];
   };
 }> {
   return {
-    files: docs.map((doc) => ({
+    files: docs.list().map((doc) => ({
       type: "page",
       path: doc.path,
       absolutePath: doc.fullPath,

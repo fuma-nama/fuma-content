@@ -1,4 +1,4 @@
-import type { Plugin } from "@/core";
+import type { Plugin, PluginContext } from "@/core";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -49,7 +49,10 @@ export interface WithLoaderConfig {
    */
   test?: RegExp;
 
-  createLoader: (environment: LoaderEnvironment) => Promise<Loader>;
+  createLoader: (
+    this: PluginContext,
+    environment: LoaderEnvironment,
+  ) => Promise<Loader>;
 }
 
 /**
@@ -62,27 +65,28 @@ export function withLoader(
   { test, createLoader }: WithLoaderConfig,
 ): Plugin {
   let loader: Promise<Loader> | undefined;
-  function getLoader(environment: LoaderEnvironment) {
-    return (loader ??= createLoader(environment));
-  }
 
   return {
     bun: {
       async build(build) {
         const { toBun } = await import("./bun");
-        toBun(test, await getLoader("bun"))(build);
+        toBun(test, await (loader ??= createLoader.call(this, "bun")))(build);
       },
     },
     node: {
       async createLoad() {
         const { toNode } = await import("./node");
-        return toNode(test, await getLoader("node"));
+        return toNode(test, await (loader ??= createLoader.call(this, "node")));
       },
     },
     vite: {
       async createPlugin() {
         const { toVite } = await import("./vite");
-        return toVite(plugin.name, test, await getLoader("vite"));
+        return toVite(
+          plugin.name,
+          test,
+          await (loader ??= createLoader.call(this, "vite")),
+        );
       },
     },
     ...plugin,

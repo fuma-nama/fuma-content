@@ -1,7 +1,7 @@
 import type { PluginOption } from "vite";
 import { buildConfig } from "@/config/build";
 import type { FSWatcher } from "chokidar";
-import { _Defaults, createCore } from "@/core";
+import { _Defaults, Core } from "@/core";
 import entryFile, { type IndexFilePluginOptions } from "@/plugins/entry-file";
 
 export interface PluginOptions {
@@ -79,7 +79,7 @@ function createViteCore({
 }: Required<PluginOptions>) {
   if (index === true) index = {};
 
-  return createCore({
+  return new Core({
     environment: "vite",
     configPath,
     outDir,

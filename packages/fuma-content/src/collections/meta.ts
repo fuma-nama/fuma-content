@@ -1,4 +1,8 @@
-import { type Collection, createCollection } from "@/collections/index";
+import {
+  type Collection,
+  CollectionTypeInfo,
+  createCollection,
+} from "@/collections/index";
 import {
   buildFileHandler,
   type FileHandlerConfig,
@@ -39,6 +43,11 @@ export type MetaCollection<_Data> = Collection & {
   _type?: _Data;
 };
 
+const metaTypeInfo: CollectionTypeInfo = {
+  id: "meta",
+  plugins: [plugin()],
+};
+
 export function defineMeta<Schema extends StandardSchemaV1>(
   config: MetaCollectionConfig<Schema>,
 ): MetaCollection<
@@ -46,7 +55,7 @@ export function defineMeta<Schema extends StandardSchemaV1>(
     ? StandardSchemaV1.InferOutput<Schema>
     : Record<string, unknown>
 > {
-  return createCollection((collection, options) => {
+  return createCollection(metaTypeInfo, (collection, options) => {
     const handlers = collection.handlers;
     handlers.fs = buildFileHandler(options, config, ["json", "yaml"]);
     handlers.meta = {
@@ -83,22 +92,18 @@ export function defineMeta<Schema extends StandardSchemaV1>(
           base: fsHandler.dir,
           eager: true,
         });
-        const initializer = `metaList<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
+        const initializer = `metaStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
         codegen.push(`export const ${collection.name} = ${initializer};`);
       },
     };
   });
 }
 
-export function metaPlugin(): Plugin {
+function plugin(): Plugin {
   const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
-  let core: Core;
 
   const base: Plugin = {
     name: "meta",
-    config() {
-      core = this.core;
-    },
     next: {
       config(nextConfig) {
         const { configPath, outDir } = this.core.getOptions();
@@ -139,7 +144,6 @@ export function metaPlugin(): Plugin {
             },
           },
           webpack(config: Configuration, options) {
-            config.resolve ||= {};
             config.module ||= {};
             config.module.rules ||= [];
             config.module.rules.push({
@@ -166,7 +170,7 @@ export function metaPlugin(): Plugin {
       const { createMetaLoader } = await import("./meta/loader");
       return createMetaLoader(
         {
-          getCore: () => core,
+          getCore: () => this.core,
         },
         {
           json: environment === "vite" ? "json" : "js",
