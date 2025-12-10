@@ -18,12 +18,32 @@ export interface CodeGeneratorOptions {
   globCache: Map<string, Promise<string[]>>;
 }
 
+interface ImportInfo {
+  // import name -> member name
+  named: Map<string, string>;
+  namespaces: Set<string>;
+  /**
+   * a set of import names, the import is type-only if its name is missing in this set.
+   */
+  isUsed: Set<string>;
+}
+
+function importInfo(): ImportInfo {
+  return {
+    named: new Map(),
+    namespaces: new Set(),
+    isUsed: new Set(),
+  };
+}
+
 /**
  * Code generator (one instance per file)
  */
 export class CodeGenerator {
   private readonly lines: string[] = [];
   private readonly globCache: Map<string, Promise<string[]>>;
+  // specifier -> imported members/info
+  private readonly importInfos = new Map<string, ImportInfo>();
   private eagerImportId = 0;
 
   readonly options: CodeGeneratorOptions;
@@ -43,19 +63,20 @@ export class CodeGenerator {
   }
 
   addNamespaceImport(namespace: string, specifier: string, types = false) {
-    this.lines.unshift(
-      types
-        ? `import type * as ${namespace} from "./${specifier}";`
-        : `import * as ${namespace} from "./${specifier}";`,
-    );
+    const info = this.importInfos.get(specifier) ?? importInfo();
+    this.importInfos.set(specifier, info);
+    if (!types) info.isUsed.add(namespace);
+    info.namespaces.add(namespace);
   }
 
   addNamedImport(names: string[], specifier: string, types = false) {
-    this.lines.unshift(
-      types
-        ? `import type { ${names.join(", ")} } from "${specifier}";`
-        : `import { ${names.join(", ")} } from "${specifier}";`,
-    );
+    const info = this.importInfos.get(specifier) ?? importInfo();
+    this.importInfos.set(specifier, info);
+    for (const name of names) {
+      const [memberName, importName = memberName] = name.split(/\s+as\s+/, 2);
+      info.named.set(importName, memberName);
+      if (!types) info.isUsed.add(importName);
+    }
   }
 
   push(...insert: string[]) {
@@ -161,12 +182,40 @@ export class CodeGenerator {
   }
 
   toString() {
-    const banner: string[] = ["// @ts-nocheck"];
+    const final: string[] = ["// @ts-nocheck"];
     if (this.options.target === "vite") {
-      banner.push('/// <reference types="vite/client" />');
+      final.push('/// <reference types="vite/client" />');
     }
 
-    return [...banner, ...this.lines].join("\n");
+    for (const [specifier, info] of this.importInfos) {
+      const { namespaces, named, isUsed } = info;
+      for (const namespace of namespaces) {
+        final.push(
+          isUsed.has(namespace)
+            ? `import * as ${namespace} from "${specifier}";`
+            : `import type * as ${namespace} from "${specifier}";`,
+        );
+      }
+
+      const namedImports: string[] = [];
+      for (const [importName, memberName] of named) {
+        const item =
+          importName === memberName
+            ? importName
+            : `${memberName} as ${importName}`;
+
+        namedImports.push(isUsed.has(importName) ? item : `type ${item}`);
+      }
+
+      if (namedImports.length > 0) {
+        final.push(
+          `import { ${namedImports.join(", ")} } from "${specifier}";`,
+        );
+      }
+    }
+
+    final.push(...this.lines);
+    return final.join("\n");
   }
 }
 
