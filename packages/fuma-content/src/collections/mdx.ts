@@ -5,6 +5,7 @@ import {
 } from "@/collections";
 import {
   buildFileHandler,
+  type FIleCollectionHandler,
   type FileHandlerConfig,
 } from "@/collections/handlers/fs";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
@@ -48,7 +49,11 @@ export interface MDXCollectionHandler {
    */
   vfile?: (this: CompilationContext, file: VFile) => Awaitable<VFile>;
 
-  onGenerateStore?: (this: EntryFileContext, initializer: string) => string;
+  onGenerateStore?: (
+    this: EntryFileContext,
+    initializer: string,
+    environment: "browser" | "server",
+  ) => string;
 }
 
 export interface MDXCollectionConfig<
@@ -68,6 +73,11 @@ export type MDXCollection<Frontmatter> = Collection & {
 const mdxTypeInfo: CollectionTypeInfo = {
   id: "mdx",
   plugins: [plugin()],
+};
+
+const RuntimePaths = {
+  browser: "fuma-content/collections/mdx/runtime-browser",
+  server: "fuma-content/collections/mdx/runtime",
 };
 
 export function defineMDX<
@@ -95,14 +105,15 @@ export function defineMDX<
         if (!mdxHandler) return;
 
         const { onGenerateStore, vfile } = mdxHandler;
-        mdxHandler.onGenerateStore = function (initializer) {
+        mdxHandler.onGenerateStore = function (initializer, environment) {
           this.codegen.addNamedImport(
             ["$lastModified"],
-            "fuma-content/collections/mdx/runtime",
+            RuntimePaths[environment],
           );
-
           initializer += ".$data($lastModified())";
-          return onGenerateStore?.call(this, initializer) ?? initializer;
+          return (
+            onGenerateStore?.call(this, initializer, environment) ?? initializer
+          );
         };
 
         mdxHandler.vfile = async function (file) {
@@ -119,71 +130,90 @@ export function defineMDX<
         };
       },
     };
+
+    function generateDocCollectionFrontmatterGlob(
+      context: EntryFileContext,
+      handler: FIleCollectionHandler,
+      eager = false,
+    ) {
+      return context.codegen.generateGlobImport(handler.patterns, {
+        query: {
+          collection: collection.name,
+          only: "frontmatter",
+          workspace: options.workspace?.name,
+        },
+        import: "frontmatter",
+        base: handler.dir,
+        eager,
+      });
+    }
+
+    function generateDocCollectionGlob(
+      context: EntryFileContext,
+      handler: FIleCollectionHandler,
+      eager = false,
+    ) {
+      return context.codegen.generateGlobImport(handler.patterns, {
+        query: {
+          collection: collection.name,
+          workspace: options.workspace?.name,
+        },
+        base: handler.dir,
+        eager,
+      });
+    }
+
     collection.handlers["entry-file"] = {
       rerunOnFileChange: dynamic,
       async server(context) {
         const mdxHandler = collection.handlers.mdx;
-        if (!collection.handlers.fs || !mdxHandler) return;
         const fsHandler = collection.handlers.fs;
+        if (!fsHandler || !mdxHandler) return;
         const { codegen } = context;
-
-        function generateDocCollectionFrontmatterGlob(eager = false) {
-          return codegen.generateGlobImport(fsHandler.patterns, {
-            query: {
-              collection: collection.name,
-              only: "frontmatter",
-              workspace: options.workspace?.name,
-            },
-            import: "frontmatter",
-            base: fsHandler.dir,
-            eager,
-          });
-        }
-
-        function generateDocCollectionGlob(eager = false) {
-          return codegen.generateGlobImport(fsHandler.patterns, {
-            query: {
-              collection: collection.name,
-              workspace: options.workspace?.name,
-            },
-            base: fsHandler.dir,
-            eager,
-          });
-        }
-
+        const runtimePath = RuntimePaths.server;
         const base = path.relative(process.cwd(), fsHandler.dir);
         let initializer: string;
 
         if (async) {
-          codegen.addNamedImport(
-            ["mdxStoreLazy"],
-            "fuma-content/collections/mdx/runtime",
-          );
+          codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
           const [headGlob, bodyGlob] = await Promise.all([
-            generateDocCollectionFrontmatterGlob(true),
-            generateDocCollectionGlob(),
+            generateDocCollectionFrontmatterGlob(context, fsHandler, true),
+            generateDocCollectionGlob(context, fsHandler),
           ]);
 
           initializer = `mdxStoreLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
         } else {
-          codegen.addNamedImport(
-            ["mdxStore"],
-            "fuma-content/collections/mdx/runtime",
-          );
-
-          initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(true)})`;
+          codegen.addNamedImport(["mdxStore"], runtimePath);
+          initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(context, fsHandler, true)})`;
         }
 
         if (mdxHandler.postprocess?.extractLinkReferences) {
-          codegen.addNamedImport(
-            ["$extractedReferences"],
-            "fuma-content/collections/mdx/runtime",
-          );
+          codegen.addNamedImport(["$extractedReferences"], runtimePath);
           initializer += ".$data($extractedReferences())";
         }
 
         initializer =
-          mdxHandler.onGenerateStore?.call(context, initializer) ?? initializer;
+          mdxHandler.onGenerateStore?.call(context, initializer, "server") ??
+          initializer;
+        codegen.push(`export const ${collection.name} = ${initializer};`);
+      },
+      async browser(context) {
+        const mdxHandler = collection.handlers.mdx;
+        const fsHandler = collection.handlers.fs;
+        if (!fsHandler || !mdxHandler) return;
+        const { codegen } = context;
+        const runtimePath = RuntimePaths.browser;
+        codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
+        let initializer = `mdxStoreBrowser<typeof Config, "${collection.name}">("${collection.name}", ${await generateDocCollectionGlob(context, fsHandler)})`;
+
+        if (mdxHandler.postprocess?.extractLinkReferences) {
+          codegen.addNamedImport(["$extractedReferences"], runtimePath);
+          initializer += ".$data($extractedReferences())";
+        }
+
+        initializer =
+          mdxHandler.onGenerateStore?.call(context, initializer, "browser") ??
+          initializer;
         codegen.push(`export const ${collection.name} = ${initializer};`);
       },
     };

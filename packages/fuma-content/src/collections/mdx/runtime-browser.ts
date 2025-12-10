@@ -1,211 +1,132 @@
+"use client";
+
 import { type ReactNode, type FC, lazy, createElement } from "react";
 import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
 import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
-import { CollectionMap } from "@/collections/runtime/store";
-import { FileCollectionStore } from "@/collections/runtime/file-store";
+import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
+import { SimpleCollectionStore } from "@/collections/runtime/store";
 
-export interface ClientLoaderOptions<Doc, Props> {
-  /**
-   * Loader ID (usually your collection name)
-   *
-   * The code splitting strategy of frameworks like Tanstack Start may duplicate `createClientLoader()` into different chunks.
-   *
-   * We use loader ID to share cache between multiple instances of client loader.
-   *
-   * @defaultValue ''
-   */
-  id?: string;
+export interface MDXStoreBrowserData<Frontmatter, CustomData> {
+  preload: () => Promise<CompiledMDXProperties<Frontmatter> & CustomData>;
 
-  component: (loaded: Doc, props: Props) => ReactNode;
+  _renderer: {
+    id: string;
+    renderers?: Map<string, FC>;
+    getStoreData: () => StoreData;
+  };
 }
 
-export interface ClientLoader<Doc, Props> {
-  preload: (id: string) => Promise<Doc>;
-  /**
-   * Get a component that renders content with `React.lazy`.
-   */
-  getComponent: (id: string) => FC<Props>;
-
-  /**
-   * Get react nodes that renders content with `React.lazy`.
-   */
-  useContent: (id: string, props: Props) => ReactNode;
+interface StoreData {
+  preloaded: Map<string, Promise<CompiledMDXProperties>>;
 }
 
-export interface MDXMapBrowserEntry<Frontmatter> {
-  load: () => Promise<CompiledMDXProperties<Frontmatter>>;
-  loader: <Props extends object | undefined = object>(
-    component: (
-      loaded: CompiledMDXProperties<Frontmatter>,
-      props: Props,
-    ) => ReactNode,
-  ) => FC<Props>;
-  preload: () => Promise<CompiledMDXProperties<Frontmatter>>;
-}
+export const _internal_data = new Map<string, StoreData>();
 
 export function mdxStoreBrowser<Config, Name extends string>(
-  _name: Name,
-  base: string,
-  _input: {
-    head: Record<string, unknown>;
-    body: Record<string, () => Promise<unknown>>;
-  },
-): FileCollectionStore<{
-  frontmatter: GetCollectionConfig<Config, Name> extends MDXCollection<
-    infer Frontmatter
+  name: Name,
+  _input: Record<string, () => Promise<unknown>>,
+): SimpleCollectionStore<
+  MDXStoreBrowserData<
+    GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
+      ? Frontmatter
+      : never,
+    unknown
   >
-    ? Frontmatter
-    : never;
-  load: () => Promise<
-    CompiledMDXProperties<
-      GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
-        ? Frontmatter
-        : never
-    >
-  >;
-}> {
+> {
   type Frontmatter =
     GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
       ? _Frontmatter
       : never;
-  const input = _input as {
-    head: Record<string, Frontmatter>;
-    body: Record<string, () => Promise<CompiledMDXProperties<Frontmatter>>>;
-  };
-
-  const merged: Record<
+  const input = _input as Record<
     string,
-    {
-      frontmatter: Frontmatter;
-      load: () => Promise<CompiledMDXProperties<Frontmatter>>;
-    }
-  > = {};
-
-  for (const [key, value] of Object.entries(input.head)) {
-    merged[key] = {
-      frontmatter: value,
-      load: input.body[key],
+    () => Promise<CompiledMDXProperties<Frontmatter>>
+  >;
+  const merged = new Map<string, MDXStoreBrowserData<Frontmatter, unknown>>();
+  function getStoreData() {
+    const store = _internal_data.get(name) ?? {
+      preloaded: new Map(),
     };
+    _internal_data.set(name, store);
+    return store;
   }
 
-  return new FileCollectionStore(base, merged);
+  for (const [key, value] of Object.entries(input)) {
+    merged.set(key, {
+      preload() {
+        const data = getStoreData();
+        const loaded = value();
+        data.preloaded.set(key, loaded);
+        return loaded;
+      },
+      _renderer: {
+        id: key,
+        getStoreData,
+      },
+    });
+  }
+
+  return new SimpleCollectionStore(merged);
 }
 
-const loaderStore = new Map<
-  string,
-  {
-    preloaded: Map<string, CompiledMDXProperties>;
-  }
->();
+/**
+ * Renders content with `React.lazy`.
+ */
+export function useRenderer<Frontmatter, CustomData>(
+  entry: MDXStoreBrowserData<Frontmatter, CustomData> | undefined,
+  renderFn: (
+    data: CompiledMDXProperties<Frontmatter> & CustomData,
+  ) => ReactNode,
+): ReactNode {
+  if (!entry) return null;
+  entry._renderer.renderers ??= new Map();
+  const { id, renderers, getStoreData } = entry._renderer;
+  let renderer = renderers.get(id);
 
-export function mdxMapBrowser<Config, Name extends string>(
-  _name: Name,
-  input: Record<string, () => Promise<unknown>>,
-) {
-  type Frontmatter =
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-      ? _Frontmatter
-      : never;
-
-  const store = new Map<string, MDXMapBrowserEntry<Frontmatter>>();
-
-  for (let [globKey, value] of Object.entries(input)) {
-    if (globKey.startsWith("./")) {
-      globKey = globKey.slice(2);
-    }
-
-    const load = value as () => Promise<CompiledMDXProperties<Frontmatter>>;
-    function getRenderer(path: string): FC<Props> {
-      if (path in renderers) return renderers[path];
-
-      const OnDemand = lazy(async () => {
-        const loaded = await getLoader(path)();
-
-        return { default: (props) => component(loaded, props) };
-      });
-
-      renderers[path] = (props) => {
-        const cached = store.preloaded.get(path);
-        if (!cached) return createElement(OnDemand, props);
-        return component(cached, props);
-      };
-      return renderers[path];
-    }
-
-    store.set(
-      globKey,
-      value as () => Promise<CompiledMDXProperties<Frontmatter>>,
-    );
-  }
-
-  return new CollectionMap(store);
-}
-
-const loaderStore = new Map<
-  string,
-  {
-    preloaded: Map<string, CompiledMDXProperties>;
-  }
->();
-
-export function createClientLoader<
-  Doc = CompiledMDXProperties,
-  Props extends object = object,
->(
-  globEntries: Record<string, () => Promise<Doc>>,
-  options: ClientLoaderOptions<Doc, Props>,
-): ClientLoader<Doc, Props> {
-  const { id = "", component } = options;
-  const renderers: Record<string, FC<Props>> = {};
-  const loaders = new Map<string, () => Promise<Doc>>();
-  const store = loaderStore.get(id) ?? {
-    preloaded: new Map(),
-  };
-  loaderStore.set(id, store);
-
-  for (const k in globEntries) {
-    loaders.set(k.startsWith("./") ? k.slice(2) : k, globEntries[k]);
-  }
-
-  function getLoader(path: string) {
-    const loader = loaders.get(path);
-    if (!loader)
-      throw new Error(
-        `[createClientLoader] ${path} does not exist in available entries`,
-      );
-    return loader;
-  }
-
-  function getRenderer(path: string): FC<Props> {
-    if (path in renderers) return renderers[path];
-
+  if (!renderer) {
     const OnDemand = lazy(async () => {
-      const loaded = await getLoader(path)();
+      const loaded = await entry.preload();
 
-      return { default: (props) => component(loaded, props) };
+      return { default: () => renderFn(loaded) };
     });
 
-    renderers[path] = (props) => {
-      const cached = store.preloaded.get(path);
-      if (!cached) return createElement(OnDemand, props);
-      return component(cached, props);
+    renderer = () => {
+      const data = getStoreData();
+      let cached: (CompiledMDXProperties<Frontmatter> & CustomData) | undefined;
+      data.preloaded.get(id)?.then((v) => {
+        cached = v as CompiledMDXProperties<Frontmatter> & CustomData;
+      });
+      if (!cached) return createElement(OnDemand);
+      return renderFn(cached);
     };
-    return renderers[path];
+    renderers.set(id, renderer);
   }
 
-  return {
-    async preload(path) {
-      const loaded = await getLoader(path)();
-      store.preloaded.set(path, loaded);
-      return loaded;
-    },
-    getComponent(path) {
-      return getRenderer(path);
-    },
-    useContent(path, props) {
-      const Comp = this.getComponent(path);
-      return createElement(Comp, props);
-    },
-  };
+  return createElement(renderer);
+}
+
+export function $attachCompiled<Add>() {
+  return <T>(data: T) =>
+    data as T extends MDXStoreBrowserData<infer Frontmatter, infer CustomData>
+      ? MDXStoreBrowserData<Frontmatter, CustomData & Add>
+      : T;
+}
+
+export function $extractedReferences() {
+  return $attachCompiled<{
+    /**
+     * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
+     */
+    extractedReferences: ExtractedReference[];
+  }>();
+}
+
+export function $lastModified() {
+  return $attachCompiled<{
+    /**
+     * Last modified date of document file, obtained from version control.
+     *
+     */
+    lastModified?: Date;
+  }>();
 }

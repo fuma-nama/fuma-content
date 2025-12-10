@@ -11,7 +11,7 @@ export default defineConfig([
 
       "./src/collections/*.ts",
       "./src/collections/{handlers,runtime}/*.ts",
-      "./src/collections/*/{loader-webpack,runtime}.ts",
+      "./src/collections/*/{loader-webpack,runtime,runtime-browser}.ts",
 
       "./src/plugins/*.ts",
       "./src/plugins/with-loader/{index,webpack}.ts",
