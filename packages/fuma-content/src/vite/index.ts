@@ -2,16 +2,8 @@ import type { PluginOption } from "vite";
 import { buildConfig } from "@/config/build";
 import type { FSWatcher } from "chokidar";
 import { _Defaults, Core } from "@/core";
-import entryFile, { type IndexFilePluginOptions } from "@/plugins/entry-file";
 
 export interface PluginOptions {
-  /**
-   * Generate index files for accessing content.
-   *
-   * @defaultValue true
-   */
-  index?: boolean | IndexFilePluginOptions;
-
   /**
    * @defaultValue content.config.ts
    */
@@ -73,31 +65,21 @@ export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
   return core;
 }
 
-function createViteCore({
-  index,
-  configPath,
-  outDir,
-}: Required<PluginOptions>) {
-  if (index === true) index = {};
-
+function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
   return new Core({
     environment: "vite",
     configPath,
     outDir,
-    plugins: [
-      index &&
-        entryFile({
-          ...index,
-          target: index.target ?? "vite",
-        }),
-    ],
+    emit: {
+      target: "vite",
+      jsExtension: false,
+    },
   });
 }
 
 function applyDefaults(options: PluginOptions): Required<PluginOptions> {
   return {
     updateViteConfig: options.updateViteConfig ?? true,
-    index: options.index ?? true,
     configPath: options.configPath ?? _Defaults.configPath,
     outDir: options.outDir ?? _Defaults.outDir,
   };

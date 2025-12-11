@@ -6,6 +6,7 @@ import type { Collection } from "@/collections";
 import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
+import { CodeGenerator } from "@/utils/code-generator";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -19,6 +20,19 @@ export interface EmitEntry {
 
 export interface PluginContext {
   core: Core;
+}
+
+export interface EmitContext extends PluginContext {
+  createCodeGenerator: (
+    path: string,
+    content: (ctx: EmitCodeGeneratorContext) => Promise<void>,
+  ) => Promise<EmitEntry>;
+}
+
+export interface EmitCodeGeneratorContext {
+  core: Core;
+  workspace?: string;
+  codegen: CodeGenerator;
 }
 
 export interface Plugin {
@@ -37,7 +51,7 @@ export interface Plugin {
   /**
    * Generate files (e.g. types, index file, or JSON schemas)
    */
-  emit?: (this: PluginContext) => Awaitable<EmitEntry[]>;
+  emit?: (this: EmitContext) => Awaitable<EmitEntry[]>;
 
   /**
    * Configure Fumadocs dev server
@@ -82,6 +96,14 @@ export interface CoreOptions {
   configPath: string;
   outDir: string;
   plugins?: PluginOption[];
+
+  emit?: {
+    target?: "default" | "vite";
+    /**
+     * add .js extenstion to imports
+     */
+    jsExtension?: boolean;
+  };
 
   /**
    * the workspace info if this instance is created as a workspace
@@ -261,10 +283,35 @@ export class Core {
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
-    const { workspace, outDir } = this.options;
+    const {
+      workspace,
+      outDir,
+      emit: { target, jsExtension } = {},
+    } = this.options;
     const { filterPlugin, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
-    const ctx = this.getPluginContext();
+    const globCache = new Map<string, Promise<string[]>>();
+    const ctx: EmitContext = {
+      ...this.getPluginContext(),
+      createCodeGenerator: async (path, content) => {
+        const codegen = new CodeGenerator({
+          target,
+          outDir,
+          jsExtension,
+          globCache,
+        });
+        await content({
+          core: this,
+          codegen,
+          workspace: workspace?.name,
+        });
+        return {
+          path,
+          content: codegen.toString(),
+        };
+      },
+    };
+
     const added = new Set<string>();
     const out: EmitOutput = {
       entries: [],
@@ -290,7 +337,6 @@ export class Core {
       await Promise.all(
         out.entries.map(async (entry) => {
           const file = path.join(outDir, entry.path);
-
           await fs.mkdir(path.dirname(file), { recursive: true });
           await fs.writeFile(file, entry.content);
         }),

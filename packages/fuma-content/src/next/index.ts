@@ -2,8 +2,6 @@ import type { NextConfig } from "next";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { _Defaults, Core } from "@/core";
-import type { IndexFilePluginOptions } from "@/plugins/entry-file";
-import entryFile from "@/plugins/entry-file";
 
 export interface NextOptions {
   /**
@@ -17,8 +15,6 @@ export interface NextOptions {
    * @defaultValue '.content'
    */
   outDir?: string;
-
-  index?: IndexFilePluginOptions | false;
 }
 
 export async function createContent(nextOptions: NextOptions = {}) {
@@ -111,7 +107,6 @@ export async function createStandaloneCore(options: NextOptions) {
 
 function applyDefaults(options: NextOptions): Required<NextOptions> {
   return {
-    index: {},
     outDir: options.outDir ?? _Defaults.outDir,
     configPath: options.configPath ?? _Defaults.configPath,
   };
@@ -122,6 +117,5 @@ function createNextCore(options: Required<NextOptions>): Core {
     environment: "next",
     outDir: options.outDir,
     configPath: options.configPath,
-    plugins: [options.index && entryFile(options.index)],
   });
 }

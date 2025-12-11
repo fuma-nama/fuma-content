@@ -1,5 +1,6 @@
 import path from "node:path";
 import { glob } from "tinyglobby";
+import { type AsyncCache, createCache } from "@/utils/async-cache";
 
 export interface GlobImportOptions {
   base: string;
@@ -41,7 +42,7 @@ function importInfo(): ImportInfo {
  */
 export class CodeGenerator {
   private readonly lines: string[] = [];
-  private readonly globCache: Map<string, Promise<string[]>>;
+  private readonly globCache: AsyncCache<string[]>;
   // specifier -> imported members/info
   private readonly importInfos = new Map<string, ImportInfo>();
   private eagerImportId = 0;
@@ -59,7 +60,7 @@ export class CodeGenerator {
       globCache,
       outDir,
     };
-    this.globCache = globCache;
+    this.globCache = createCache(globCache);
   }
 
   addNamespaceImport(namespace: string, specifier: string, types = false) {
@@ -124,17 +125,16 @@ export class CodeGenerator {
     patterns: string | string[],
     { base, eager = false, query = {}, import: importName }: GlobImportOptions,
   ): Promise<string> {
-    const cacheKey = JSON.stringify({ patterns, base });
-    let files = this.globCache.get(cacheKey);
-    if (!files) {
-      files = glob(patterns, {
-        cwd: base,
-      });
-      this.globCache.set(cacheKey, files);
-    }
+    const files = await this.globCache.cached(
+      JSON.stringify({ patterns, base }),
+      () =>
+        glob(patterns, {
+          cwd: base,
+        }),
+    );
 
     let code: string = "{";
-    for (const item of await files) {
+    for (const item of files) {
       const fullPath = path.join(base, item);
       const searchParams = new URLSearchParams();
 

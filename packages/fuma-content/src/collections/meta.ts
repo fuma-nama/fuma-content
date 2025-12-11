@@ -1,13 +1,13 @@
 import {
   type Collection,
-  CollectionTypeInfo,
+  type CollectionTypeInfo,
   createCollection,
-} from "@/collections/index";
+} from "@/collections";
 import {
   buildFileHandler,
   type FileHandlerConfig,
 } from "@/collections/handlers/fs";
-import type { Core, Plugin } from "@/core";
+import type { EmitCodeGeneratorContext, Plugin } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
@@ -72,38 +72,70 @@ export function defineMeta<Schema extends StandardSchemaV1>(
           });
       },
     };
-    handlers["entry-file"] = {
-      async server(context) {
-        const fsHandler = handlers.fs;
-        if (!fsHandler) return;
-
-        const { codegen } = context;
-        codegen.addNamedImport(
-          ["metaStore"],
-          "fuma-content/collections/meta/runtime",
-        );
-        const base = path.relative(process.cwd(), fsHandler.dir);
-        const glob = await codegen.generateGlobImport(fsHandler.patterns, {
-          query: {
-            collection: collection.name,
-            workspace: options.workspace?.name,
-          },
-          import: "default",
-          base: fsHandler.dir,
-          eager: true,
-        });
-        const initializer = `metaStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
-        codegen.push(`export const ${collection.name} = ${initializer};`);
-      },
-    };
   });
 }
 
 function plugin(): Plugin {
   const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
 
+  async function generateCollectionStore(
+    context: EmitCodeGeneratorContext,
+    collection: Collection,
+  ) {
+    const fsHandler = collection.handlers.fs;
+    if (!fsHandler) return;
+    const { codegen } = context;
+
+    codegen.addNamedImport(
+      ["metaStore"],
+      "fuma-content/collections/meta/runtime",
+    );
+    const base = path.relative(process.cwd(), fsHandler.dir);
+    const glob = await codegen.generateGlobImport(fsHandler.patterns, {
+      query: {
+        collection: collection.name,
+        workspace: context.workspace,
+      },
+      import: "default",
+      base: fsHandler.dir,
+      eager: true,
+    });
+    const initializer = `metaStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
+    codegen.push(`export const ${collection.name} = ${initializer};`);
+  }
+
   const base: Plugin = {
     name: "meta",
+    configureServer(server) {
+      if (!server.watcher) return;
+
+      server.watcher.on("all", async (event, file) => {
+        if (event === "change") return;
+        const updatedCollection = this.core
+          .getCollections()
+          .find((collection) => {
+            const handlers = collection.handlers;
+            if (!handlers.meta || !handlers.fs) return false;
+            return handlers.fs.hasFile(file);
+          });
+
+        if (!updatedCollection) return;
+        await this.core.emit({
+          filterPlugin: (plugin) => plugin.name === "meta",
+          filterWorkspace: () => false,
+          write: true,
+        });
+      });
+    },
+    emit() {
+      return Promise.all([
+        this.createCodeGenerator("meta.ts", async (ctx) => {
+          for (const collection of this.core.getCollections()) {
+            await generateCollectionStore(ctx, collection);
+          }
+        }),
+      ]);
+    },
     next: {
       config(nextConfig) {
         const { configPath, outDir } = this.core.getOptions();

@@ -5,11 +5,10 @@ import {
 } from "@/collections";
 import {
   buildFileHandler,
-  type FIleCollectionHandler,
   type FileHandlerConfig,
 } from "@/collections/handlers/fs";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
-import type { Core, Plugin } from "@/core";
+import type { EmitCodeGeneratorContext, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
 import path from "node:path";
 import type { VFile } from "vfile";
@@ -18,7 +17,6 @@ import type { Configuration } from "webpack";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { EntryFileContext } from "@/plugins/entry-file";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -29,9 +27,11 @@ interface CompilationContext {
 }
 
 export interface MDXCollectionHandler {
-  cwd: string;
-  postprocess?: Partial<PostprocessOptions>;
+  readonly cwd: string;
+  readonly dynamic: boolean;
+  readonly async: boolean;
 
+  postprocess?: Partial<PostprocessOptions>;
   getMDXOptions?: (
     environment: "bundler" | "runtime",
   ) => Awaitable<ProcessorOptions>;
@@ -50,9 +50,8 @@ export interface MDXCollectionHandler {
   vfile?: (this: CompilationContext, file: VFile) => Awaitable<VFile>;
 
   onGenerateStore?: (
-    this: EntryFileContext,
+    this: EmitCodeGeneratorContext & { environment: "browser" | "server" },
     initializer: string,
-    environment: "browser" | "server",
   ) => string;
 }
 
@@ -98,6 +97,8 @@ export function defineMDX<
         : process.cwd(),
       postprocess: config.postprocess,
       getMDXOptions: config.options,
+      dynamic,
+      async,
     };
     collection.handlers["last-modified"] = {
       config({ getLastModified }) {
@@ -105,15 +106,13 @@ export function defineMDX<
         if (!mdxHandler) return;
 
         const { onGenerateStore, vfile } = mdxHandler;
-        mdxHandler.onGenerateStore = function (initializer, environment) {
+        mdxHandler.onGenerateStore = function (initializer) {
           this.codegen.addNamedImport(
             ["$lastModified"],
-            RuntimePaths[environment],
+            RuntimePaths[this.environment],
           );
           initializer += ".$data($lastModified())";
-          return (
-            onGenerateStore?.call(this, initializer, environment) ?? initializer
-          );
+          return onGenerateStore?.call(this, initializer) ?? initializer;
         };
 
         mdxHandler.vfile = async function (file) {
@@ -130,102 +129,150 @@ export function defineMDX<
         };
       },
     };
-
-    function generateDocCollectionFrontmatterGlob(
-      context: EntryFileContext,
-      handler: FIleCollectionHandler,
-      eager = false,
-    ) {
-      return context.codegen.generateGlobImport(handler.patterns, {
-        query: {
-          collection: collection.name,
-          only: "frontmatter",
-          workspace: options.workspace?.name,
-        },
-        import: "frontmatter",
-        base: handler.dir,
-        eager,
-      });
-    }
-
-    function generateDocCollectionGlob(
-      context: EntryFileContext,
-      handler: FIleCollectionHandler,
-      eager = false,
-    ) {
-      return context.codegen.generateGlobImport(handler.patterns, {
-        query: {
-          collection: collection.name,
-          workspace: options.workspace?.name,
-        },
-        base: handler.dir,
-        eager,
-      });
-    }
-
-    collection.handlers["entry-file"] = {
-      rerunOnFileChange: dynamic,
-      async server(context) {
-        const mdxHandler = collection.handlers.mdx;
-        const fsHandler = collection.handlers.fs;
-        if (!fsHandler || !mdxHandler) return;
-        const { codegen } = context;
-        const runtimePath = RuntimePaths.server;
-        const base = path.relative(process.cwd(), fsHandler.dir);
-        let initializer: string;
-
-        if (async) {
-          codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
-          const [headGlob, bodyGlob] = await Promise.all([
-            generateDocCollectionFrontmatterGlob(context, fsHandler, true),
-            generateDocCollectionGlob(context, fsHandler),
-          ]);
-
-          initializer = `mdxStoreLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
-        } else {
-          codegen.addNamedImport(["mdxStore"], runtimePath);
-          initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(context, fsHandler, true)})`;
-        }
-
-        if (mdxHandler.postprocess?.extractLinkReferences) {
-          codegen.addNamedImport(["$extractedReferences"], runtimePath);
-          initializer += ".$data($extractedReferences())";
-        }
-
-        initializer =
-          mdxHandler.onGenerateStore?.call(context, initializer, "server") ??
-          initializer;
-        codegen.push(`export const ${collection.name} = ${initializer};`);
-      },
-      async browser(context) {
-        const mdxHandler = collection.handlers.mdx;
-        const fsHandler = collection.handlers.fs;
-        if (!fsHandler || !mdxHandler) return;
-        const { codegen } = context;
-        const runtimePath = RuntimePaths.browser;
-        codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
-        let initializer = `mdxStoreBrowser<typeof Config, "${collection.name}">("${collection.name}", ${await generateDocCollectionGlob(context, fsHandler)})`;
-
-        if (mdxHandler.postprocess?.extractLinkReferences) {
-          codegen.addNamedImport(["$extractedReferences"], runtimePath);
-          initializer += ".$data($extractedReferences())";
-        }
-
-        initializer =
-          mdxHandler.onGenerateStore?.call(context, initializer, "browser") ??
-          initializer;
-        codegen.push(`export const ${collection.name} = ${initializer};`);
-      },
-    };
   });
 }
 
 function plugin(): Plugin {
   const mdxLoaderGlob = /\.mdx?(\?.+?)?$/;
 
+  function generateDocCollectionFrontmatterGlob(
+    context: EmitCodeGeneratorContext,
+    collection: Collection,
+    eager = false,
+  ) {
+    const handler = collection.handlers.fs;
+    if (!handler) return "";
+    return context.codegen.generateGlobImport(handler.patterns, {
+      query: {
+        collection: collection.name,
+        only: "frontmatter",
+        workspace: context.workspace,
+      },
+      import: "frontmatter",
+      base: handler.dir,
+      eager,
+    });
+  }
+
+  function generateDocCollectionGlob(
+    context: EmitCodeGeneratorContext,
+    collection: Collection,
+    eager = false,
+  ) {
+    const handler = collection.handlers.fs;
+    if (!handler) return "";
+    return context.codegen.generateGlobImport(handler.patterns, {
+      query: {
+        collection: collection.name,
+        workspace: context.workspace,
+      },
+      base: handler.dir,
+      eager,
+    });
+  }
+
+  async function generateCollectionStoreServer(
+    context: EmitCodeGeneratorContext,
+    collection: Collection,
+  ) {
+    const mdxHandler = collection.handlers.mdx;
+    const fsHandler = collection.handlers.fs;
+    if (!fsHandler || !mdxHandler) return;
+    const { codegen } = context;
+    const runtimePath = RuntimePaths.server;
+    const base = path.relative(process.cwd(), fsHandler.dir);
+    let initializer: string;
+
+    if (mdxHandler.async) {
+      codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
+      const [headGlob, bodyGlob] = await Promise.all([
+        generateDocCollectionFrontmatterGlob(context, collection, true),
+        generateDocCollectionGlob(context, collection),
+      ]);
+
+      initializer = `mdxStoreLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
+    } else {
+      codegen.addNamedImport(["mdxStore"], runtimePath);
+      initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(context, collection, true)})`;
+    }
+
+    if (mdxHandler.postprocess?.extractLinkReferences) {
+      codegen.addNamedImport(["$extractedReferences"], runtimePath);
+      initializer += ".$data($extractedReferences())";
+    }
+
+    initializer =
+      mdxHandler.onGenerateStore?.call(
+        { ...context, environment: "server" },
+        initializer,
+      ) ?? initializer;
+    codegen.push(`export const ${collection.name} = ${initializer};`);
+  }
+
+  async function generateCollectionStoreBrowser(
+    context: EmitCodeGeneratorContext,
+    collection: Collection,
+  ) {
+    const mdxHandler = collection.handlers.mdx;
+    const fsHandler = collection.handlers.fs;
+    if (!fsHandler || !mdxHandler) return;
+    const { codegen } = context;
+    const runtimePath = RuntimePaths.browser;
+    codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
+    let initializer = `mdxStoreBrowser<typeof Config, "${collection.name}">("${collection.name}", ${await generateDocCollectionGlob(context, collection)})`;
+
+    if (mdxHandler.postprocess?.extractLinkReferences) {
+      codegen.addNamedImport(["$extractedReferences"], runtimePath);
+      initializer += ".$data($extractedReferences())";
+    }
+
+    initializer =
+      mdxHandler.onGenerateStore?.call(
+        { ...context, environment: "browser" },
+        initializer,
+      ) ?? initializer;
+    codegen.push(`export const ${collection.name} = ${initializer};`);
+  }
+
   return withLoader(
     {
       name: "mdx",
+      configureServer(server) {
+        if (!server.watcher) return;
+
+        server.watcher.on("all", async (event, file) => {
+          const updatedCollection = this.core
+            .getCollections()
+            .find((collection) => {
+              const handlers = collection.handlers;
+              if (!handlers.mdx || !handlers.fs) return false;
+              if (event === "change" && !handlers.mdx.dynamic) return false;
+              return handlers.fs.hasFile(file);
+            });
+
+          if (!updatedCollection) return;
+          await this.core.emit({
+            filterPlugin: (plugin) => plugin.name === "mdx",
+            filterWorkspace: () => false,
+            write: true,
+          });
+        });
+      },
+      emit() {
+        return Promise.all([
+          this.createCodeGenerator("mdx.ts", async (ctx) => {
+            for (const collection of this.core.getCollections()) {
+              await generateCollectionStoreServer(ctx, collection);
+            }
+          }),
+
+          this.createCodeGenerator("mdx-browser.ts", async (ctx) => {
+            for (const collection of this.core.getCollections()) {
+              await generateCollectionStoreBrowser(ctx, collection);
+            }
+          }),
+        ]);
+      },
       next: {
         config(nextConfig) {
           const { configPath, outDir } = this.core.getOptions();
