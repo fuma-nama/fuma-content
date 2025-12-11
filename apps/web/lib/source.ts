@@ -5,7 +5,7 @@ import {
   type Source,
 } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
-import { docs } from "content/server";
+import { docs } from "content/mdx";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(mySource(), {
