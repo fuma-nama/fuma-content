@@ -1,7 +1,7 @@
 import type { BunPlugin } from "bun";
 import { buildConfig } from "@/config/build";
 import { pathToFileURL } from "node:url";
-import { _Defaults, type CoreOptions, Core } from "@/core";
+import { type CoreOptions, Core } from "@/core";
 
 export type ContentPluginOptions = Partial<CoreOptions>;
 
@@ -9,9 +9,8 @@ export function createContentPlugin(
   options: ContentPluginOptions = {},
 ): BunPlugin {
   const {
-    environment = "bun",
-    outDir = _Defaults.outDir,
-    configPath = _Defaults.configPath,
+    outDir = Core.defaultOptions.outDir,
+    configPath = Core.defaultOptions.configPath,
   } = options;
 
   return {
@@ -19,7 +18,6 @@ export function createContentPlugin(
     async setup(build) {
       const importPath = pathToFileURL(configPath).href;
       const core = new Core({
-        environment,
         outDir,
         configPath,
       });

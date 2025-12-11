@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
-import { _Defaults, Core } from "@/core";
+import { Core } from "@/core";
 
 export interface NextOptions {
   /**
@@ -107,14 +107,13 @@ export async function createStandaloneCore(options: NextOptions) {
 
 function applyDefaults(options: NextOptions): Required<NextOptions> {
   return {
-    outDir: options.outDir ?? _Defaults.outDir,
-    configPath: options.configPath ?? _Defaults.configPath,
+    outDir: options.outDir ?? Core.defaultOptions.outDir,
+    configPath: options.configPath ?? Core.defaultOptions.configPath,
   };
 }
 
 function createNextCore(options: Required<NextOptions>): Core {
   return new Core({
-    environment: "next",
     outDir: options.outDir,
     configPath: options.configPath,
   });

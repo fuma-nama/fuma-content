@@ -1,98 +1,94 @@
-import { buildConfig, type DocCollectionItem } from "@/config/build";
-import {
-  buildMDX,
-  type CompiledMDXProperties,
-} from "@/collections/mdx/build-mdx";
+import { buildConfig } from "@/config/build";
+import { buildMDX } from "@/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/utils/fuma-matter";
 import fs from "node:fs/promises";
-import { server, type ServerOptions } from "./server";
 import { type CoreOptions, Core } from "@/core";
-import type { FileInfo, InternalTypeConfig } from "./types";
 import type { MDXComponents } from "mdx/types";
 import type { FC } from "react";
 import jsxRuntimeDefault from "react/jsx-runtime";
+import { FileCollectionStore } from "@/collections/runtime/file-store";
+import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
+import type { GetCollectionConfig } from "@/types";
+import type { MDXCollectionConfig } from "@/collections/mdx";
+import path from "node:path";
+import { createCache } from "@/utils/async-cache";
+import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 
-export interface LazyEntry<Data = unknown> {
-  info: FileInfo;
-  data: Data;
-
-  hash?: string;
+export interface MDXStoreDynamicData<Frontmatter> {
+  id: string;
+  frontmatter: Frontmatter;
+  compile: () => Promise<CompiledMDXProperties<Frontmatter>>;
 }
 
-export type CreateDynamic<
-  Config,
-  TC extends InternalTypeConfig = InternalTypeConfig,
-> = ReturnType<typeof dynamic<Config, TC>>;
+let core: Promise<Core>;
 
-export async function dynamic<Config, TC extends InternalTypeConfig>(
-  configExports: Config,
+export async function mdxStoreDynamic<Config, Name extends string>(
+  config: Config,
   coreOptions: CoreOptions,
-  serverOptions?: ServerOptions,
-) {
-  const core = new Core(coreOptions);
-  await core.init({
-    config: buildConfig(configExports as Record<string, unknown>),
-  });
+  name: Name,
+  base: string,
+  _frontmatter: Record<string, unknown>,
+): Promise<
+  FileCollectionStore<
+    MDXStoreDynamicData<
+      GetCollectionConfig<Config, Name> extends MDXCollectionConfig<
+        infer Frontmatter
+      >
+        ? Frontmatter
+        : never
+    >
+  >
+> {
+  core ??= (async () => {
+    const core = new Core(coreOptions);
+    await core.init({
+      config: buildConfig(config as Record<string, unknown>),
+    });
+    return core;
+  })();
 
-  const create = server<Config, TC>(serverOptions);
+  type Frontmatter =
+    GetCollectionConfig<Config, Name> extends MDXCollectionConfig<
+      infer Frontmatter
+    >
+      ? Frontmatter
+      : never;
+  const frontmatter = _frontmatter as Record<string, Frontmatter>;
+  const collection = (await core).getCollection(name);
+  if (!collection || !collection.handlers.mdx)
+    throw new Error("invalid collection name");
 
-  function getDocCollection(name: string): DocCollectionItem | undefined {
-    const collection = core.getCollection(name);
-    if (!collection) return;
+  const merged: Record<string, MDXStoreDynamicData<Frontmatter>> = {};
+  const cache = createCache<CompiledMDXProperties<Frontmatter>>();
 
-    if (collection.type === "docs") return collection.docs;
-    else if (collection.type === "doc") return collection;
+  for (const [k, v] of Object.entries(frontmatter)) {
+    merged[k] = {
+      id: k,
+      frontmatter: v,
+      async compile() {
+        return cache.cached(k, async () => {
+          const filePath = path.join(base, k);
+          let content = (await fs.readFile(filePath)).toString();
+          content = fumaMatter(content).content;
+
+          const compiled = await buildMDX(await core, collection, {
+            filePath,
+            source: content,
+            frontmatter: v as unknown as Record<string, unknown>,
+            isDevelopment: false,
+            environment: "runtime",
+          });
+
+          return (await executeMdx(String(compiled.value), {
+            baseUrl: pathToFileURL(filePath),
+          })) as CompiledMDXProperties<Frontmatter>;
+        });
+      },
+    };
   }
 
-  function convertLazyEntries(
-    collection: DocCollectionItem,
-    entries: LazyEntry[],
-  ) {
-    const head: Record<string, () => unknown> = {};
-    const body: Record<string, () => Promise<unknown>> = {};
-
-    async function compile({ info, data }: LazyEntry) {
-      let content = (await fs.readFile(info.fullPath)).toString();
-      content = fumaMatter(content).content;
-
-      const compiled = await buildMDX(core, collection, {
-        filePath: info.fullPath,
-        source: content,
-        frontmatter: data as Record<string, unknown>,
-        isDevelopment: false,
-        environment: "runtime",
-      });
-
-      return (await executeMdx(String(compiled.value), {
-        baseUrl: pathToFileURL(info.fullPath),
-      })) as CompiledMDXProperties;
-    }
-
-    for (const entry of entries) {
-      head[entry.info.path] = () => entry.data;
-      let cachedResult: Promise<CompiledMDXProperties> | undefined;
-      body[entry.info.path] = () => (cachedResult ??= compile(entry));
-    }
-
-    return { head, body };
-  }
-
-  return {
-    async doc<Name extends keyof Config & string>(
-      name: Name,
-      base: string,
-      entries: LazyEntry[],
-    ) {
-      const collection = getDocCollection(name as string);
-      if (!collection)
-        throw new Error(`the doc collection ${name as string} doesn't exist.`);
-
-      const { head, body } = convertLazyEntries(collection, entries);
-
-      return create.docLazy(name, base, head, body);
-    },
-  };
+  return new FileCollectionStore(base, merged);
 }
 
 export type MdxContent = FC<{ components?: MDXComponents }>;
@@ -123,4 +119,32 @@ async function executeMdx(compiled: string, options: Options = {}) {
   return (await hydrateFn.apply(hydrateFn, Object.values(fullScope))) as {
     default: MdxContent;
   };
+}
+
+export function $attachCompiled<Add>() {
+  return <T>(data: T) =>
+    data as T extends MDXStoreDynamicData<unknown>
+      ? T & {
+          compile: () => Promise<Awaited<ReturnType<T["compile"]>> & Add>;
+        }
+      : T;
+}
+
+export function $extractedReferences() {
+  return $attachCompiled<{
+    /**
+     * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
+     */
+    extractedReferences: ExtractedReference[];
+  }>();
+}
+
+export function $lastModified() {
+  return $attachCompiled<{
+    /**
+     * Last modified date of document file, obtained from version control.
+     *
+     */
+    lastModified?: Date;
+  }>();
 }

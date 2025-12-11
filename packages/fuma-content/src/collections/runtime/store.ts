@@ -57,6 +57,6 @@ export class SimpleCollectionStore<Data> implements CollectionStore<
   }
 
   get $inferData(): Data {
-    throw new Error("compile-time only");
+    return undefined as Data;
   }
 }

@@ -22,7 +22,6 @@ let core: Core;
 
 export function getCore(options: WebpackLoaderOptions) {
   return (core ??= new Core({
-    environment: "webpack",
     outDir: options.outDir,
     configPath: options.configPath,
   }));

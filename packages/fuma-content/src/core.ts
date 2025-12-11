@@ -36,6 +36,11 @@ export interface EmitCodeGeneratorContext {
 }
 
 export interface Plugin {
+  /**
+   * unique name for plugin
+   *
+   * @example `my-package:my-plugin`
+   */
   name: string;
 
   /**
@@ -92,7 +97,6 @@ export interface ServerContext {
 }
 
 export interface CoreOptions {
-  environment: string;
   configPath: string;
   outDir: string;
   plugins?: PluginOption[];
@@ -137,11 +141,6 @@ export interface EmitOutput {
   workspaces: Record<string, EmitEntry[]>;
 }
 
-export const _Defaults = {
-  configPath: "content.config.ts",
-  outDir: ".content",
-};
-
 async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
   const plugins: Plugin[] = [];
 
@@ -159,6 +158,10 @@ export class Core {
   private readonly options: CoreOptions;
   private plugins: Plugin[] = [];
   private config!: LoadedConfig;
+  static defaultOptions = {
+    configPath: "content.config.ts",
+    outDir: ".content",
+  };
 
   /**
    * Convenient cache store, reset when config changes.

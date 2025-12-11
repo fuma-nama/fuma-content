@@ -1,7 +1,7 @@
 import type { PluginOption } from "vite";
 import { buildConfig } from "@/config/build";
 import type { FSWatcher } from "chokidar";
-import { _Defaults, Core } from "@/core";
+import { Core } from "@/core";
 
 export interface PluginOptions {
   /**
@@ -67,7 +67,6 @@ export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
 
 function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
   return new Core({
-    environment: "vite",
     configPath,
     outDir,
     emit: {
@@ -80,7 +79,7 @@ function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
 function applyDefaults(options: PluginOptions): Required<PluginOptions> {
   return {
     updateViteConfig: options.updateViteConfig ?? true,
-    configPath: options.configPath ?? _Defaults.configPath,
-    outDir: options.outDir ?? _Defaults.outDir,
+    configPath: options.configPath ?? Core.defaultOptions.configPath,
+    outDir: options.outDir ?? Core.defaultOptions.outDir,
   };
 }

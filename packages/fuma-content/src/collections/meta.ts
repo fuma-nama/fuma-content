@@ -84,11 +84,16 @@ function plugin(): Plugin {
   ) {
     const fsHandler = collection.handlers.fs;
     if (!fsHandler) return;
-    const { codegen } = context;
+    const { codegen, core } = context;
 
     codegen.addNamedImport(
       ["metaStore"],
       "fuma-content/collections/meta/runtime",
+    );
+    codegen.addNamedImport(
+      ["default as Config"],
+      codegen.formatImportPath(core.getOptions().configPath),
+      true,
     );
     const base = path.relative(process.cwd(), fsHandler.dir);
     const glob = await codegen.generateGlobImport(fsHandler.patterns, {
