@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import * as path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
+import type { FSWatcher } from "chokidar";
 
 export interface NextOptions {
   /**
@@ -41,22 +42,22 @@ export async function createContent(nextOptions: NextOptions = {}) {
 }
 
 async function init(dev: boolean, core: Core): Promise<void> {
-  async function update() {
-    await core.init({
-      config: loadConfig(core, true),
-    });
-    await core.emit({ write: true });
-  }
+  if (!dev) return;
+  const { FSWatcher } = await import("chokidar");
+  const { configPath, outDir } = core.getOptions();
+  const absoluteConfigPath = path.resolve(configPath);
+  let watcher: FSWatcher | undefined;
 
   async function devServer() {
-    const { FSWatcher } = await import("chokidar");
-    const { configPath, outDir } = core.getOptions();
-    const watcher = new FSWatcher({
+    if (watcher && !watcher.closed) {
+      await watcher.close();
+    }
+
+    watcher = new FSWatcher({
       ignoreInitial: true,
       persistent: true,
       ignored: [outDir],
     });
-
     watcher.add(configPath);
     for (const collection of core.getCollections(true)) {
       const handler = collection.handlers.fs;
@@ -65,36 +66,34 @@ async function init(dev: boolean, core: Core): Promise<void> {
       }
     }
 
-    watcher.on("ready", () => {
+    watcher.once("ready", () => {
       console.log("[MDX] started dev server");
     });
 
-    const absoluteConfigPath = path.resolve(configPath);
-    watcher.on("all", async (_event, file) => {
+    watcher.on("all", (_event, file) => {
       if (path.resolve(file) === absoluteConfigPath) {
-        // skip plugin listeners
-        watcher.removeAllListeners();
-
-        await watcher.close();
-        await update();
         console.log("[MDX] restarting dev server");
-        await devServer();
+        watcher?.removeAllListeners();
+        void (async () => {
+          await core.init({
+            config: loadConfig(core, true),
+          });
+          await devServer();
+          await core.emit({ write: true });
+        })();
       }
-    });
-
-    process.on("exit", () => {
-      if (watcher.closed) return;
-
-      console.log("[MDX] closing dev server");
-      void watcher.close();
     });
 
     await core.initServer({ watcher });
   }
 
-  if (dev) {
-    await devServer();
-  }
+  process.on("exit", () => {
+    if (!watcher || watcher.closed) return;
+    console.log("[MDX] closing dev server");
+    void watcher.close();
+  });
+
+  await devServer();
 }
 
 export async function createStandaloneCore(options: NextOptions) {
