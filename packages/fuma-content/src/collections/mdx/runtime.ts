@@ -4,6 +4,7 @@ import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
+import type { VersionControlFileData } from "@/plugins/git";
 
 export type CompiledMDXProperties<Frontmatter = Record<string, unknown>> = {
   frontmatter: Frontmatter;
@@ -116,12 +117,6 @@ export function $extractedReferences() {
   }>();
 }
 
-export function $lastModified() {
-  return $attachCompiled<{
-    /**
-     * Last modified date of document file, obtained from version control.
-     *
-     */
-    lastModified?: Date;
-  }>();
+export function $versionControl() {
+  return $attachCompiled<VersionControlFileData>();
 }

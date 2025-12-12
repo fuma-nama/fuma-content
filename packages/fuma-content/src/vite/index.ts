@@ -27,8 +27,7 @@ export interface PluginOptions {
 export default async function content(
   config: Record<string, unknown>,
   pluginOptions: PluginOptions = {},
-  // @ts-expect-error `PluginOption` is compatible with Promise
-): PluginOption {
+): Promise<PluginOption[]> {
   const options = applyDefaults(pluginOptions);
   const core = createViteCore(options);
   await core.init({
@@ -42,8 +41,6 @@ export default async function content(
       .map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
     {
       name: "fuma-content",
-      // needed, otherwise other plugins will be executed before our `transform`.
-      enforce: "pre",
       async buildStart() {
         await core.emit({ write: true });
       },

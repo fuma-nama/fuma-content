@@ -35,16 +35,11 @@ export default function jsonSchema({
       if (!server.watcher || !insert) return;
 
       server.watcher.on("add", async (file) => {
-        let match: Collection | undefined;
-        for (const collection of this.core.getCollections()) {
+        const match = this.core.getCollections().find((collection) => {
           const handler = collection.handlers.fs;
-          if (!handler) return;
-
-          if (handler.hasFile(file)) {
-            match = collection;
-            break;
-          }
-        }
+          if (!handler) return false;
+          return handler.hasFile(file);
+        });
 
         if (!match) return;
         let obj: object;

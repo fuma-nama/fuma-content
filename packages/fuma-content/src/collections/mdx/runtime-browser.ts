@@ -6,6 +6,7 @@ import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import { SimpleCollectionStore } from "@/collections/runtime/store";
+import type { VersionControlFileData } from "@/plugins/git";
 
 export interface MDXStoreBrowserData<Frontmatter, CustomData> {
   preload: () => Promise<CompiledMDXProperties<Frontmatter> & CustomData>;
@@ -121,12 +122,6 @@ export function $extractedReferences() {
   }>();
 }
 
-export function $lastModified() {
-  return $attachCompiled<{
-    /**
-     * Last modified date of document file, obtained from version control.
-     *
-     */
-    lastModified?: Date;
-  }>();
+export function $versionControl() {
+  return $attachCompiled<VersionControlFileData>();
 }

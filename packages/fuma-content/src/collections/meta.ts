@@ -15,7 +15,7 @@ import { withLoader } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 
-type Awaitable<T> = T | Promise<T>;
+type Awaitable<T> = T | PromiseLike<T>;
 
 export interface MetaContext {
   path: string;

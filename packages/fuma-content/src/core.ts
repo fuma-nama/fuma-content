@@ -8,7 +8,7 @@ import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
 import { CodeGenerator } from "@/utils/code-generator";
 
-type Awaitable<T> = T | Promise<T>;
+type Awaitable<T> = T | PromiseLike<T>;
 
 export interface EmitEntry {
   /**
@@ -144,7 +144,7 @@ export interface EmitOutput {
 async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
   const plugins: Plugin[] = [];
 
-  for await (const option of pluginOptions) {
+  for (const option of await Promise.all(pluginOptions)) {
     if (!option) continue;
     if (Array.isArray(option)) plugins.push(...(await getPlugins(option)));
     else plugins.push(option);

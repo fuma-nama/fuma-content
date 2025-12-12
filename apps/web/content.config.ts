@@ -1,7 +1,7 @@
 import { defineMDX } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
-import lastModified from "fuma-content/plugins/last-modified";
 import { pageSchema } from "fumadocs-core/source/schema";
+import git from "fuma-content/plugins/git";
 
 export default defineConfig({
   collections: {
@@ -13,5 +13,5 @@ export default defineConfig({
       },
     }),
   },
-  plugins: [lastModified()],
+  plugins: [git()],
 });

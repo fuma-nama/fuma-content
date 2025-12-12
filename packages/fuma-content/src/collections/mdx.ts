@@ -18,7 +18,7 @@ import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
-type Awaitable<T> = T | Promise<T>;
+type Awaitable<T> = T | PromiseLike<T>;
 
 interface CompilationContext {
   collection: Collection;
@@ -114,30 +114,34 @@ export function defineMDX<
         return initializer;
       },
     };
-    collection.handlers["last-modified"] = {
-      config({ getLastModified }) {
+    collection.handlers["version-control"] = {
+      client({ client }) {
         const mdxHandler = collection.handlers.mdx;
         if (!mdxHandler) return;
 
         const { onGenerateStore, vfile } = mdxHandler;
         mdxHandler.onGenerateStore = function (initializer) {
           this.codegen.addNamedImport(
-            ["$lastModified"],
+            ["$versionControl"],
             RuntimePaths[this.environment],
           );
-          initializer += ".$data($lastModified())";
+          initializer += ".$data($versionControl())";
           return onGenerateStore?.call(this, initializer) ?? initializer;
         };
 
         mdxHandler.vfile = async function (file) {
-          const timestamp = await getLastModified(file.path);
-          if (timestamp) {
-            file.data["mdx-export"] ??= [];
-            file.data["mdx-export"].push({
+          const vcData = await client.getFileData({ filePath: file.path });
+          file.data["mdx-export"] ??= [];
+          file.data["mdx-export"].push(
+            {
               name: "lastModified",
-              value: timestamp,
-            });
-          }
+              value: vcData.lastModified,
+            },
+            {
+              name: "creationDate",
+              value: vcData.creationDate,
+            },
+          );
           if (vfile) return vfile?.call(this, file);
           return file;
         };

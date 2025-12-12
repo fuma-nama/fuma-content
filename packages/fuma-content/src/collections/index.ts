@@ -3,7 +3,7 @@ import type { JSONSchemaHandler } from "@/plugins/json-schema";
 import type { FIleCollectionHandler } from "@/collections/handlers/fs";
 import type { MDXCollectionHandler } from "@/collections/mdx";
 import type { MetaCollectionHandler } from "@/collections/meta";
-import type { LastModifiedHandler } from "@/plugins/last-modified";
+import type { VersionControlHandler } from "@/plugins/git";
 import type { PluginOption } from "@/core";
 
 export interface InitOptions {
@@ -42,7 +42,7 @@ export interface CollectionHandlers {
   mdx?: MDXCollectionHandler;
   meta?: MetaCollectionHandler;
   "json-schema"?: JSONSchemaHandler;
-  "last-modified"?: LastModifiedHandler;
+  "version-control"?: VersionControlHandler;
 }
 
 export function createCollection(
