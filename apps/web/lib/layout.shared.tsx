@@ -1,9 +1,20 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
-export function baseOptions(): BaseLayoutProps {
+export function baseOptions({
+  links,
+  ...rest
+}: BaseLayoutProps = {}): BaseLayoutProps {
   return {
     nav: {
-      title: 'My App',
+      title: "Fuma Content",
     },
+    links: links ?? [
+      {
+        type: "main",
+        url: "/docs",
+        text: "Documentation",
+      },
+    ],
+    ...rest,
   };
 }

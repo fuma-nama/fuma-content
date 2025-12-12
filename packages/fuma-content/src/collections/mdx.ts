@@ -322,6 +322,10 @@ function plugin(): Plugin {
           for (const collection of this.core.getCollections()) {
             await generateCollectionStoreBrowser(ctx, collection);
           }
+
+          ctx.codegen.push(
+            `export { useRenderer } from "${RuntimePaths.browser}";`,
+          );
         }),
 
         this.createCodeGenerator("mdx-dynamic.ts", async (ctx) => {

@@ -16,6 +16,8 @@
     "next": "16.0.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "shiki": "^3.20.0",
+    "tailwind-merge": "^3.4.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
