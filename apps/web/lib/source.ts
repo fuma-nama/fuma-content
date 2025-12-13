@@ -42,7 +42,7 @@ export function getPageImage(page: InferPageType<typeof source>) {
 }
 
 export async function getLLMText(page: InferPageType<typeof source>) {
-  const processed = await page.data.getText("processed");
+  const processed = page.data.compiled._markdown;
 
   return `# ${page.data.title}
 

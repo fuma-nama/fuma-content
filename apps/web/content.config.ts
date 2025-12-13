@@ -2,13 +2,7 @@ import { defineMDX } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import { pageSchema } from "fumadocs-core/source/schema";
 import git from "fuma-content/plugins/git";
-import {
-  remarkGfm,
-  rehypeCode,
-  rehypeToc,
-  remarkCodeTab,
-  remarkHeading,
-} from "fumadocs-core/mdx-plugins";
+import { mdxPreset } from "fumadocs-core/content/mdx/preset-bundler";
 
 export default defineConfig({
   collections: {
@@ -17,11 +11,17 @@ export default defineConfig({
       frontmatter: pageSchema,
       postprocess: {
         extractLinkReferences: true,
+        includeProcessedMarkdown: true,
       },
-      options: () => ({
-        remarkPlugins: [remarkGfm, remarkHeading, remarkCodeTab],
-        rehypePlugins: [rehypeCode, rehypeToc],
-      }),
+      options: () =>
+        mdxPreset({
+          rehypeCodeOptions: {
+            themes: {
+              light: "catppuccin-latte",
+              dark: "catppuccin-mocha",
+            },
+          },
+        }),
     }),
   },
   plugins: [git()],

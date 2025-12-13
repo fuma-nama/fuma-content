@@ -6,3 +6,161 @@ description: The primitive for content processing.
 ## What is This?
 
 Fuma Content introduces primitives for content processing, with a carefully designed abstraction to make it highly extensible and flexible.
+
+### The Idea
+
+Fuma Content process content via **Collections** and **Plugins**.
+
+- **Collections** implement a list of handlers, each handler contains options for specific functionality, such as MDX compilation.
+- **Plugins** declare & read options from collection handlers, then integrate into bundler or file generation layer to process content.
+
+**Built-in Collections:** MDX, Meta (supporting JSON and YAML files).
+
+Fuma Content is a foundational layer, we plan to build more on top such as WYSIWYG editor plugin, or CMS plugin.
+
+### Requirements
+
+Fuma Content requires a bundler or runtime loader (like Bun or Node.js loader) to work, it supports major frameworks like Vite, Next.js, and JavaScript runtimes.
+
+## Installation
+
+```npm
+npm i fuma-content
+```
+
+Configure it according to your framework.
+
+```ts tab="Next.js" title="next.config.mjs"
+import { createContent } from "fuma-content/next";
+
+/** @type {import('next').NextConfig} */
+const config = {
+  reactStrictMode: true,
+};
+
+const withContent = await createContent();
+
+export default withContent(config);
+```
+
+```ts tab="Vite" title="vite.config.ts"
+import { defineConfig } from "vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import content from "fuma-content/vite";
+
+export default defineConfig({
+  plugins: [
+    content(await import("./content.config")),
+    // recommended
+    tsConfigPaths({
+      projects: ["./tsconfig.json"],
+    }),
+  ],
+});
+```
+
+```toml tab="Bun" title="bunfig.toml"
+preload = ["./scripts/preload.ts"]
+```
+
+```ts tab="Bun" title="scripts/preload.ts"
+import { createContentPlugin } from "fumadocs-mdx/bun";
+
+Bun.plugin(createContentPlugin());
+```
+
+```ts tab="Node.js" title="my-app.ts"
+import { register } from "node:module";
+
+// add this to any entry point of your app/script
+// make sure your Node.js supports TypeScript (e.g. ts-node or 23.6.0+)
+register("fumadocs-mdx/node/loader", import.meta.url);
+```
+
+Create a config file, you can define collections and plugins:
+
+```ts title="content.config.ts"
+import { defineConfig } from "fuma-content/config";
+import { defineMDX } from "fuma-content/collections/mdx";
+
+export default defineConfig({
+  collections: {
+    docs: defineMDX({
+      dir: "content/docs",
+      // you can define a Standard Schema for frontmatter
+      // frontmatter: ...
+    }),
+  },
+});
+```
+
+Fuma Content is now configured, start the dev server of your framework (e.g. `next dev`) to access the compiled content.
+
+## Usage
+
+Each collection generates its own file in the `.content` folder, it's recommended to add a path alias:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "paths": {
+      // [!code ++]
+      "content/*": [".content/*"]
+    }
+  }
+}
+```
+
+For built-in collections, you can access them like:
+
+```tsx tab="MDX (Server)"
+import { docs } from "content/mdx";
+
+for (const file of docs.list()) {
+  const id = file.id;
+  // compiled properties & typed frontmatter
+  const { frontmatter, ...rest } = file.compiled;
+}
+
+function Page({ id }: { id: string }) {
+  const file = docs.get(id);
+  if (!file) return;
+
+  // default refers to the content body renderer
+  const { default: MDX } = file.compiled;
+
+  return (
+    <div className="prose">
+      <MDX
+        // MDX Components
+        components={{
+          h1: (props) => <h1 {...props} className="text-4xl" />,
+        }}
+      />
+    </div>
+  );
+}
+```
+
+```tsx tab="MDX (Browser)"
+import { docs, useRenderer } from "content/mdx-browser";
+
+function Page({ id }: { id: string }) {
+  const file = docs.get(id);
+  if (!file) return;
+
+  const children = useRenderer(file, (compiled) => {
+    const { default: MDX } = compiled;
+    return <MDX />;
+  });
+
+  return <div className="prose">{children}</div>;
+}
+```
+
+```ts tab="Meta (Server)"
+import { authors } from "content/meta";
+
+// a list of objects parsed from all meta files
+console.log(authors.list());
+```

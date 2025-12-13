@@ -9,10 +9,7 @@ import {
   remarkPostprocess,
 } from "@/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
-import {
-  type PreprocessOptions,
-  remarkPreprocess,
-} from "@/collections/mdx/remark-preprocess";
+import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
 import type { Collection } from "@/collections";
 import { createCache } from "@/utils/async-cache";
@@ -31,8 +28,6 @@ interface BuildMDXOptions {
   environment: "bundler" | "runtime";
   isDevelopment: boolean;
   _compiler?: CompilerOptions;
-  preprocess?: PreprocessOptions;
-  postprocess?: PostprocessOptions;
 }
 
 export interface FumaContentDataMap {
@@ -74,8 +69,6 @@ export async function buildMDX(
     _compiler,
     environment,
     isDevelopment,
-    postprocess,
-    preprocess,
   }: BuildMDXOptions,
 ): Promise<VFile> {
   const handler = collection?.handlers.mdx;
@@ -88,11 +81,11 @@ export async function buildMDX(
       const mdxOptions = await handler?.getMDXOptions?.(environment);
       const preprocessPlugin = [
         remarkPreprocess,
-        preprocess,
+        handler?.preprocess,
       ] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
-        ...postprocess,
+        ...handler?.postprocess,
       };
       const remarkIncludeOptions: RemarkIncludeOptions = {
         preprocess: [preprocessPlugin],
@@ -121,7 +114,6 @@ export async function buildMDX(
       frontmatter,
       _compiler,
       _getProcessor: getProcessor,
-      _preprocessor: preprocess?.preprocessor,
     },
   });
 

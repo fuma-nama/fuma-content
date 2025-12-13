@@ -5,7 +5,6 @@ const config = {
   reactStrictMode: true,
 };
 
-export default async () => {
-  const withContent = await createContent();
-  return withContent(config);
-};
+const withContent = await createContent();
+
+export default withContent(config);

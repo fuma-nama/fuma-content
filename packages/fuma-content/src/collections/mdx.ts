@@ -17,6 +17,7 @@ import type { Configuration } from "webpack";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
 
 type Awaitable<T> = T | PromiseLike<T>;
 
@@ -31,6 +32,7 @@ export interface MDXCollectionHandler {
   readonly dynamic: boolean;
   readonly lazy: boolean;
 
+  preprocess?: PreprocessOptions;
   postprocess?: Partial<PostprocessOptions>;
   getMDXOptions?: (
     environment: "bundler" | "runtime",
