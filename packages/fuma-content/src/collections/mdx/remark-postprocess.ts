@@ -153,6 +153,7 @@ function getMdastExport(name: string, value: unknown): RootContent {
           {
             type: "ExportNamedDeclaration",
             specifiers: [],
+            attributes: [],
             source: null,
             declaration: {
               type: "VariableDeclaration",
