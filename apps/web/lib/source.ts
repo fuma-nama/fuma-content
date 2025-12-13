@@ -26,6 +26,7 @@ function mySource(): Source<{
       absolutePath: doc.fullPath,
       data: {
         ...doc.compiled.frontmatter,
+        structuredData: doc.compiled.structuredData,
         compiled: doc.compiled,
       },
     })),
