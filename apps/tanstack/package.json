@@ -10,18 +10,18 @@
     "types:check": "fuma-content && tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.140.1",
-    "@tanstack/react-router-devtools": "1.140.1",
-    "@tanstack/react-start": "1.140.3",
+    "@tanstack/react-router": "1.141.6",
+    "@tanstack/react-router-devtools": "1.141.6",
+    "@tanstack/react-start": "1.141.7",
     "fuma-content": "workspace:*",
-    "fumadocs-core": "16.2.5",
-    "fumadocs-ui": "16.2.5",
-    "lucide-react": "^0.561.0",
+    "fumadocs-core": "16.3.0",
+    "fumadocs-ui": "16.3.0",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
-    "vite": "^7.2.7",
-    "zod": "^4.1.13"
+    "vite": "^7.3.0",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
@@ -33,6 +33,6 @@
     "nitro": "3.0.1-alpha.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^6.0.3"
   }
 }

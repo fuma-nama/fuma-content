@@ -22,7 +22,7 @@ export interface MDXStoreDynamicData<Frontmatter> {
   compile: () => Promise<CompiledMDXProperties<Frontmatter>>;
 }
 
-let core: Promise<Core>;
+let corePromise: Promise<Core>;
 
 export async function mdxStoreDynamic<Config, Name extends string>(
   config: Config,
@@ -41,13 +41,14 @@ export async function mdxStoreDynamic<Config, Name extends string>(
     >
   >
 > {
-  core ??= (async () => {
+  corePromise ??= (async () => {
     const core = new Core(coreOptions);
     await core.init({
       config: buildConfig(config as Record<string, unknown>),
     });
     return core;
   })();
+  const core = await corePromise;
 
   type Frontmatter =
     GetCollectionConfig<Config, Name> extends MDXCollectionConfig<
@@ -56,7 +57,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
       ? Frontmatter
       : never;
   const frontmatter = _frontmatter as Record<string, Frontmatter>;
-  const collection = (await core).getCollection(name);
+  const collection = core.getCollection(name);
   if (!collection || !collection.handlers.mdx)
     throw new Error("invalid collection name");
 
@@ -73,7 +74,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
           let content = (await fs.readFile(filePath)).toString();
           content = fumaMatter(content).content;
 
-          const compiled = await buildMDX(await core, collection, {
+          const compiled = await buildMDX(core, collection, {
             filePath,
             source: content,
             frontmatter: v as unknown as Record<string, unknown>,

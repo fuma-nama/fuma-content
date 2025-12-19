@@ -1,25 +1,35 @@
 "use client";
 
-import { type ReactNode, type FC, lazy, createElement } from "react";
+import { type ReactNode, lazy, createElement } from "react";
 import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
 import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import { SimpleCollectionStore } from "@/collections/runtime/store";
 import type { VersionControlFileData } from "@/plugins/git";
+import { type AsyncCache, createCache } from "@/utils/async-cache";
 
 export interface MDXStoreBrowserData<Frontmatter, CustomData> {
-  preload: () => Promise<CompiledMDXProperties<Frontmatter> & CustomData>;
+  id: string;
+  preload: () =>
+    | (CompiledMDXProperties<Frontmatter> & CustomData)
+    | Promise<CompiledMDXProperties<Frontmatter> & CustomData>;
+  _renderer: StoreRendererData;
+}
 
-  _renderer: {
-    id: string;
-    renderers?: Map<string, FC>;
-    getStoreData: () => StoreData;
-  };
+interface StoreRendererData {
+  storeId: string;
+  renderers: Map<
+    string,
+    {
+      fn: () => ReactNode;
+      forceOnDemand: boolean;
+    }
+  >;
 }
 
 interface StoreData {
-  preloaded: Map<string, Promise<CompiledMDXProperties>>;
+  preloaded: AsyncCache<CompiledMDXProperties>;
 }
 
 export const _internal_data = new Map<string, StoreData>();
@@ -44,26 +54,31 @@ export function mdxStoreBrowser<Config, Name extends string>(
     () => Promise<CompiledMDXProperties<Frontmatter>>
   >;
   const merged = new Map<string, MDXStoreBrowserData<Frontmatter, unknown>>();
-  function getStoreData() {
-    const store = _internal_data.get(name) ?? {
-      preloaded: new Map(),
+  function getStoreData(): StoreData {
+    let store = _internal_data.get(name);
+    if (store) return store;
+
+    store = {
+      preloaded: createCache(),
     };
     _internal_data.set(name, store);
     return store;
   }
 
+  const _renderer: StoreRendererData = {
+    storeId: name,
+    renderers: new Map(),
+  };
+
   for (const [key, value] of Object.entries(input)) {
     merged.set(key, {
+      id: key,
       preload() {
-        const data = getStoreData();
-        const loaded = value();
-        data.preloaded.set(key, loaded);
-        return loaded;
+        return getStoreData()
+          .preloaded.$value<CompiledMDXProperties<Frontmatter>>()
+          .cached(key, value);
       },
-      _renderer: {
-        id: key,
-        getStoreData,
-      },
+      _renderer,
     });
   }
 
@@ -80,30 +95,35 @@ export function useRenderer<Frontmatter, CustomData>(
   ) => ReactNode,
 ): ReactNode {
   if (!entry) return null;
-  entry._renderer.renderers ??= new Map();
-  const { id, renderers, getStoreData } = entry._renderer;
+  const {
+    id,
+    _renderer: { renderers },
+  } = entry;
   let renderer = renderers.get(id);
 
   if (!renderer) {
     const OnDemand = lazy(async () => {
       const loaded = await entry.preload();
-
       return { default: () => renderFn(loaded) };
     });
 
-    renderer = () => {
-      const data = getStoreData();
-      let cached: (CompiledMDXProperties<Frontmatter> & CustomData) | undefined;
-      data.preloaded.get(id)?.then((v) => {
-        cached = v as CompiledMDXProperties<Frontmatter> & CustomData;
-      });
-      if (!cached) return createElement(OnDemand);
-      return renderFn(cached);
+    renderer = {
+      forceOnDemand: false,
+      fn() {
+        const v = entry.preload();
+        if (!(v instanceof Promise) && !this.forceOnDemand) {
+          return renderFn(v);
+        }
+
+        // ensure it won't unmount React lazy during re-renders
+        this.forceOnDemand = true;
+        return createElement(OnDemand);
+      },
     };
     renderers.set(id, renderer);
   }
 
-  return createElement(renderer);
+  return renderer.fn();
 }
 
 export function $attachCompiled<Add>() {

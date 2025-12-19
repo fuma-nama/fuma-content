@@ -18,6 +18,7 @@ import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
+import { slash } from "@/utils/code-generator";
 
 type Awaitable<T> = T | PromiseLike<T>;
 
@@ -200,7 +201,7 @@ function plugin(): Plugin {
     if (!fsHandler || !mdxHandler) return;
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.server;
-    const base = path.relative(process.cwd(), fsHandler.dir);
+    const base = slash(path.relative(process.cwd(), fsHandler.dir));
     let initializer: string;
     codegen.addNamedImport(
       ["default as Config"],
@@ -265,7 +266,7 @@ function plugin(): Plugin {
     const { core, codegen } = context;
     const { configPath, workspace, outDir } = core.getOptions();
     const runtimePath = RuntimePaths.dynamic;
-    const base = path.relative(process.cwd(), fsHandler.dir);
+    const base = slash(path.relative(process.cwd(), fsHandler.dir));
     codegen.addNamedImport(
       ["default as Config"],
       codegen.formatImportPath(configPath),

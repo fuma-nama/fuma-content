@@ -15,7 +15,7 @@ export function createFSCache() {
     },
 
     delete(file: string) {
-      cache.store.delete(toFullPath(file));
+      cache.invalidate(toFullPath(file));
     },
   };
 }
