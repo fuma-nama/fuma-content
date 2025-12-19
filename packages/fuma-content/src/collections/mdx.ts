@@ -404,3 +404,5 @@ function plugin(): Plugin {
     },
   });
 }
+
+export type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
