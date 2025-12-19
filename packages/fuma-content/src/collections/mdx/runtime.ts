@@ -25,23 +25,24 @@ export interface MDXStoreData<Frontmatter> {
   compiled: CompiledMDXProperties<Frontmatter>;
 }
 
+type GetFrontmatter<Config, Name extends string> =
+  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
+    ? _Frontmatter
+    : never;
+
 export function mdxStore<Config, Name extends string>(
   _name: Name,
   base: string,
   _input: Record<string, unknown>,
-): FileCollectionStore<
-  MDXStoreData<
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
-      ? Frontmatter
-      : never
-  >
-> {
-  type Frontmatter =
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-      ? _Frontmatter
-      : never;
-  const input = _input as Record<string, CompiledMDXProperties<Frontmatter>>;
-  const merged = input as unknown as Record<string, MDXStoreData<Frontmatter>>;
+): FileCollectionStore<MDXStoreData<GetFrontmatter<Config, Name>>> {
+  const input = _input as Record<
+    string,
+    CompiledMDXProperties<GetFrontmatter<Config, Name>>
+  >;
+  const merged = input as unknown as Record<
+    string,
+    MDXStoreData<GetFrontmatter<Config, Name>>
+  >;
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
@@ -66,23 +67,18 @@ export function mdxStoreLazy<Config, Name extends string>(
     head: Record<string, unknown>;
     body: Record<string, () => Promise<unknown>>;
   },
-): FileCollectionStore<
-  MDXStoreLazyData<
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
-      ? Frontmatter
-      : never
-  >
-> {
-  type Frontmatter =
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-      ? _Frontmatter
-      : never;
+): FileCollectionStore<MDXStoreLazyData<GetFrontmatter<Config, Name>>> {
   const input = _input as {
-    head: Record<string, Frontmatter>;
-    body: Record<string, () => Promise<CompiledMDXProperties<Frontmatter>>>;
+    head: Record<string, GetFrontmatter<Config, Name>>;
+    body: Record<
+      string,
+      () => Promise<CompiledMDXProperties<GetFrontmatter<Config, Name>>>
+    >;
   };
-
-  const merged: Record<string, MDXStoreLazyData<Frontmatter>> = {};
+  const merged: Record<
+    string,
+    MDXStoreLazyData<GetFrontmatter<Config, Name>>
+  > = {};
 
   for (const [key, value] of Object.entries(input.head)) {
     merged[key] = {

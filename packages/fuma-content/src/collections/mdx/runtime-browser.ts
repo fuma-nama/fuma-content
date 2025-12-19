@@ -32,28 +32,27 @@ interface StoreData {
   preloaded: AsyncCache<CompiledMDXProperties>;
 }
 
+type GetFrontmatter<Config, Name extends string> =
+  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
+    ? _Frontmatter
+    : never;
+
 export const _internal_data = new Map<string, StoreData>();
 
 export function mdxStoreBrowser<Config, Name extends string>(
   name: Name,
   _input: Record<string, () => Promise<unknown>>,
 ): SimpleCollectionStore<
-  MDXStoreBrowserData<
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer Frontmatter>
-      ? Frontmatter
-      : never,
-    unknown
-  >
+  MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>
 > {
-  type Frontmatter =
-    GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-      ? _Frontmatter
-      : never;
   const input = _input as Record<
     string,
-    () => Promise<CompiledMDXProperties<Frontmatter>>
+    () => Promise<CompiledMDXProperties<GetFrontmatter<Config, Name>>>
   >;
-  const merged = new Map<string, MDXStoreBrowserData<Frontmatter, unknown>>();
+  const merged = new Map<
+    string,
+    MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>
+  >();
   function getStoreData(): StoreData {
     let store = _internal_data.get(name);
     if (store) return store;
@@ -75,7 +74,9 @@ export function mdxStoreBrowser<Config, Name extends string>(
       id: key,
       preload() {
         return getStoreData()
-          .preloaded.$value<CompiledMDXProperties<Frontmatter>>()
+          .preloaded.$value<
+            CompiledMDXProperties<GetFrontmatter<Config, Name>>
+          >()
           .cached(key, value);
       },
       _renderer,

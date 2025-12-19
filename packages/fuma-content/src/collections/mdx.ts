@@ -203,8 +203,8 @@ function plugin(): Plugin {
     const runtimePath = RuntimePaths.server;
     const base = slash(path.relative(process.cwd(), fsHandler.dir));
     let initializer: string;
-    codegen.addNamedImport(
-      ["default as Config"],
+    codegen.addNamespaceImport(
+      "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
@@ -240,8 +240,8 @@ function plugin(): Plugin {
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.browser;
     codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
-    codegen.addNamedImport(
-      ["default as Config"],
+    codegen.addNamespaceImport(
+      "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
@@ -267,9 +267,9 @@ function plugin(): Plugin {
     const { configPath, workspace, outDir } = core.getOptions();
     const runtimePath = RuntimePaths.dynamic;
     const base = slash(path.relative(process.cwd(), fsHandler.dir));
-    codegen.addNamedImport(
-      ["default as Config"],
-      codegen.formatImportPath(configPath),
+    codegen.addNamespaceImport(
+      "Config",
+      codegen.formatImportPath(core.getOptions().configPath),
     );
     codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
 

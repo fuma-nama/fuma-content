@@ -10,7 +10,7 @@ import jsxRuntimeDefault from "react/jsx-runtime";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
 import type { GetCollectionConfig } from "@/types";
-import type { MDXCollectionConfig } from "@/collections/mdx";
+import type { MDXCollection } from "@/collections/mdx";
 import path from "node:path";
 import { createCache } from "@/utils/async-cache";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
@@ -24,6 +24,11 @@ export interface MDXStoreDynamicData<Frontmatter> {
 
 let corePromise: Promise<Core>;
 
+type GetFrontmatter<Config, Name extends string> =
+  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
+    ? _Frontmatter
+    : never;
+
 export async function mdxStoreDynamic<Config, Name extends string>(
   config: Config,
   coreOptions: CoreOptions,
@@ -31,15 +36,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
   base: string,
   _frontmatter: Record<string, unknown>,
 ): Promise<
-  FileCollectionStore<
-    MDXStoreDynamicData<
-      GetCollectionConfig<Config, Name> extends MDXCollectionConfig<
-        infer Frontmatter
-      >
-        ? Frontmatter
-        : never
-    >
-  >
+  FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>>>
 > {
   corePromise ??= (async () => {
     const core = new Core(coreOptions);
@@ -49,20 +46,20 @@ export async function mdxStoreDynamic<Config, Name extends string>(
     return core;
   })();
   const core = await corePromise;
-
-  type Frontmatter =
-    GetCollectionConfig<Config, Name> extends MDXCollectionConfig<
-      infer Frontmatter
-    >
-      ? Frontmatter
-      : never;
-  const frontmatter = _frontmatter as Record<string, Frontmatter>;
+  const frontmatter = _frontmatter as Record<
+    string,
+    GetFrontmatter<Config, Name>
+  >;
   const collection = core.getCollection(name);
   if (!collection || !collection.handlers.mdx)
     throw new Error("invalid collection name");
 
-  const merged: Record<string, MDXStoreDynamicData<Frontmatter>> = {};
-  const cache = createCache<CompiledMDXProperties<Frontmatter>>();
+  const merged: Record<
+    string,
+    MDXStoreDynamicData<GetFrontmatter<Config, Name>>
+  > = {};
+  const cache =
+    createCache<CompiledMDXProperties<GetFrontmatter<Config, Name>>>();
 
   for (const [k, v] of Object.entries(frontmatter)) {
     merged[k] = {
@@ -84,7 +81,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
 
           return (await executeMdx(String(compiled.value), {
             baseUrl: pathToFileURL(filePath),
-          })) as CompiledMDXProperties<Frontmatter>;
+          })) as CompiledMDXProperties<GetFrontmatter<Config, Name>>;
         });
       },
     };

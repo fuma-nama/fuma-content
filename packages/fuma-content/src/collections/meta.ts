@@ -8,7 +8,10 @@ import {
   type FileHandlerConfig,
 } from "@/collections/handlers/fs";
 import type { EmitCodeGeneratorContext, Plugin } from "@/core";
-import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type {
+  StandardSchemaV1,
+  StandardJSONSchemaV1,
+} from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
@@ -30,13 +33,13 @@ export interface MetaCollectionHandler {
     this: MetaContext,
     data: unknown,
   ) => Awaitable<unknown | undefined>;
-  schema?: StandardSchemaV1 | ((context: MetaContext) => StandardSchemaV1);
+  schema?: StandardSchemaV1;
 }
 
 export interface MetaCollectionConfig<
   Schema extends StandardSchemaV1,
 > extends FileHandlerConfig {
-  schema?: Schema | ((context: MetaContext) => Schema);
+  schema?: Schema;
 }
 
 export type MetaCollection<_Data> = Collection & {
@@ -70,6 +73,12 @@ export function defineMeta<Schema extends StandardSchemaV1>(
             io: "input",
             unrepresentable: "any",
           });
+        else
+          return (config.schema as unknown as Partial<StandardJSONSchemaV1>)[
+            "~standard"
+          ]?.jsonSchema.input({
+            target: "draft-2020-12",
+          });
       },
     };
   });
@@ -90,8 +99,8 @@ function plugin(): Plugin {
       ["metaStore"],
       "fuma-content/collections/meta/runtime",
     );
-    codegen.addNamedImport(
-      ["default as Config"],
+    codegen.addNamespaceImport(
+      "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );

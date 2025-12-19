@@ -4,25 +4,24 @@ import { pageSchema } from "fumadocs-core/source/schema";
 import git from "fuma-content/plugins/git";
 import { mdxPreset } from "fumadocs-core/content/mdx/preset-bundler";
 
-export default defineConfig({
-  collections: {
-    docs: defineMDX({
-      dir: "content/docs",
-      frontmatter: pageSchema,
-      postprocess: {
-        extractLinkReferences: true,
-        includeProcessedMarkdown: true,
-      },
-      options: () =>
-        mdxPreset({
-          rehypeCodeOptions: {
-            themes: {
-              light: "catppuccin-latte",
-              dark: "catppuccin-mocha",
-            },
-          },
-        }),
-    }),
+export const docs = defineMDX({
+  dir: "content/docs",
+  frontmatter: pageSchema,
+  postprocess: {
+    extractLinkReferences: true,
+    includeProcessedMarkdown: true,
   },
+  options: () =>
+    mdxPreset({
+      rehypeCodeOptions: {
+        themes: {
+          light: "catppuccin-latte",
+          dark: "catppuccin-mocha",
+        },
+      },
+    }),
+});
+
+export default defineConfig({
   plugins: [git()],
 });
