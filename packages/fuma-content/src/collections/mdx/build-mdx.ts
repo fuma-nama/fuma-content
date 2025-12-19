@@ -14,6 +14,8 @@ import type { Pluggable } from "unified";
 import type { Collection } from "@/collections";
 import { createCache } from "@/utils/async-cache";
 import type { CompilerOptions } from "@/plugins/with-loader";
+import type { FC } from "react";
+import type { MDXProps } from "mdx/types";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -59,6 +61,24 @@ declare module "vfile" {
   interface DataMap extends FumaContentDataMap {}
 }
 
+export type CompiledMDX<Frontmatter = Record<string, unknown>> = {
+  frontmatter: Frontmatter;
+} & CompiledMDXData &
+  Record<string, unknown>;
+
+export interface CompiledMDXData {
+  default: FC<MDXProps>;
+
+  /**
+   * Enable from `postprocess` option.
+   */
+  _markdown?: string;
+  /**
+   * Enable from `postprocess` option.
+   */
+  _mdast?: string;
+}
+
 export async function buildMDX(
   core: Core,
   collection: Collection | undefined,
@@ -72,7 +92,7 @@ export async function buildMDX(
   }: BuildMDXOptions,
 ): Promise<VFile> {
   const handler = collection?.handlers.mdx;
-  const processorCache = createCache(core.cache as Map<string, MDXProcessor>);
+  const processorCache = createCache(core.cache).$value<MDXProcessor>();
 
   function getProcessor(format: "md" | "mdx") {
     const key = `build-mdx:${collection?.name ?? "global"}:${format}`;

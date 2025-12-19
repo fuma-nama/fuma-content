@@ -1,19 +1,19 @@
 "use client";
 
 import { type ReactNode, lazy, createElement } from "react";
-import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
 import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import { SimpleCollectionStore } from "@/collections/runtime/store";
 import type { VersionControlFileData } from "@/plugins/git";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
+import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
 export interface MDXStoreBrowserData<Frontmatter, CustomData> {
   id: string;
   preload: () =>
-    | (CompiledMDXProperties<Frontmatter> & CustomData)
-    | Promise<CompiledMDXProperties<Frontmatter> & CustomData>;
+    | (CompiledMDX<Frontmatter> & CustomData)
+    | Promise<CompiledMDX<Frontmatter> & CustomData>;
   _renderer: StoreRendererData;
 }
 
@@ -29,7 +29,7 @@ interface StoreRendererData {
 }
 
 interface StoreData {
-  preloaded: AsyncCache<CompiledMDXProperties>;
+  preloaded: AsyncCache<CompiledMDX>;
 }
 
 type GetFrontmatter<Config, Name extends string> =
@@ -47,7 +47,7 @@ export function mdxStoreBrowser<Config, Name extends string>(
 > {
   const input = _input as Record<
     string,
-    () => Promise<CompiledMDXProperties<GetFrontmatter<Config, Name>>>
+    () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>
   >;
   const merged = new Map<
     string,
@@ -74,9 +74,7 @@ export function mdxStoreBrowser<Config, Name extends string>(
       id: key,
       preload() {
         return getStoreData()
-          .preloaded.$value<
-            CompiledMDXProperties<GetFrontmatter<Config, Name>>
-          >()
+          .preloaded.$value<CompiledMDX<GetFrontmatter<Config, Name>>>()
           .cached(key, value);
       },
       _renderer,
@@ -91,9 +89,7 @@ export function mdxStoreBrowser<Config, Name extends string>(
  */
 export function useRenderer<Frontmatter, CustomData>(
   entry: MDXStoreBrowserData<Frontmatter, CustomData> | undefined,
-  renderFn: (
-    data: CompiledMDXProperties<Frontmatter> & CustomData,
-  ) => ReactNode,
+  renderFn: (data: CompiledMDX<Frontmatter> & CustomData) => ReactNode,
 ): ReactNode {
   if (!entry) return null;
   const {

@@ -2,27 +2,12 @@ import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import type { FC } from "react";
-import type { MDXProps } from "mdx/types";
 import type { VersionControlFileData } from "@/plugins/git";
-
-export type CompiledMDXProperties<Frontmatter = Record<string, unknown>> = {
-  frontmatter: Frontmatter;
-  default: FC<MDXProps>;
-
-  /**
-   * Enable from `postprocess` option.
-   */
-  _markdown?: string;
-  /**
-   * Enable from `postprocess` option.
-   */
-  _mdast?: string;
-} & Record<string, unknown>;
+import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
 export interface MDXStoreData<Frontmatter> {
   id: string;
-  compiled: CompiledMDXProperties<Frontmatter>;
+  compiled: CompiledMDX<Frontmatter>;
 }
 
 type GetFrontmatter<Config, Name extends string> =
@@ -37,7 +22,7 @@ export function mdxStore<Config, Name extends string>(
 ): FileCollectionStore<MDXStoreData<GetFrontmatter<Config, Name>>> {
   const input = _input as Record<
     string,
-    CompiledMDXProperties<GetFrontmatter<Config, Name>>
+    CompiledMDX<GetFrontmatter<Config, Name>>
   >;
   const merged = input as unknown as Record<
     string,
@@ -57,7 +42,7 @@ export function mdxStore<Config, Name extends string>(
 export interface MDXStoreLazyData<Frontmatter> {
   id: string;
   frontmatter: Frontmatter;
-  load: () => Promise<CompiledMDXProperties<Frontmatter>>;
+  load: () => Promise<CompiledMDX<Frontmatter>>;
 }
 
 export function mdxStoreLazy<Config, Name extends string>(
@@ -72,7 +57,7 @@ export function mdxStoreLazy<Config, Name extends string>(
     head: Record<string, GetFrontmatter<Config, Name>>;
     body: Record<
       string,
-      () => Promise<CompiledMDXProperties<GetFrontmatter<Config, Name>>>
+      () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>
     >;
   };
   const merged: Record<

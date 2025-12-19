@@ -406,3 +406,4 @@ function plugin(): Plugin {
 }
 
 export type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
+export type { CompiledMDXData, CompiledMDX } from "@/collections/mdx/build-mdx";

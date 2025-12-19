@@ -1,5 +1,5 @@
 import { buildConfig } from "@/config/build";
-import { buildMDX } from "@/collections/mdx/build-mdx";
+import { buildMDX, type CompiledMDX } from "@/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/utils/fuma-matter";
 import fs from "node:fs/promises";
@@ -8,7 +8,6 @@ import type { MDXComponents } from "mdx/types";
 import type { FC } from "react";
 import jsxRuntimeDefault from "react/jsx-runtime";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
-import type { CompiledMDXProperties } from "@/collections/mdx/runtime";
 import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import path from "node:path";
@@ -19,7 +18,7 @@ import type { VersionControlFileData } from "@/plugins/git";
 export interface MDXStoreDynamicData<Frontmatter> {
   id: string;
   frontmatter: Frontmatter;
-  compile: () => Promise<CompiledMDXProperties<Frontmatter>>;
+  compile: () => Promise<CompiledMDX<Frontmatter>>;
 }
 
 let corePromise: Promise<Core>;
@@ -58,8 +57,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
     string,
     MDXStoreDynamicData<GetFrontmatter<Config, Name>>
   > = {};
-  const cache =
-    createCache<CompiledMDXProperties<GetFrontmatter<Config, Name>>>();
+  const cache = createCache<CompiledMDX<GetFrontmatter<Config, Name>>>();
 
   for (const [k, v] of Object.entries(frontmatter)) {
     merged[k] = {
@@ -81,7 +79,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
 
           return (await executeMdx(String(compiled.value), {
             baseUrl: pathToFileURL(filePath),
-          })) as CompiledMDXProperties<GetFrontmatter<Config, Name>>;
+          })) as CompiledMDX<GetFrontmatter<Config, Name>>;
         });
       },
     };
