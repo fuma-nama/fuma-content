@@ -2,7 +2,7 @@ import type { Loader, LoaderInput } from "@/plugins/with-loader";
 import { dump, load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";
-import type { MetaContext } from "@/collections/meta";
+import type { MetaTransformationContext } from "@/collections/meta";
 import type { DynamicCore } from "@/config/dynamic";
 
 const querySchema = z
@@ -51,7 +51,7 @@ export function createMetaLoader(
       let data: unknown = parse(filePath, source);
       if (!handler) return data;
 
-      const context: MetaContext = {
+      const context: MetaTransformationContext = {
         path: filePath,
         source,
       };
@@ -65,7 +65,7 @@ export function createMetaLoader(
         );
       }
 
-      return handler.transform?.call(context, data);
+      return handler.transform.run(data, context);
     };
   }
 

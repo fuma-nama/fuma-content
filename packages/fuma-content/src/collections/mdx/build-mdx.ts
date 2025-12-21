@@ -137,15 +137,12 @@ export async function buildMDX(
     },
   });
 
-  if (collection && handler?.vfile) {
-    vfile = await handler.vfile.call(
-      {
-        collection,
-        filePath,
-        source,
-      },
-      vfile,
-    );
+  if (collection && handler) {
+    vfile = await handler.vfile.run(vfile, {
+      collection,
+      filePath,
+      source,
+    });
   }
 
   return (await getProcessor(filePath.endsWith(".mdx") ? "mdx" : "md")).process(

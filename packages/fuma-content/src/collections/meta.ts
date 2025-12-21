@@ -17,9 +17,9 @@ import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
-import type { Awaitable } from "@/types";
+import { type AsyncPipe, asyncPipe } from "@/utils/pipe";
 
-export interface MetaContext {
+export interface MetaTransformationContext {
   path: string;
   source: string;
 }
@@ -28,10 +28,7 @@ export interface MetaCollectionHandler {
   /**
    * Transform metadata
    */
-  transform?: (
-    this: MetaContext,
-    data: unknown,
-  ) => Awaitable<unknown | undefined>;
+  transform: AsyncPipe<unknown, MetaTransformationContext>;
   schema?: StandardSchemaV1;
 }
 
@@ -65,6 +62,7 @@ export function defineMeta<Schema extends StandardSchemaV1>(
     });
     handlers.meta = {
       schema: config.schema,
+      transform: asyncPipe(),
     };
     handlers["json-schema"] = {
       async create() {

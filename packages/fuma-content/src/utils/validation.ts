@@ -21,7 +21,7 @@ export class ValidationError extends Error {
     const picocolors = picocolorsModule.default ?? picocolorsModule;
 
     return [
-      picocolors.bold(`[MDX] ${this.title}:`),
+      picocolors.bold(`[Fuma Content] ${this.title}:`),
       ...this.issues.map((issue) =>
         picocolors.redBright(
           `- ${picocolors.bold(issue.path?.join(".") ?? "*")}: ${issue.message}`,
