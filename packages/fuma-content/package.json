@@ -64,9 +64,9 @@
     "loader-meta.cjs"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "clean": "rimraf dist",
-    "dev": "tsup --watch",
+    "dev": "tsdown --watch",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
@@ -105,6 +105,7 @@
     "remark-directive": "^4.0.0",
     "remark-stringify": "^11.0.0",
     "rollup": "^4.53.5",
+    "tsdown": "^0.18.2",
     "typescript": "^5.9.3",
     "typescript-config": "workspace:*",
     "vite": "^7.3.0",

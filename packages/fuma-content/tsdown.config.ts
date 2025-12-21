@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 const external = ["next", "typescript", "bun"];
 
@@ -17,15 +17,20 @@ export default defineConfig([
       "./src/plugins/with-loader/{index,webpack}.ts",
     ],
     format: "esm",
+
+    outExtensions: () => ({
+      dts: ".d.ts",
+      js: ".js",
+    }),
     external,
     dts: true,
     target: "node22",
   },
   {
+    // ensure Next.js CJS config compatibility
+    // because next.config.ts by default uses CJS
     entry: {
-      // ensure Next.js CJS config compatibility
-      // because next.config.ts by default uses CJS
-      "./next/index": "./src/next/index.ts",
+      "next/*": "./src/next/*.ts",
     },
     format: "cjs",
     external,
