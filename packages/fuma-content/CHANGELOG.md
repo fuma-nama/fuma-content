@@ -1,5 +1,13 @@
 # fuma-content
 
+## 1.0.2
+
+### Patch Changes
+
+- 495430b: standardize pipe syntax
+- cd6cd7e: Support regions in remark-include
+- 5763743: forward types to `/mdx` export
+
 ## 1.0.1
 
 ### Patch Changes
