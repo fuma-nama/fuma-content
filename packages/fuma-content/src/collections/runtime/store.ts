@@ -1,4 +1,4 @@
-type Awaitable<T> = T | PromiseLike<T>;
+import type { Awaitable } from "@/types";
 
 export interface CollectionStore<Id, Data> {
   /**

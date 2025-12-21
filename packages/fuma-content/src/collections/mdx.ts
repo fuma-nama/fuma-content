@@ -4,8 +4,8 @@ import {
   createCollection,
 } from "@/collections";
 import {
-  buildFileHandler,
   type FileHandlerConfig,
+  initFileCollection,
 } from "@/collections/handlers/fs";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { CoreOptions, EmitCodeGeneratorContext, Plugin } from "@/core";
@@ -19,8 +19,8 @@ import { withLoader } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
 import { slash } from "@/utils/code-generator";
-
-type Awaitable<T> = T | PromiseLike<T>;
+import { validate } from "@/utils/validation";
+import type { Awaitable } from "@/types";
 
 interface CompilationContext {
   collection: Collection;
@@ -40,7 +40,7 @@ export interface MDXCollectionHandler {
   ) => Awaitable<ProcessorOptions>;
 
   /**
-   * Transform frontmatter
+   * Transform & validate frontmatter
    */
   frontmatter?: (
     this: CompilationContext,
@@ -70,9 +70,9 @@ export interface MDXCollectionConfig<
   dynamic?: boolean;
 }
 
-export type MDXCollection<Frontmatter> = Collection & {
+export interface MDXCollection<Frontmatter> extends Collection {
   _frontmatter?: Frontmatter;
-};
+}
 
 const mdxTypeInfo: CollectionTypeInfo = {
   id: "mdx",
@@ -96,7 +96,10 @@ export function defineMDX<
 > {
   const { lazy = false, dynamic = false } = config;
   return createCollection(mdxTypeInfo, (collection, options) => {
-    collection.handlers.fs = buildFileHandler(options, config, ["mdx", "md"]);
+    initFileCollection(collection, options, {
+      supportedFormats: ["mdx", "md"],
+      ...config,
+    });
     collection.handlers.mdx = {
       cwd: options.workspace
         ? path.resolve(options.workspace.dir)
@@ -105,6 +108,18 @@ export function defineMDX<
       getMDXOptions: config.options,
       dynamic,
       lazy: lazy,
+      frontmatter(data) {
+        if (config.frontmatter) {
+          return validate(
+            config.frontmatter,
+            data,
+            undefined,
+            `invalid frontmatter in ${this.filePath}`,
+          ) as Promise<Record<string, unknown>>;
+        }
+
+        return data;
+      },
       onGenerateStore(initializer) {
         const mdxHandler = collection.handlers.mdx;
         if (mdxHandler?.postprocess?.extractLinkReferences) {

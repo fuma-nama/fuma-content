@@ -1,6 +1,6 @@
 import picomatch from "picomatch";
 import path from "node:path";
-import type { InitOptions } from "@/collections";
+import type { Collection, InitOptions } from "@/collections";
 
 export interface FileHandlerConfig {
   /**
@@ -14,6 +14,11 @@ export interface FileHandlerConfig {
    * Include all files if not specified
    */
   files?: string[];
+
+  /**
+   * Restrict to a list of file extensions to include, e.g. `['js', 'ts']`.
+   */
+  supportedFormats?: string[];
 }
 
 export interface FIleCollectionHandler {
@@ -26,18 +31,24 @@ export interface FIleCollectionHandler {
   patterns: string[];
 }
 
-export function buildFileHandler(
-  { workspace }: InitOptions,
+export function initFileCollection(
+  collection: Collection,
+  init: InitOptions,
   config: FileHandlerConfig,
-  supportedFormats: string[],
-): FIleCollectionHandler {
-  const patterns = config.files ?? [`**/*.{${supportedFormats.join(",")}}`];
+) {
+  const { workspace } = init;
+  const { supportedFormats, dir, files } = config;
+  const patterns =
+    files ??
+    (supportedFormats ? [`**/*.{${supportedFormats.join(",")}}`] : [`**/*`]);
   let matcher: picomatch.Matcher;
 
-  return {
+  collection.handlers.fs = {
     patterns,
-    dir: workspace ? path.resolve(workspace.dir, config.dir) : config.dir,
+    dir: workspace ? path.resolve(workspace.dir, dir) : dir,
     isFileSupported(filePath) {
+      if (!supportedFormats) return true;
+
       return supportedFormats.some((format) => filePath.endsWith(`.${format}`));
     },
     hasFile(filePath) {

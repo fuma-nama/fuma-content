@@ -10,3 +10,5 @@ export type GetCollectionConfig<Config, Name extends string> =
         }
       ? Collections[Name]
       : never;
+
+export type Awaitable<T> = T | PromiseLike<T>;

@@ -7,8 +7,7 @@ import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
 import { CodeGenerator } from "@/utils/code-generator";
-
-type Awaitable<T> = T | PromiseLike<T>;
+import type { Awaitable } from "@/types";
 
 export interface EmitEntry {
   /**

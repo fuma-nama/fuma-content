@@ -4,8 +4,8 @@ import {
   createCollection,
 } from "@/collections";
 import {
-  buildFileHandler,
   type FileHandlerConfig,
+  initFileCollection,
 } from "@/collections/handlers/fs";
 import type { EmitCodeGeneratorContext, Plugin } from "@/core";
 import type {
@@ -17,8 +17,7 @@ import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
-
-type Awaitable<T> = T | PromiseLike<T>;
+import type { Awaitable } from "@/types";
 
 export interface MetaContext {
   path: string;
@@ -38,7 +37,7 @@ export interface MetaCollectionHandler {
 
 export interface MetaCollectionConfig<
   Schema extends StandardSchemaV1,
-> extends FileHandlerConfig {
+> extends Omit<FileHandlerConfig, "supportedFormats"> {
   schema?: Schema;
 }
 
@@ -60,7 +59,10 @@ export function defineMeta<Schema extends StandardSchemaV1>(
 > {
   return createCollection(metaTypeInfo, (collection, options) => {
     const handlers = collection.handlers;
-    handlers.fs = buildFileHandler(options, config, ["json", "yaml"]);
+    initFileCollection(collection, options, {
+      supportedFormats: ["json", "yaml"],
+      ...config,
+    });
     handlers.meta = {
       schema: config.schema,
     };
