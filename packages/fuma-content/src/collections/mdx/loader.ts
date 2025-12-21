@@ -75,9 +75,9 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
       const handler = collection?.handlers.mdx;
 
       if (collection && handler?.frontmatter) {
-        matter.data = await handler.frontmatter.call(
-          { collection, filePath, source: value },
+        matter.data = await handler.frontmatter.run(
           matter.data as Record<string, unknown>,
+          { collection, filePath, source: value },
         );
       }
 
