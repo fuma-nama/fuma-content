@@ -575,17 +575,17 @@
           "position": undefined,
           "type": "code",
           "value": "//#region a
-console.log('hello world');
+console.log("hello world");
 //#endregion
 
 export function fn() {
   //#region b
-  console.log('one');
+  console.log("one");
   //#region c
   return function nested() {
-    console.log('two');
+    console.log("two");
     //#endregion
-    console.log('three');
+    console.log("three");
   };
   //#endregion
 }
@@ -629,7 +629,7 @@ export function fn() {
           "meta": undefined,
           "position": undefined,
           "type": "code",
-          "value": "console.log('hello world');",
+          "value": "console.log("hello world");",
         },
       ],
       "position": undefined,
@@ -669,10 +669,10 @@ export function fn() {
           "meta": undefined,
           "position": undefined,
           "type": "code",
-          "value": "console.log('one');
+          "value": "console.log("one");
 return function nested() {
-  console.log('two');
-  console.log('three');
+  console.log("two");
+  console.log("three");
 };",
         },
       ],
@@ -703,7 +703,7 @@ return function nested() {
           "position": undefined,
           "type": "code",
           "value": "return function nested() {
-  console.log('two');",
+  console.log("two");",
         },
       ],
       "position": undefined,

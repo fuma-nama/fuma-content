@@ -1,11 +1,11 @@
-import { Link } from '@tanstack/react-router';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
+import { Link } from "@tanstack/react-router";
+import { HomeLayout } from "fumadocs-ui/layouts/home";
 
 export function NotFound() {
   return (
     <HomeLayout
       nav={{
-        title: 'Tanstack Start',
+        title: "Tanstack Start",
       }}
       className="justify-center py-32 text-center"
     >
