@@ -34,7 +34,7 @@ export interface MetaCollectionHandler {
 
 export interface MetaCollectionConfig<
   Schema extends StandardSchemaV1,
-> extends Omit<FileHandlerConfig, "supportedFormats"> {
+> extends FileHandlerConfig {
   schema?: Schema;
 }
 

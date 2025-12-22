@@ -10,12 +10,12 @@
     "types:check": "fuma-content && tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.141.6",
-    "@tanstack/react-router-devtools": "1.141.6",
-    "@tanstack/react-start": "1.141.7",
+    "@tanstack/react-router": "1.142.8",
+    "@tanstack/react-router-devtools": "1.142.8",
+    "@tanstack/react-start": "1.142.8",
     "fuma-content": "workspace:*",
-    "fumadocs-core": "16.3.0",
-    "fumadocs-ui": "16.3.0",
+    "fumadocs-core": "16.3.2",
+    "fumadocs-ui": "16.3.2",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

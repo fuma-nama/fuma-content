@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import remarkMdx from "remark-mdx";
 import { remarkInclude } from "@/collections/mdx/remark-include";
 import remarkDirective from "remark-directive";
-
 import fs from "node:fs/promises";
 import { remark } from "remark";
 import { VFile } from "vfile";

@@ -1,125 +1,32 @@
-```ts title="server.ts"
+```ts title="mdx.ts"
 // @ts-nocheck
-import { server } from "fuma-content/runtime/server";
 import type * as Config from "./config";
-
-const create = server<
-  typeof Config,
-  import("fuma-content/runtime/types").InternalTypeConfig & {
-    DocData: {
-      blogs: {
-        /**
-         * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-         */
-        extractedReferences: import("fuma-content").ExtractedReference[];
-      };
-    };
-  }
->({ doc: { passthroughs: ["extractedReferences"] } });
+import { mdxStore, $extractedReferences } from "fuma-content/collections/mdx/runtime";
+import * as __fd_glob_3 from "./generate-index/folder/test.mdx?collection=blogs"
+import * as __fd_glob_2 from "./generate-index/index.mdx?collection=blogs"
+import * as __fd_glob_1 from "./generate-index/folder/test.mdx?collection=docs"
+import * as __fd_glob_0 from "./generate-index/index.mdx?collection=docs"
+export const docs = mdxStore<typeof Config, "docs">("docs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_0, "folder/test.mdx": __fd_glob_1, });
+export const blogs = mdxStore<typeof Config, "blogs">("blogs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_2, "folder/test.mdx": __fd_glob_3, }).$data($extractedReferences());
 ```
 
-```ts title="dynamic.ts"
+```ts title="mdx-browser.ts"
 // @ts-nocheck
-import { dynamic } from "fuma-content/runtime/dynamic";
+import { mdxStoreBrowser, $extractedReferences } from "fuma-content/collections/mdx/runtime-browser";
+import type * as Config from "./config";
+export const docs = mdxStoreBrowser<typeof Config, "docs">("docs", {"index.mdx": () => import("./generate-index/index.mdx?collection=docs"), "folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=docs"), });
+export const blogs = mdxStoreBrowser<typeof Config, "blogs">("blogs", {"index.mdx": () => import("./generate-index/index.mdx?collection=blogs"), "folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=blogs"), }).$data($extractedReferences());
+export { useRenderer } from "fuma-content/collections/mdx/runtime-browser";
+```
+
+```ts title="mdx-dynamic.ts"
+// @ts-nocheck
 import * as Config from "./config";
-
-const create = await dynamic<
-  typeof Config,
-  import("fuma-content/runtime/types").InternalTypeConfig & {
-    DocData: {
-      blogs: {
-        /**
-         * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-         */
-        extractedReferences: import("fuma-content").ExtractedReference[];
-      };
-    };
-  }
->(
-  Config,
-  {
-    configPath: "packages/fuma-content/test/fixtures/config.ts",
-    environment: "test",
-    outDir: "packages/fuma-content/test/fixtures",
-  },
-  { doc: { passthroughs: ["extractedReferences"] } },
-);
-
-export const docs = await create.doc(
-  "docs",
-  "packages/fuma-content/test/fixtures/generate-index",
-  {
-    absolutePath: path.resolve(
-      "packages/fuma-content/test/fixtures/generate-index/index.mdx",
-    ),
-    info: {
-      fullPath: "packages/fuma-content/test/fixtures/generate-index/index.mdx",
-      path: "index.mdx",
-    },
-    data: {},
-    hash: "b12f02f44f5ed3318104c095c455e5ee",
-  },
-  {
-    absolutePath: path.resolve(
-      "packages/fuma-content/test/fixtures/generate-index/folder/test.mdx",
-    ),
-    info: {
-      fullPath:
-        "packages/fuma-content/test/fixtures/generate-index/folder/test.mdx",
-      path: "folder/test.mdx",
-    },
-    data: {},
-    hash: "d41d8cd98f00b204e9800998ecf8427e",
-  },
-);
-
-export const blogs = await create.doc(
-  "blogs",
-  "packages/fuma-content/test/fixtures/generate-index",
-  {
-    absolutePath: path.resolve(
-      "packages/fuma-content/test/fixtures/generate-index/index.mdx",
-    ),
-    info: {
-      fullPath: "packages/fuma-content/test/fixtures/generate-index/index.mdx",
-      path: "index.mdx",
-    },
-    data: {},
-    hash: "b12f02f44f5ed3318104c095c455e5ee",
-  },
-  {
-    absolutePath: path.resolve(
-      "packages/fuma-content/test/fixtures/generate-index/folder/test.mdx",
-    ),
-    info: {
-      fullPath:
-        "packages/fuma-content/test/fixtures/generate-index/folder/test.mdx",
-      path: "folder/test.mdx",
-    },
-    data: {},
-    hash: "d41d8cd98f00b204e9800998ecf8427e",
-  },
-);
-```
-
-```ts title="browser.ts"
-// @ts-nocheck
-import { browser } from "fuma-content/runtime/browser";
-import type * as Config from "./config";
-
-const create = browser<
-  typeof Config,
-  import("fuma-content/runtime/types").InternalTypeConfig & {
-    DocData: {
-      blogs: {
-        /**
-         * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-         */
-        extractedReferences: import("fuma-content").ExtractedReference[];
-      };
-    };
-  }
->();
-const browserCollections = {};
-export default browserCollections;
+import { mdxStoreDynamic, $extractedReferences } from "fuma-content/collections/mdx/runtime-dynamic";
+import { frontmatter as __fd_glob_3 } from "./generate-index/folder/test.mdx?collection=blogs&only=frontmatter"
+import { frontmatter as __fd_glob_2 } from "./generate-index/index.mdx?collection=blogs&only=frontmatter"
+import { frontmatter as __fd_glob_1 } from "./generate-index/folder/test.mdx?collection=docs&only=frontmatter"
+import { frontmatter as __fd_glob_0 } from "./generate-index/index.mdx?collection=docs&only=frontmatter"
+export const docs = mdxStoreDynamic<typeof Config, "docs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures"}, "docs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_0, "folder/test.mdx": __fd_glob_1, });
+export const blogs = mdxStoreDynamic<typeof Config, "blogs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures"}, "blogs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_2, "folder/test.mdx": __fd_glob_3, }).$data($extractedReferences());
 ```
