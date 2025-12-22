@@ -1,0 +1,5 @@
+@reference "tailwindcss";
+
+.tiptap h1 {
+    @apply text-2xl font-medium;
+}
