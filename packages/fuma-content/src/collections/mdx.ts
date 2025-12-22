@@ -1,12 +1,5 @@
-import {
-  type Collection,
-  type CollectionTypeInfo,
-  createCollection,
-} from "@/collections";
-import {
-  type FileHandlerConfig,
-  initFileCollection,
-} from "@/collections/handlers/fs";
+import { type Collection, type CollectionTypeInfo, createCollection } from "@/collections";
+import { type FileHandlerConfig, initFileCollection } from "@/collections/handlers/fs";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { CoreOptions, EmitCodeGeneratorContext, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
@@ -36,17 +29,12 @@ export interface MDXCollectionHandler {
 
   preprocess?: PreprocessOptions;
   postprocess?: Partial<PostprocessOptions>;
-  getMDXOptions?: (
-    environment: "bundler" | "runtime",
-  ) => Awaitable<ProcessorOptions>;
+  getMDXOptions?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
 
   /**
    * Transform & validate frontmatter
    */
-  frontmatter: AsyncPipe<
-    Record<string, unknown> | undefined,
-    CompilationContext
-  >;
+  frontmatter: AsyncPipe<Record<string, unknown> | undefined, CompilationContext>;
 
   /**
    * Transform `vfile` on compilation stage
@@ -89,9 +77,7 @@ const RuntimePaths = {
   server: "fuma-content/collections/mdx/runtime",
 };
 
-export function defineMDX<
-  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
->(
+export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
   config: MDXCollectionConfig<FrontmatterSchema>,
 ): MDXCollection<
   FrontmatterSchema extends StandardSchemaV1
@@ -105,9 +91,7 @@ export function defineMDX<
       ...config,
     });
     const mdxHandler = (collection.handlers.mdx = {
-      cwd: options.workspace
-        ? path.resolve(options.workspace.dir)
-        : process.cwd(),
+      cwd: options.workspace ? path.resolve(options.workspace.dir) : process.cwd(),
       postprocess: config.postprocess,
       getMDXOptions: config.options,
       dynamic,
@@ -130,15 +114,10 @@ export function defineMDX<
     }
 
     if (mdxHandler.postprocess?.extractLinkReferences) {
-      mdxHandler.storeInitializer.pipe(
-        (initializer, { codegen, environment }) => {
-          codegen.addNamedImport(
-            ["$extractedReferences"],
-            RuntimePaths[environment],
-          );
-          return `${initializer}.$data($extractedReferences())`;
-        },
-      );
+      mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
+        codegen.addNamedImport(["$extractedReferences"], RuntimePaths[environment]);
+        return `${initializer}.$data($extractedReferences())`;
+      });
     }
 
     collection.handlers["version-control"] = {
@@ -146,15 +125,10 @@ export function defineMDX<
         const mdxHandler = collection.handlers.mdx;
         if (!mdxHandler) return;
 
-        mdxHandler.storeInitializer.pipe(
-          (initializer, { codegen, environment }) => {
-            codegen.addNamedImport(
-              ["$versionControl"],
-              RuntimePaths[environment],
-            );
-            return `${initializer}.$data($versionControl())`;
-          },
-        );
+        mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
+          codegen.addNamedImport(["$versionControl"], RuntimePaths[environment]);
+          return `${initializer}.$data($versionControl())`;
+        });
 
         mdxHandler.vfile.pipe(async (file) => {
           const vcData = await client.getFileData({ filePath: file.path });
@@ -288,10 +262,7 @@ function plugin(): Plugin {
     const { configPath, workspace, outDir } = core.getOptions();
     const runtimePath = RuntimePaths.dynamic;
     const base = slash(path.relative(process.cwd(), fsHandler.dir));
-    codegen.addNamespaceImport(
-      "Config",
-      codegen.formatImportPath(core.getOptions().configPath),
-    );
+    codegen.addNamespaceImport("Config", codegen.formatImportPath(core.getOptions().configPath));
     codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
 
     const coreOptions: CoreOptions = {
@@ -316,14 +287,12 @@ function plugin(): Plugin {
       if (!server.watcher) return;
 
       server.watcher.on("all", async (event, file) => {
-        const updatedCollection = this.core
-          .getCollections()
-          .find((collection) => {
-            const handlers = collection.handlers;
-            if (!handlers.mdx || !handlers.fs) return false;
-            if (event === "change" && !handlers.mdx.dynamic) return false;
-            return handlers.fs.hasFile(file);
-          });
+        const updatedCollection = this.core.getCollections().find((collection) => {
+          const handlers = collection.handlers;
+          if (!handlers.mdx || !handlers.fs) return false;
+          if (event === "change" && !handlers.mdx.dynamic) return false;
+          return handlers.fs.hasFile(file);
+        });
 
         if (!updatedCollection) return;
         await this.core.emit({
@@ -346,9 +315,7 @@ function plugin(): Plugin {
             await generateCollectionStoreBrowser(ctx, collection);
           }
 
-          ctx.codegen.push(
-            `export { useRenderer } from "${RuntimePaths.browser}";`,
-          );
+          ctx.codegen.push(`export { useRenderer } from "${RuntimePaths.browser}";`);
         }),
 
         this.createCodeGenerator("mdx-dynamic.ts", async (ctx) => {
@@ -365,9 +332,7 @@ function plugin(): Plugin {
         const loaderOptions: WebpackLoaderOptions = {
           configPath,
           outDir,
-          absoluteCompiledConfigPath: path.resolve(
-            this.core.getCompiledConfigPath(),
-          ),
+          absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
           isDev: process.env.NODE_ENV === "development",
         };
 

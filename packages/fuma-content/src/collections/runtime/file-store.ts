@@ -24,9 +24,7 @@ function fileInfo(base: string, globKey: string): FileInfo {
   };
 }
 
-export class FileCollectionStore<V> extends SimpleCollectionStore<
-  FileInfo & V
-> {
+export class FileCollectionStore<V> extends SimpleCollectionStore<FileInfo & V> {
   constructor(base: string, glob: Record<string, V>) {
     const data = new Map<string, FileInfo & V>();
     for (const [key, value] of Object.entries(glob)) {
@@ -38,15 +36,11 @@ export class FileCollectionStore<V> extends SimpleCollectionStore<
     super(data);
   }
 
-  transform<T>(
-    fn: (input: FileInfo & V) => FileInfo & T,
-  ): FileCollectionStore<T> {
+  transform<T>(fn: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
     return super.transform(fn);
   }
 
-  $data<T>(
-    _cast: (input: FileInfo & V) => FileInfo & T,
-  ): FileCollectionStore<T> {
+  $data<T>(_cast: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
     return super.$data(_cast);
   }
 }

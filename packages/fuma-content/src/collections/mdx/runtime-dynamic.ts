@@ -34,9 +34,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
   name: Name,
   base: string,
   _frontmatter: Record<string, unknown>,
-): Promise<
-  FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>>>
-> {
+): Promise<FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>>>> {
   corePromise ??= (async () => {
     const core = new Core(coreOptions);
     await core.init({
@@ -45,18 +43,11 @@ export async function mdxStoreDynamic<Config, Name extends string>(
     return core;
   })();
   const core = await corePromise;
-  const frontmatter = _frontmatter as Record<
-    string,
-    GetFrontmatter<Config, Name>
-  >;
+  const frontmatter = _frontmatter as Record<string, GetFrontmatter<Config, Name>>;
   const collection = core.getCollection(name);
-  if (!collection || !collection.handlers.mdx)
-    throw new Error("invalid collection name");
+  if (!collection || !collection.handlers.mdx) throw new Error("invalid collection name");
 
-  const merged: Record<
-    string,
-    MDXStoreDynamicData<GetFrontmatter<Config, Name>>
-  > = {};
+  const merged: Record<string, MDXStoreDynamicData<GetFrontmatter<Config, Name>>> = {};
   const cache = createCache<CompiledMDX<GetFrontmatter<Config, Name>>>();
 
   for (const [k, v] of Object.entries(frontmatter)) {
@@ -96,9 +87,7 @@ interface Options {
   jsxRuntime?: unknown;
 }
 
-const AsyncFunction: new (
-  ...args: string[]
-) => (...args: unknown[]) => Promise<unknown> =
+const AsyncFunction: new (...args: string[]) => (...args: unknown[]) => Promise<unknown> =
   Object.getPrototypeOf(executeMdx).constructor;
 
 async function executeMdx(compiled: string, options: Options = {}) {

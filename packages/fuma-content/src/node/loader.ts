@@ -20,11 +20,9 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     const ctx = core.getPluginContext();
 
     const hooks = await Promise.all(
-      core
-        .getPlugins(true)
-        .map<Promise<LoadHook | undefined>>(async (plugin) => {
-          return plugin.node?.createLoad?.call(ctx);
-        }),
+      core.getPlugins(true).map<Promise<LoadHook | undefined>>(async (plugin) => {
+        return plugin.node?.createLoad?.call(ctx);
+      }),
     );
     return hooks.filter((v) => v !== undefined);
   });
@@ -38,9 +36,7 @@ export const load: LoadHook = async (url, context, nextLoad) => {
       return nextLoad(url, context);
     }
 
-    return hooks[i](url, context, (url, ctx) =>
-      run(i + 1, url, { ...context, ...ctx }),
-    );
+    return hooks[i](url, context, (url, ctx) => run(i + 1, url, { ...context, ...ctx }));
   }
 
   return run(0, url, context);

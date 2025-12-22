@@ -36,9 +36,7 @@ export default async function content(
 
   const ctx = core.getPluginContext();
   return [
-    ...core
-      .getPlugins(true)
-      .map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
+    ...core.getPlugins(true).map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
     {
       name: "fuma-content",
       async buildStart() {

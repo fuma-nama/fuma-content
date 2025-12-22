@@ -39,8 +39,7 @@ export function initFileCollection(
   const { workspace } = init;
   const { supportedFormats, dir, files } = config;
   const patterns =
-    files ??
-    (supportedFormats ? [`**/*.{${supportedFormats.join(",")}}`] : [`**/*`]);
+    files ?? (supportedFormats ? [`**/*.{${supportedFormats.join(",")}}`] : [`**/*`]);
   let matcher: picomatch.Matcher;
 
   collection.handlers.fs = {

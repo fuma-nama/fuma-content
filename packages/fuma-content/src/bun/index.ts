@@ -5,13 +5,9 @@ import { type CoreOptions, Core } from "@/core";
 
 export type ContentPluginOptions = Partial<CoreOptions>;
 
-export function createContentPlugin(
-  options: ContentPluginOptions = {},
-): BunPlugin {
-  const {
-    outDir = Core.defaultOptions.outDir,
-    configPath = Core.defaultOptions.configPath,
-  } = options;
+export function createContentPlugin(options: ContentPluginOptions = {}): BunPlugin {
+  const { outDir = Core.defaultOptions.outDir, configPath = Core.defaultOptions.configPath } =
+    options;
 
   return {
     name: "fuma-content",

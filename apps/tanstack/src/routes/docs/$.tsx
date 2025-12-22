@@ -3,12 +3,7 @@ import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { createServerFn } from "@tanstack/react-start";
 import { source } from "@/lib/source";
 import { docs } from "content/mdx-browser";
-import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from "fumadocs-ui/layouts/docs/page";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { baseOptions } from "@/lib/layout.shared";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
@@ -41,24 +36,21 @@ const serverLoader = createServerFn({
 function Page() {
   const data = Route.useLoaderData();
   const { pageTree } = useFumadocsLoader(data);
-  const node = useRenderer(
-    docs.get(data.id),
-    ({ frontmatter, default: MDX }) => {
-      return (
-        <DocsPage>
-          <DocsTitle>{frontmatter.title}</DocsTitle>
-          <DocsDescription>{frontmatter.description}</DocsDescription>
-          <DocsBody>
-            <MDX
-              components={{
-                ...defaultMdxComponents,
-              }}
-            />
-          </DocsBody>
-        </DocsPage>
-      );
-    },
-  );
+  const node = useRenderer(docs.get(data.id), ({ frontmatter, default: MDX }) => {
+    return (
+      <DocsPage>
+        <DocsTitle>{frontmatter.title}</DocsTitle>
+        <DocsDescription>{frontmatter.description}</DocsDescription>
+        <DocsBody>
+          <MDX
+            components={{
+              ...defaultMdxComponents,
+            }}
+          />
+        </DocsBody>
+      </DocsPage>
+    );
+  });
 
   return (
     <DocsLayout {...baseOptions()} tree={pageTree}>

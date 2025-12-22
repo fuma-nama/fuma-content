@@ -25,21 +25,11 @@ type CacheEntry = z.infer<typeof cacheEntry>;
 
 export function createMdxLoader({ getCore }: DynamicCore): Loader {
   return {
-    async load({
-      getSource,
-      development: isDevelopment,
-      query,
-      compiler,
-      filePath,
-    }) {
+    async load({ getSource, development: isDevelopment, query, compiler, filePath }) {
       let core = await getCore();
       const value = await getSource();
       const matter = fumaMatter(value);
-      const {
-        collection: collectionName,
-        workspace,
-        only,
-      } = querySchema.parse(query);
+      const { collection: collectionName, workspace, only } = querySchema.parse(query);
       if (workspace) {
         core = core.getWorkspaces().get(workspace) ?? core;
       }
@@ -69,16 +59,15 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
         };
       }
 
-      const collection = collectionName
-        ? core.getCollection(collectionName)
-        : undefined;
+      const collection = collectionName ? core.getCollection(collectionName) : undefined;
       const handler = collection?.handlers.mdx;
 
       if (collection && handler?.frontmatter) {
-        matter.data = await handler.frontmatter.run(
-          matter.data as Record<string, unknown>,
-          { collection, filePath, source: value },
-        );
+        matter.data = await handler.frontmatter.run(matter.data as Record<string, unknown>, {
+          collection,
+          filePath,
+          source: value,
+        });
       }
 
       if (only === "frontmatter") {

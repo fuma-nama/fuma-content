@@ -3,9 +3,7 @@ import { getCore } from "@/lib/config";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
-export default async function Page({
-  params,
-}: PageProps<"/collection/[name]">) {
+export default async function Page({ params }: PageProps<"/collection/[name]">) {
   const core = await getCore();
   const collection = core.getCollection((await params).name);
   if (!collection) notFound();

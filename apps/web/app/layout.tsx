@@ -15,11 +15,7 @@ const geistMono = Geist_Mono({
 
 export default function Layout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={cn(geist.className, geistMono.variable)}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={cn(geist.className, geistMono.variable)} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <RootProvider>{children}</RootProvider>
       </body>

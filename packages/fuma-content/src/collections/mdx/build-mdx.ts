@@ -1,13 +1,7 @@
 import { createProcessor } from "@mdx-js/mdx";
 import { VFile } from "vfile";
-import {
-  remarkInclude,
-  type RemarkIncludeOptions,
-} from "@/collections/mdx/remark-include";
-import {
-  type PostprocessOptions,
-  remarkPostprocess,
-} from "@/collections/mdx/remark-postprocess";
+import { remarkInclude, type RemarkIncludeOptions } from "@/collections/mdx/remark-include";
+import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
 import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
@@ -51,9 +45,7 @@ export interface FumaContentDataMap {
   /**
    * [Fuma Content] get internal processor, do not use this on user land.
    */
-  _getProcessor?: (
-    format: "md" | "mdx",
-  ) => MDXProcessor | Promise<MDXProcessor>;
+  _getProcessor?: (format: "md" | "mdx") => MDXProcessor | Promise<MDXProcessor>;
 }
 
 declare module "vfile" {
@@ -82,14 +74,7 @@ export interface CompiledMDXData {
 export async function buildMDX(
   core: Core,
   collection: Collection | undefined,
-  {
-    filePath,
-    frontmatter,
-    source,
-    _compiler,
-    environment,
-    isDevelopment,
-  }: BuildMDXOptions,
+  { filePath, frontmatter, source, _compiler, environment, isDevelopment }: BuildMDXOptions,
 ): Promise<VFile> {
   const handler = collection?.handlers.mdx;
   const processorCache = createCache(core.cache).$value<MDXProcessor>();
@@ -99,10 +84,7 @@ export async function buildMDX(
 
     return processorCache.cached(key, async () => {
       const mdxOptions = await handler?.getMDXOptions?.(environment);
-      const preprocessPlugin = [
-        remarkPreprocess,
-        handler?.preprocess,
-      ] satisfies Pluggable;
+      const preprocessPlugin = [remarkPreprocess, handler?.preprocess] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
         ...handler?.postprocess,
@@ -145,7 +127,5 @@ export async function buildMDX(
     });
   }
 
-  return (await getProcessor(filePath.endsWith(".mdx") ? "mdx" : "md")).process(
-    vfile,
-  );
+  return (await getProcessor(filePath.endsWith(".mdx") ? "mdx" : "md")).process(vfile);
 }

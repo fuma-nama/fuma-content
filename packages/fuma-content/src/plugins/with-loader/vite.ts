@@ -3,11 +3,7 @@ import type { PluginOption } from "vite";
 import { parse } from "node:querystring";
 import type { Loader } from "@/plugins/with-loader";
 
-export function toVite(
-  name: string,
-  test: RegExp | undefined,
-  loader: Loader,
-): PluginOption {
+export function toVite(name: string, test: RegExp | undefined, loader: Loader): PluginOption {
   return {
     name: `fuma-content:${name}`,
     async transform(value, id) {

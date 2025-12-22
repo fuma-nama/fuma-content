@@ -20,14 +20,8 @@ export function mdxStore<Config, Name extends string>(
   base: string,
   _input: Record<string, unknown>,
 ): FileCollectionStore<MDXStoreData<GetFrontmatter<Config, Name>>> {
-  const input = _input as Record<
-    string,
-    CompiledMDX<GetFrontmatter<Config, Name>>
-  >;
-  const merged = input as unknown as Record<
-    string,
-    MDXStoreData<GetFrontmatter<Config, Name>>
-  >;
+  const input = _input as Record<string, CompiledMDX<GetFrontmatter<Config, Name>>>;
+  const merged = input as unknown as Record<string, MDXStoreData<GetFrontmatter<Config, Name>>>;
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
@@ -55,15 +49,9 @@ export function mdxStoreLazy<Config, Name extends string>(
 ): FileCollectionStore<MDXStoreLazyData<GetFrontmatter<Config, Name>>> {
   const input = _input as {
     head: Record<string, GetFrontmatter<Config, Name>>;
-    body: Record<
-      string,
-      () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>
-    >;
+    body: Record<string, () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>>;
   };
-  const merged: Record<
-    string,
-    MDXStoreLazyData<GetFrontmatter<Config, Name>>
-  > = {};
+  const merged: Record<string, MDXStoreLazyData<GetFrontmatter<Config, Name>>> = {};
 
   for (const [key, value] of Object.entries(input.head)) {
     merged[key] = {

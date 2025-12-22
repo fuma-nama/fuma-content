@@ -57,12 +57,7 @@ export function createMetaLoader(
       };
 
       if (handler.schema) {
-        data = await validate(
-          handler.schema,
-          data,
-          context,
-          `invalid data in ${filePath}`,
-        );
+        data = await validate(handler.schema, data, context, `invalid data in ${filePath}`);
       }
 
       return handler.transform.run(data, context);
@@ -84,10 +79,7 @@ export function createMetaLoader(
         };
       } else {
         return {
-          code:
-            resolveYaml === "yaml"
-              ? dump(data)
-              : `export default ${JSON.stringify(data)}`,
+          code: resolveYaml === "yaml" ? dump(data) : `export default ${JSON.stringify(data)}`,
         };
       }
     },

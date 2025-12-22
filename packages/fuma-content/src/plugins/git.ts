@@ -57,9 +57,7 @@ export default function git(options: GitPluginOptions = {}): Plugin {
 }
 
 export interface VersionControlClient {
-  getFileData: (options: {
-    filePath: string;
-  }) => Promise<VersionControlFileData>;
+  getFileData: (options: { filePath: string }) => Promise<VersionControlFileData>;
 }
 
 function createGitClient(cwd: string): VersionControlClient {
@@ -81,22 +79,11 @@ function createGitClient(cwd: string): VersionControlClient {
               cwd,
             },
           }),
-          x(
-            "git",
-            [
-              "log",
-              "--diff-filter=A",
-              "--follow",
-              "--format=%ai",
-              "-1",
-              relativePath,
-            ],
-            {
-              nodeOptions: {
-                cwd,
-              },
+          x("git", ["log", "--diff-filter=A", "--follow", "--format=%ai", "-1", relativePath], {
+            nodeOptions: {
+              cwd,
             },
-          ),
+          }),
         ]);
 
         return {

@@ -12,9 +12,7 @@ declare module "vfile" {
   }
 }
 
-export function remarkPreprocess(
-  options?: PreprocessOptions,
-): Transformer<Root, Root> {
+export function remarkPreprocess(options?: PreprocessOptions): Transformer<Root, Root> {
   return async (tree, file) => {
     if (file.data._preprocessed) return;
     file.data._preprocessed = true;

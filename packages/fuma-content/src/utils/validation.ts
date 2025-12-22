@@ -5,9 +5,7 @@ export class ValidationError extends Error {
   issues: readonly StandardSchemaV1.Issue[];
 
   constructor(message: string, issues: readonly StandardSchemaV1.Issue[]) {
-    super(
-      `${message}:\n${issues.map((issue) => `  ${issue.path}: ${issue.message}`).join("\n")}`,
-    );
+    super(`${message}:\n${issues.map((issue) => `  ${issue.path}: ${issue.message}`).join("\n")}`);
 
     this.title = message;
     this.issues = issues;
@@ -42,9 +40,7 @@ export async function validate<Schema extends StandardSchemaV1, Context>(
   }
 
   if ("~standard" in schema) {
-    const result = await (schema as StandardSchemaV1)["~standard"].validate(
-      data,
-    );
+    const result = await (schema as StandardSchemaV1)["~standard"].validate(data);
 
     if (result.issues) {
       throw new ValidationError(errorMessage, result.issues);

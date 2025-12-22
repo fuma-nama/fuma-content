@@ -1,6 +1,5 @@
 "use client";
 
-
 import type { PlateElementProps } from "platejs/react";
 
 import { type VariantProps, cva } from "class-variance-authority";
@@ -24,11 +23,7 @@ export function HeadingElement({
   ...props
 }: PlateElementProps & VariantProps<typeof headingVariants>) {
   return (
-    <PlateElement
-      as={variant!}
-      className={headingVariants({ variant })}
-      {...props}
-    >
+    <PlateElement as={variant!} className={headingVariants({ variant })} {...props}>
       {props.children}
     </PlateElement>
   );

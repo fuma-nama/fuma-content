@@ -1,10 +1,7 @@
 import type { GlobalConfig, WorkspaceConfig } from "@/config/index";
 import type { Collection } from "@/collections";
 
-export interface LoadedConfig extends Omit<
-  GlobalConfig,
-  "workspaces" | "collections"
-> {
+export interface LoadedConfig extends Omit<GlobalConfig, "workspaces" | "collections"> {
   collections: Map<string, Collection>;
   workspaces: Record<
     string,

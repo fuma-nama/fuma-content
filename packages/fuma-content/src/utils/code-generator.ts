@@ -107,9 +107,7 @@ export class CodeGenerator {
     patterns: string | string[],
     { base, ...rest }: GlobImportOptions,
   ): string {
-    patterns = (typeof patterns === "string" ? [patterns] : patterns).map(
-      normalizeViteGlobPath,
-    );
+    patterns = (typeof patterns === "string" ? [patterns] : patterns).map(normalizeViteGlobPath);
 
     return `import.meta.glob(${JSON.stringify(patterns)}, ${JSON.stringify(
       {
@@ -125,12 +123,10 @@ export class CodeGenerator {
     patterns: string | string[],
     { base, eager = false, query = {}, import: importName }: GlobImportOptions,
   ): Promise<string> {
-    const files = await this.globCache.cached(
-      JSON.stringify({ patterns, base }),
-      () =>
-        glob(patterns, {
-          cwd: base,
-        }),
+    const files = await this.globCache.cached(JSON.stringify({ patterns, base }), () =>
+      glob(patterns, {
+        cwd: base,
+      }),
     );
 
     let code: string = "{";
@@ -199,18 +195,13 @@ export class CodeGenerator {
 
       const namedImports: string[] = [];
       for (const [importName, memberName] of named) {
-        const item =
-          importName === memberName
-            ? importName
-            : `${memberName} as ${importName}`;
+        const item = importName === memberName ? importName : `${memberName} as ${importName}`;
 
         namedImports.push(isUsed.has(importName) ? item : `type ${item}`);
       }
 
       if (namedImports.length > 0) {
-        final.push(
-          `import { ${namedImports.join(", ")} } from "${specifier}";`,
-        );
+        final.push(`import { ${namedImports.join(", ")} } from "${specifier}";`);
       }
     }
 

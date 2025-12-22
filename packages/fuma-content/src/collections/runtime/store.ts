@@ -15,10 +15,7 @@ export interface CollectionStore<Id, Data> {
   $inferData: Data;
 }
 
-export class SimpleCollectionStore<Data> implements CollectionStore<
-  string,
-  Data
-> {
+export class SimpleCollectionStore<Data> implements CollectionStore<string, Data> {
   private readonly dataMap: Map<string, Data>;
   private readonly dataList: Data[];
 

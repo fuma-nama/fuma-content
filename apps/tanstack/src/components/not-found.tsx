@@ -13,8 +13,8 @@ export function NotFound() {
         <h1 className="font-bold text-6xl text-fd-muted-foreground">404</h1>
         <h2 className="font-semibold text-2xl">Page Not Found</h2>
         <p className="max-w-md text-fd-muted-foreground">
-          The page you are looking for might have been removed, had its name
-          changed, or is temporarily unavailable.
+          The page you are looking for might have been removed, had its name changed, or is
+          temporarily unavailable.
         </p>
         <Link
           to="/"

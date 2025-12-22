@@ -1,9 +1,4 @@
-import {
-  type PluggableList,
-  type Processor,
-  type Transformer,
-  unified,
-} from "unified";
+import { type PluggableList, type Processor, type Transformer, unified } from "unified";
 import { visit } from "unist-util-visit";
 import type { Code, Node, Root, RootContent } from "mdast";
 import * as path from "node:path";
@@ -247,10 +242,7 @@ export function remarkInclude(
       },
     });
 
-    let mdast = await preprocessor.run(
-      parser.parse(targetFile) as Root,
-      targetFile,
-    );
+    let mdast = await preprocessor.run(parser.parse(targetFile) as Root, targetFile);
 
     if (heading) {
       const extracted = extractSection(mdast, heading);
@@ -285,10 +277,7 @@ export function remarkInclude(
 
       queue.push(
         embedContent(targetPath, section, attributes, file).then((replace) => {
-          Object.assign(
-            parent && parent.type === "paragraph" ? parent : node,
-            replace,
-          );
+          Object.assign(parent && parent.type === "paragraph" ? parent : node, replace);
         }),
       );
 

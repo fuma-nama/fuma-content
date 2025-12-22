@@ -45,10 +45,7 @@ export interface Plugin {
   /**
    * on config loaded/updated
    */
-  config?: (
-    this: PluginContext,
-    config: LoadedConfig,
-  ) => Awaitable<void | LoadedConfig>;
+  config?: (this: PluginContext, config: LoadedConfig) => Awaitable<void | LoadedConfig>;
 
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
@@ -60,10 +57,7 @@ export interface Plugin {
   /**
    * Configure Fumadocs dev server
    */
-  configureServer?: (
-    this: PluginContext,
-    server: ServerContext,
-  ) => Awaitable<void>;
+  configureServer?: (this: PluginContext, server: ServerContext) => Awaitable<void>;
 
   vite?: {
     createPlugin?: (this: PluginContext) => Vite.PluginOption;
@@ -82,9 +76,7 @@ export interface Plugin {
   };
 }
 
-export type PluginOption = Awaitable<
-  Plugin | PluginOption[] | false | undefined
->;
+export type PluginOption = Awaitable<Plugin | PluginOption[] | false | undefined>;
 
 export interface ServerContext {
   /**
@@ -199,22 +191,20 @@ export class Core {
     // only support workspaces with max depth 1
     if (!workspace) {
       await Promise.all(
-        Object.entries(this.config.workspaces).map(
-          async ([name, workspace]) => {
-            const child = new Core({
-              ...this.options,
-              outDir: path.join(outDir, name),
-              workspace: {
-                name,
-                parent: this,
-                dir: workspace.dir,
-              },
-            });
+        Object.entries(this.config.workspaces).map(async ([name, workspace]) => {
+          const child = new Core({
+            ...this.options,
+            outDir: path.join(outDir, name),
+            workspace: {
+              name,
+              parent: this,
+              dir: workspace.dir,
+            },
+          });
 
-            await child.init({ config: workspace.config });
-            this.workspaces.set(name, child);
-          },
-        ),
+          await child.init({ config: workspace.config });
+          this.workspaces.set(name, child);
+        }),
       );
     }
 
@@ -285,11 +275,7 @@ export class Core {
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
-    const {
-      workspace,
-      outDir,
-      emit: { target, jsExtension } = {},
-    } = this.options;
+    const { workspace, outDir, emit: { target, jsExtension } = {} } = this.options;
     const { filterPlugin, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const globCache = new Map<string, Promise<string[]>>();
@@ -322,8 +308,7 @@ export class Core {
 
     for (const li of await Promise.all(
       this.plugins.map((plugin) => {
-        if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit)
-          return null;
+        if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit) return null;
         return plugin.emit.call(ctx);
       }),
     )) {

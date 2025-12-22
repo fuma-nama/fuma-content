@@ -83,8 +83,7 @@ const editorVariants = cva(
   },
 );
 
-export type EditorProps = PlateContentProps &
-  VariantProps<typeof editorVariants>;
+export type EditorProps = PlateContentProps & VariantProps<typeof editorVariants>;
 
 export const Editor = ({
   className,
@@ -117,12 +116,7 @@ export function EditorView({
   variant,
   ...props
 }: PlateViewProps & VariantProps<typeof editorVariants>) {
-  return (
-    <PlateView
-      {...props}
-      className={cn(editorVariants({ variant }), className)}
-    />
-  );
+  return <PlateView {...props} className={cn(editorVariants({ variant }), className)} />;
 }
 
 EditorView.displayName = "EditorView";

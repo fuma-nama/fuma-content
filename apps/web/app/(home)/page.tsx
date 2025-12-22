@@ -88,20 +88,15 @@ function Page({ id }: { id: string }) {
 export default function HomePage() {
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-4 py-16">
-      <h1 className="mb-6 font-semibold text-2xl">
-        Integrate content into your JavaScript app.
-      </h1>
+      <h1 className="mb-6 font-semibold text-2xl">Integrate content into your JavaScript app.</h1>
       <p className="mb-6 text-fd-muted-foreground">
-        Fuma Content is a{" "}
-        <span className="font-medium text-fd-primary">content processing</span>{" "}
+        Fuma Content is a <span className="font-medium text-fd-primary">content processing</span>{" "}
         layer, with native support for MDX.js, JSON and YAML files.
       </p>
       <div className="mb-6 flex flex-row items-center gap-2">
         <Link
           href="/docs"
-          className={cn(
-            buttonVariants({ variant: "primary", className: "px-4" }),
-          )}
+          className={cn(buttonVariants({ variant: "primary", className: "px-4" }))}
         >
           Getting Started
         </Link>

@@ -1,9 +1,4 @@
-import {
-  type InferPageType,
-  loader,
-  type MetaData,
-  type Source,
-} from "fumadocs-core/source";
+import { type InferPageType, loader, type MetaData, type Source } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
 import { docs } from "content/mdx";
 

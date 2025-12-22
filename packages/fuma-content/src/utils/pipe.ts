@@ -16,9 +16,7 @@ export interface AsyncPipe<Data, Context = undefined> {
    *
    * @returns the same pipe instance
    */
-  pipe: (
-    fn: (data: Data, context: Context) => Awaitable<Data>,
-  ) => AsyncPipe<Data, Context>;
+  pipe: (fn: (data: Data, context: Context) => Awaitable<Data>) => AsyncPipe<Data, Context>;
   run: (data: Data, context: Context) => Awaitable<Data>;
 }
 

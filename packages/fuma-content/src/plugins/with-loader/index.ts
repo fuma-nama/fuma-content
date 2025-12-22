@@ -49,10 +49,7 @@ export interface WithLoaderConfig {
    */
   test?: RegExp;
 
-  createLoader: (
-    this: PluginContext,
-    environment: LoaderEnvironment,
-  ) => Promise<Loader>;
+  createLoader: (this: PluginContext, environment: LoaderEnvironment) => Promise<Loader>;
 }
 
 /**
@@ -60,10 +57,7 @@ export interface WithLoaderConfig {
  *
  * @remarks it doesn't include Next.js, you have to define the webpack/turbopack config, and export the loaders on your own.
  */
-export function withLoader(
-  plugin: Plugin,
-  { test, createLoader }: WithLoaderConfig,
-): Plugin {
+export function withLoader(plugin: Plugin, { test, createLoader }: WithLoaderConfig): Plugin {
   let loader: Promise<Loader> | undefined;
 
   return {
@@ -82,11 +76,7 @@ export function withLoader(
     vite: {
       async createPlugin() {
         const { toVite } = await import("./vite");
-        return toVite(
-          plugin.name,
-          test,
-          await (loader ??= createLoader.call(this, "vite")),
-        );
+        return toVite(plugin.name, test, await (loader ??= createLoader.call(this, "vite")));
       },
     },
     ...plugin,

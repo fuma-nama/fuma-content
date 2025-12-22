@@ -1,17 +1,7 @@
-import {
-  type Collection,
-  type CollectionTypeInfo,
-  createCollection,
-} from "@/collections";
-import {
-  type FileHandlerConfig,
-  initFileCollection,
-} from "@/collections/handlers/fs";
+import { type Collection, type CollectionTypeInfo, createCollection } from "@/collections";
+import { type FileHandlerConfig, initFileCollection } from "@/collections/handlers/fs";
 import type { EmitCodeGeneratorContext, Plugin } from "@/core";
-import type {
-  StandardSchemaV1,
-  StandardJSONSchemaV1,
-} from "@standard-schema/spec";
+import type { StandardSchemaV1, StandardJSONSchemaV1 } from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
@@ -32,9 +22,7 @@ export interface MetaCollectionHandler {
   schema?: StandardSchemaV1;
 }
 
-export interface MetaCollectionConfig<
-  Schema extends StandardSchemaV1,
-> extends FileHandlerConfig {
+export interface MetaCollectionConfig<Schema extends StandardSchemaV1> extends FileHandlerConfig {
   schema?: Schema;
 }
 
@@ -50,9 +38,7 @@ const metaTypeInfo: CollectionTypeInfo = {
 export function defineMeta<Schema extends StandardSchemaV1>(
   config: MetaCollectionConfig<Schema>,
 ): MetaCollection<
-  Schema extends StandardSchemaV1
-    ? StandardSchemaV1.InferOutput<Schema>
-    : Record<string, unknown>
+  Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : Record<string, unknown>
 > {
   return createCollection(metaTypeInfo, (collection, options) => {
     const handlers = collection.handlers;
@@ -95,10 +81,7 @@ function plugin(): Plugin {
     if (!fsHandler) return;
     const { codegen, core } = context;
 
-    codegen.addNamedImport(
-      ["metaStore"],
-      "fuma-content/collections/meta/runtime",
-    );
+    codegen.addNamedImport(["metaStore"], "fuma-content/collections/meta/runtime");
     codegen.addNamespaceImport(
       "Config",
       codegen.formatImportPath(core.getOptions().configPath),
@@ -125,13 +108,11 @@ function plugin(): Plugin {
 
       server.watcher.on("all", async (event, file) => {
         if (event === "change") return;
-        const updatedCollection = this.core
-          .getCollections()
-          .find((collection) => {
-            const handlers = collection.handlers;
-            if (!handlers.meta || !handlers.fs) return false;
-            return handlers.fs.hasFile(file);
-          });
+        const updatedCollection = this.core.getCollections().find((collection) => {
+          const handlers = collection.handlers;
+          if (!handlers.meta || !handlers.fs) return false;
+          return handlers.fs.hasFile(file);
+        });
 
         if (!updatedCollection) return;
         await this.core.emit({
@@ -157,9 +138,7 @@ function plugin(): Plugin {
         const loaderOptions: WebpackLoaderOptions = {
           configPath,
           outDir,
-          absoluteCompiledConfigPath: path.resolve(
-            this.core.getCompiledConfigPath(),
-          ),
+          absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
           isDev: process.env.NODE_ENV === "development",
         };
 

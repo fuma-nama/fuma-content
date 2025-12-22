@@ -1,14 +1,8 @@
 "use client";
 
-
 import type { PlateElementProps } from "platejs/react";
 
-import {
-  PlateElement,
-  useFocused,
-  useReadOnly,
-  useSelected,
-} from "platejs/react";
+import { PlateElement, useFocused, useReadOnly, useSelected } from "platejs/react";
 
 import { cn } from "@/lib/utils";
 

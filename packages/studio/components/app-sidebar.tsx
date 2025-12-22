@@ -16,10 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
-export function AppSidebar({
-  children,
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ children, ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>

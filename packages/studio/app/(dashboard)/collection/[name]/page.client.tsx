@@ -2,11 +2,7 @@
 
 import type { Value } from "platejs";
 
-import {
-  BoldPlugin,
-  ItalicPlugin,
-  UnderlinePlugin,
-} from "@platejs/basic-nodes/react";
+import { BoldPlugin, ItalicPlugin, UnderlinePlugin } from "@platejs/basic-nodes/react";
 import { Plate, usePlateEditor } from "platejs/react";
 
 import { Editor, EditorContainer } from "@/components/editor/editor";

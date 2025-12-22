@@ -7,14 +7,10 @@ export function metaStore<Config, Name extends string>(
   base: string,
   input: Record<string, unknown>,
 ): FileCollectionStore<{
-  data: GetCollectionConfig<Config, Name> extends MetaCollection<infer Data>
-    ? Data
-    : never;
+  data: GetCollectionConfig<Config, Name> extends MetaCollection<infer Data> ? Data : never;
 }> {
   type Metadata =
-    GetCollectionConfig<Config, Name> extends MetaCollection<infer Data>
-      ? Data
-      : never;
+    GetCollectionConfig<Config, Name> extends MetaCollection<infer Data> ? Data : never;
   const merged = input as Record<
     string,
     {

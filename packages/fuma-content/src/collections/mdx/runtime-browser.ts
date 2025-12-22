@@ -42,17 +42,9 @@ export const _internal_data = new Map<string, StoreData>();
 export function mdxStoreBrowser<Config, Name extends string>(
   name: Name,
   _input: Record<string, () => Promise<unknown>>,
-): SimpleCollectionStore<
-  MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>
-> {
-  const input = _input as Record<
-    string,
-    () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>
-  >;
-  const merged = new Map<
-    string,
-    MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>
-  >();
+): SimpleCollectionStore<MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>> {
+  const input = _input as Record<string, () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>>;
+  const merged = new Map<string, MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>>();
   function getStoreData(): StoreData {
     let store = _internal_data.get(name);
     if (store) return store;

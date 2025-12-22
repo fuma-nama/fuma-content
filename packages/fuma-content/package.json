@@ -3,70 +3,73 @@
   "version": "1.0.2",
   "description": "The content processing layer for your app.",
   "keywords": [
-    "Docs",
-    "Contentlayer"
+    "Contentlayer",
+    "Docs"
   ],
-  "repository": "github:fuma-nama/fuma-content",
+  "homepage": "https://fuma-content.vercel.app",
   "license": "MIT",
   "author": "Fuma Nama",
-  "homepage": "https://fuma-content.vercel.app",
+  "repository": "github:fuma-nama/fuma-content",
+  "bin": "./dist/bin.js",
+  "files": [
+    "loader-mdx.cjs",
+    "loader-meta.cjs",
+    "dist/*"
+  ],
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./config": {
-      "import": "./dist/config/index.js",
-      "types": "./dist/config/index.d.ts"
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js"
     },
     "./config/*": {
-      "import": "./dist/config/*.js",
-      "types": "./dist/config/*.d.ts"
+      "types": "./dist/config/*.d.ts",
+      "import": "./dist/config/*.js"
     },
     "./next": {
-      "import": "./dist/next/index.js",
       "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.js",
       "require": "./dist/next/index.cjs"
     },
     "./vite": {
-      "import": "./dist/vite/index.js",
-      "types": "./dist/vite/index.d.ts"
+      "types": "./dist/vite/index.d.ts",
+      "import": "./dist/vite/index.js"
     },
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./collections": {
-      "import": "./dist/collections/index.js",
-      "types": "./dist/collections/index.d.ts"
+      "types": "./dist/collections/index.d.ts",
+      "import": "./dist/collections/index.js"
     },
     "./collections/*": {
-      "import": "./dist/collections/*.js",
       "types": "./dist/collections/*.d.ts",
+      "import": "./dist/collections/*.js",
       "default": "./dist/collections/*.js"
     },
     "./node/loader": {
-      "import": "./dist/node/loader.js",
-      "types": "./dist/node/loader.d.ts"
+      "types": "./dist/node/loader.d.ts",
+      "import": "./dist/node/loader.js"
     },
     "./bun": {
-      "import": "./dist/bun/index.js",
-      "types": "./dist/bun/index.d.ts"
+      "types": "./dist/bun/index.d.ts",
+      "import": "./dist/bun/index.js"
     },
     "./plugins/with-loader": {
-      "import": "./dist/plugins/with-loader/index.js",
-      "types": "./dist/plugins/with-loader/index.d.ts"
+      "types": "./dist/plugins/with-loader/index.d.ts",
+      "import": "./dist/plugins/with-loader/index.js"
     },
     "./plugins/*": {
-      "import": "./dist/plugins/*.js",
-      "types": "./dist/plugins/*.d.ts"
+      "types": "./dist/plugins/*.d.ts",
+      "import": "./dist/plugins/*.js"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": "./dist/bin.js",
-  "files": [
-    "dist/*",
-    "loader-mdx.cjs",
-    "loader-meta.cjs"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "rimraf dist",
@@ -130,8 +133,5 @@
     "vite": {
       "optional": true
     }
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }
