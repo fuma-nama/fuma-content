@@ -21,9 +21,6 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "nursery": {
-        "useSortedClasses": "on"
-      },
       "a11y": {
         "recommended": false
       },
