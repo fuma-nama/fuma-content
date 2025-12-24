@@ -1,22 +1,21 @@
 "use client";
 
-import * as React from "react";
-
 import { DndPlugin, useDraggable, useDropLine } from "@platejs/dnd";
 import { expandListItemsWithChildren } from "@platejs/list";
 import { BlockSelectionPlugin } from "@platejs/selection/react";
 import { GripVertical } from "lucide-react";
-import { type TElement, getPluginByType, isType, KEYS } from "platejs";
+import { getPluginByType, isType, KEYS, type TElement } from "platejs";
 import {
+  MemoizedChildren,
   type PlateEditor,
   type PlateElementProps,
   type RenderNodeWrapper,
-  MemoizedChildren,
   useEditorRef,
   useElement,
   usePluginOption,
+  useSelected,
 } from "platejs/react";
-import { useSelected } from "platejs/react";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -184,7 +183,7 @@ function Gutter({ children, className, ...props }: React.ComponentProps<"div">) 
       {...props}
       className={cn(
         "slate-gutterLeft",
-        "-translate-x-full absolute top-0 z-50 flex h-full cursor-text hover:opacity-100 sm:opacity-0",
+        "-translate-x-full absolute top-0 z-10 flex h-full cursor-text hover:opacity-100 sm:opacity-0",
         getPluginByType(editor, element.type)?.node.isContainer
           ? "group-hover/container:opacity-100"
           : "group-hover:opacity-100",
@@ -387,15 +386,12 @@ const createDragPreviewElements = (editor: PlateEditor, blocks: TElement[]): HTM
     wrapper.append(newDomNode);
     wrapper.style.display = "flow-root";
 
-    const lastDomNode = blocks[index - 1];
+    const lastBlockNode = blocks[index - 1];
+    const lastDomNode = lastBlockNode ? editor.api.toDOMNode(lastBlockNode) : undefined;
+    if (domNode.parentElement && lastDomNode?.parentElement) {
+      const lastDomNodeRect = lastDomNode.parentElement.getBoundingClientRect();
 
-    if (lastDomNode) {
-      const lastDomNodeRect = editor.api
-        .toDOMNode(lastDomNode)
-        ?.parentElement?.getBoundingClientRect();
-
-      const domNodeRect = domNode.parentElement?.getBoundingClientRect();
-
+      const domNodeRect = domNode.parentElement.getBoundingClientRect();
       const distance = domNodeRect.top - lastDomNodeRect.bottom;
 
       // Check if the two elements are adjacent (touching each other)

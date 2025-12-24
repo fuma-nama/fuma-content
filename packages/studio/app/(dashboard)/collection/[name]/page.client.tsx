@@ -1,18 +1,334 @@
 "use client";
 
-import { normalizeNodeId } from "platejs";
+import { MarkdownPlugin } from "@platejs/markdown";
 import { Plate, usePlateEditor } from "platejs/react";
-
+import { useDeferredValue, useEffect, useState } from "react";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { SettingsDialog } from "@/components/editor/settings-dialog";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
 
+const markdownValue = `
+## Introduction
+
+Fumadocs <span className='text-fd-muted-foreground text-sm'>(Foo-ma docs)</span> is a **documentation framework**, designed to be fast, flexible,
+and composes seamlessly into your React framework.
+
+Fumadocs has different parts:
+
+<Cards>
+
+<Card icon={<CpuIcon className="text-purple-300" />} title='Fumadocs Core'>
+
+Handles most of the logic, including document search, content source adapters, and Markdown extensions.
+
+</Card>
+
+<Card icon={<PanelsTopLeft className="text-blue-300" />} title='Fumadocs UI'>
+
+The default theme of Fumadocs offers a beautiful look for documentation sites and interactive components.
+
+</Card>
+
+<Card icon={<Database />} title='Content Source'>
+
+The source of your content, can be a CMS or local data layers like [Fumadocs MDX](/docs/mdx) (the official content source).
+
+</Card>
+
+<Card icon={<Terminal />} title='Fumadocs CLI'>
+
+A command line tool to install UI components and automate things, useful for customizing layouts.
+
+</Card>
+
+</Cards>
+
+<Callout title="Want to learn more?">
+  Read our in-depth [What is Fumadocs](/docs/ui/what-is-fumadocs) introduction.
+</Callout>
+
+### Terminology
+
+**Markdown/MDX:** Markdown is a markup language for creating formatted text. Fumadocs natively supports Markdown and MDX (superset of Markdown).
+
+**[Bun](https://bun.sh):** A JavaScript runtime, we use it for running scripts.
+
+Some basic knowledge of React.js would be useful for further customisations.
+
+## Automatic Installation
+
+A minimum version of Node.js 20 required.
+
+\`\`\`bash tab="npm"
+npm create fumadocs-app
+\`\`\`
+
+\`\`\`bash tab="pnpm"
+pnpm create fumadocs-app
+\`\`\`
+
+\`\`\`bash tab="yarn"
+yarn create fumadocs-app
+\`\`\`
+
+\`\`\`bash tab="bun"
+bun create fumadocs-app
+\`\`\`
+
+It will ask you the built-in template to use:
+
+- **React.js framework**: Next.js, Waku, React Router, Tanstack Start.
+- **Content source**: Fumadocs MDX.
+
+A new fumadocs app should be initialized. Now you can start hacking!
+
+<Callout title='From Existing Codebase?'>
+
+    You can follow the [Manual Installation](/docs/ui/manual-installation) guide to get started.
+
+</Callout>
+
+### Enjoy!
+
+Create your first MDX file in the docs folder.
+
+\`\`\`mdx title="content/docs/index.mdx"
+---
+title: Hello World
+---
+
+## Yo what's up
+\`\`\`
+
+Run the app in development mode and see http://localhost:3000/docs.
+
+\`\`\`npm
+npm run dev
+\`\`\`
+
+## FAQ
+
+Some common questions you may encounter.
+
+<Accordions>
+  <Accordion id='upgrade-fumadocs' title="Getting error with missing APIs or bugs?">
+    Make sure to upgrade Fumadocs when you've encountered any problems or trying out new features:
+
+    \`\`\`bash title="pnpm"
+    pnpm update -i -r --latest
+    \`\`\`
+
+  </Accordion>
+
+  <Accordion id='change-base-url' title="How to change the base route of docs?">
+
+    Routing is handled by your React framework, you need to change the routing structure first.
+
+    For example, in Next.js, rename the route (\`/docs/*\` -> \`/info/*\`):
+
+    <Files>
+      <Folder name="app/docs" defaultOpen className="opacity-50" disabled>
+        <File name="layout.tsx" />
+      </Folder>
+      <Folder name="app/info" defaultOpen>
+        <File name="layout.tsx" />
+      </Folder>
+    </Files>
+
+    Or rename from \`/docs/*\` to \`/*\` using a route group:
+
+    <Files>
+      <Folder name="app/(docs)" defaultOpen>
+        <File name="layout.tsx" />
+      </Folder>
+    </Files>
+
+    Finally, update the base URL of pages in \`source.ts\`:
+
+\`\`\`ts title="lib/source.ts"
+import { loader } from 'fumadocs-core/source';
+
+export const source = loader({
+  baseUrl: '/info', // to the new value [!code highlight]
+});
+\`\`\`
+
+  </Accordion>
+
+    <Accordion id='multi-docs' title="How to implement multi-docs?">
+        We recommend to use [Sidebar Tabs](/docs/ui/navigation/sidebar#sidebar-tabs).
+    </Accordion>
+
+</Accordions>
+
+### For Vite
+
+<Accordions>
+  <Accordion id='vite-context-error' title="Getting error with React contexts?">
+
+There's some weird pre-bundling problems with Vite: [#3910](https://github.com/vitejs/vite/issues/3910).
+Make sure to exclude Fumadocs from pre-bundling and add it to \`noExternal\`:
+
+\`\`\`ts title="vite.config.ts"
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: {
+    // add other Fumadocs deps as needed
+    noExternal: [
+      'fumadocs-core',
+      'fumadocs-ui',
+      'fumadocs-openapi',
+      '@fumadocs/base-ui',
+      '@fumadocs/ui',
+    ],
+  },
+});
+\`\`\`
+
+  </Accordion>
+</Accordions>
+
+### For Next.js
+
+<Accordions>
+  <Accordion id='node-23' title="Getting error on production build?">
+
+    Node.js 23.1 might have problems with Next.js, see [#1021](https://github.com/fuma-nama/fumadocs/issues/1021). Make sure to change your Node.js version.
+
+  </Accordion>
+  <Accordion id='dynamic-route' title="It uses Dynamic Route, will it be poor in performance?">
+
+    Next.js turns dynamic route into static routes when \`generateStaticParams\` is configured.
+    Hence, it is as fast as static pages.
+
+    You can [enable Static Exports](/docs/ui/static-export) on Next.js to get a static build output.
+
+  </Accordion>
+  <Accordion id='webpack' title='Reading from "fumadocs-mdx:collections/server" is not handled by plugins'>
+
+Webpack resolves import namespace **before** your import aliases in \`tsconfig.json\`. When using Fumadocs MDX, you have to rename your import alias to \`collections/*\` instead.
+
+\`\`\`json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "paths": {
+      // [!code ++]
+      "collections/*": [".source/*"]
+    }
+  }
+}
+\`\`\`
+
+Make sure to update the references as well.
+
+\`\`\`ts title="lib/source.ts"
+// [!code --]
+import { docs } from 'fumadocs-mdx:collections/server';
+// [!code ++]
+import { docs } from 'collections/server';
+\`\`\`
+
+</Accordion>
+  <Accordion id='custom-layout-docs-page' title='How to create a page in /docs without docs layout?'>
+
+    Same as managing layouts in Next.js App Router, remove the original MDX file from content directory (\`/content/docs\`).
+    This ensures duplicated pages will not cause errors.
+
+    Now, You can add the page to another route group, which isn't a descendant of docs layout.
+
+    For example, to replace \`/docs/test\`:
+
+    <Files>
+      <File name="(home)/docs/test/page.tsx" />
+      <Folder name="docs">
+        <File name="layout.tsx" />
+        <File name="[[...slug]]/page.tsx" />
+      </Folder>
+    </Files>
+
+    For \`/docs\`, you need to change the catch-all route to be non-optional:
+
+    <Files>
+      <File name="(home)/docs/page.tsx" />
+      <Folder name="docs" defaultOpen>
+        <File name="layout.tsx" />
+        <File name="[...slug]/page.tsx" />
+      </Folder>
+    </Files>
+
+  </Accordion>
+
+</Accordions>
+
+## Learn More
+
+New to here? Don't worry, we are welcome for your questions.
+
+If you find anything confusing, please give your feedback on [Github Discussion](https://github.com/fuma-nama/fumadocs/discussions)!
+
+### Writing Content
+
+For authoring docs, make sure to read:
+
+<Cards>
+  <Card href="/docs/ui/markdown" title="Markdown">
+    Fumadocs has some additional features for authoring content.
+  </Card>
+  <Card href="/docs/ui/navigation" title="Navigation">
+    Learn how to customise navigation links and sidebar items.
+  </Card>
+  <Card href="/docs/ui/page-conventions" title="Page Slugs & Page Tree">
+    Learn how to organise content.
+  </Card>
+  <Card
+    href="/docs/ui/components"
+    title="Components"
+    description="See all available components to enhance your docs"
+  />
+</Cards>
+
+### Special Needs
+
+<Cards>
+  <Card
+    href="/docs/ui/static-export"
+    title="Configure Static Export"
+    description="Learn how to enable static export on your docs"
+  />
+  <Card
+    href="/docs/ui/internationalization"
+    title="Internationalization"
+    description="Learn how to enable i18n"
+  />
+  <Card
+    href="/docs/ui/theme"
+    title="Color Themes"
+    description="Add themes to Fumadocs UI"
+  />
+  <Card
+    href="/docs/ui/components"
+    title="Layouts"
+    description="Customis\` your Fumadocs UI layouts"
+  />
+</Cards\``;
+
 export function MDXEditor() {
+  const [ready, setReady] = useState(false);
+  const deferredReady = useDeferredValue(ready);
   const editor = usePlateEditor({
     plugins: EditorKit,
-    value,
   });
 
+  useEffect(() => {
+    editor.tf.setValue(editor.getApi(MarkdownPlugin).markdown.deserialize(markdownValue));
+    setReady(true);
+  }, []);
+
+  if (!deferredReady)
+    return (
+      <p className="p-4 bg-muted text-muted-foreground border rounded-xl">Initializing Editor...</p>
+    );
   return (
     <Plate editor={editor}>
       <EditorContainer>
@@ -23,542 +339,3 @@ export function MDXEditor() {
     </Plate>
   );
 }
-
-const value = normalizeNodeId([
-  {
-    children: [{ text: "Welcome to the Plate Playground!" }],
-    type: "h1",
-  },
-  {
-    children: [
-      { text: "Experience a modern rich-text editor built with " },
-      { children: [{ text: "Slate" }], type: "a", url: "https://slatejs.org" },
-      { text: " and " },
-      { children: [{ text: "React" }], type: "a", url: "https://reactjs.org" },
-      {
-        text: ". This playground showcases just a part of Plate's capabilities. ",
-      },
-      {
-        children: [{ text: "Explore the documentation" }],
-        type: "a",
-        url: "/docs",
-      },
-      { text: " to discover more." },
-    ],
-    type: "p",
-  },
-  // Suggestions & Comments Section
-  {
-    children: [{ text: "Collaborative Editing" }],
-    type: "h2",
-  },
-  {
-    children: [
-      { text: "Review and refine content seamlessly. Use " },
-      {
-        children: [
-          {
-            suggestion: true,
-            suggestion_playground1: {
-              id: "playground1",
-              createdAt: Date.now(),
-              type: "insert",
-              userId: "alice",
-            },
-            text: "suggestions",
-          },
-        ],
-        type: "a",
-        url: "/docs/suggestion",
-      },
-      {
-        suggestion: true,
-        suggestion_playground1: {
-          id: "playground1",
-          createdAt: Date.now(),
-          type: "insert",
-          userId: "alice",
-        },
-        text: " ",
-      },
-      {
-        suggestion: true,
-        suggestion_playground1: {
-          id: "playground1",
-          createdAt: Date.now(),
-          type: "insert",
-          userId: "alice",
-        },
-        text: "like this added text",
-      },
-      { text: " or to " },
-      {
-        suggestion: true,
-        suggestion_playground2: {
-          id: "playground2",
-          createdAt: Date.now(),
-          type: "remove",
-          userId: "bob",
-        },
-        text: "mark text for removal",
-      },
-      { text: ". Discuss changes using " },
-      {
-        children: [{ comment: true, comment_discussion1: true, text: "comments" }],
-        type: "a",
-        url: "/docs/comment",
-      },
-      {
-        comment: true,
-        comment_discussion1: true,
-        text: " on many text segments",
-      },
-      { text: ". You can even have " },
-      {
-        comment: true,
-        comment_discussion2: true,
-        suggestion: true,
-        suggestion_playground3: {
-          id: "playground3",
-          createdAt: Date.now(),
-          type: "insert",
-          userId: "charlie",
-        },
-        text: "overlapping",
-      },
-      { text: " annotations!" },
-    ],
-    type: "p",
-  },
-  // {
-  //   children: [
-  //     {
-  //       text: 'Block-level suggestions are also supported for broader feedback.',
-  //     },
-  //   ],
-  //   suggestion: {
-  //     suggestionId: 'suggestionBlock1',
-  //     type: 'block',
-  //     userId: 'charlie',
-  //   },
-  //   type: 'p',
-  // },
-  // AI Section
-  {
-    children: [{ text: "AI-Powered Editing" }],
-    type: "h2",
-  },
-  {
-    children: [
-      { text: "Boost your productivity with integrated " },
-      {
-        children: [{ text: "AI SDK" }],
-        type: "a",
-        url: "/docs/ai",
-      },
-      { text: ". Press " },
-      { kbd: true, text: "⌘+J" },
-      { text: " or " },
-      { kbd: true, text: "Space" },
-      { text: " in an empty line to:" },
-    ],
-    type: "p",
-  },
-  {
-    children: [{ text: "Generate content (continue writing, summarize, explain)" }],
-    indent: 1,
-    listStyleType: "disc",
-    type: "p",
-  },
-  {
-    children: [{ text: "Edit existing text (improve, fix grammar, change tone)" }],
-    indent: 1,
-    listStyleType: "disc",
-    type: "p",
-  },
-  // Core Features Section (Combined)
-  {
-    children: [{ text: "Rich Content Editing" }],
-    type: "h2",
-  },
-  {
-    children: [
-      { text: "Structure your content with " },
-      {
-        children: [{ text: "headings" }],
-        type: "a",
-        url: "/docs/heading",
-      },
-      { text: ", " },
-      {
-        children: [{ text: "lists" }],
-        type: "a",
-        url: "/docs/list",
-      },
-      { text: ", and " },
-      {
-        children: [{ text: "quotes" }],
-        type: "a",
-        url: "/docs/blockquote",
-      },
-      { text: ". Apply " },
-      {
-        children: [{ text: "marks" }],
-        type: "a",
-        url: "/docs/basic-marks",
-      },
-      { text: " like " },
-      { bold: true, text: "bold" },
-      { text: ", " },
-      { italic: true, text: "italic" },
-      { text: ", " },
-      { text: "underline", underline: true },
-      { text: ", " },
-      { strikethrough: true, text: "strikethrough" },
-      { text: ", and " },
-      { code: true, text: "code" },
-      { text: ". Use " },
-      {
-        children: [{ text: "autoformatting" }],
-        type: "a",
-        url: "/docs/autoformat",
-      },
-      { text: " for " },
-      {
-        children: [{ text: "Markdown" }],
-        type: "a",
-        url: "/docs/markdown",
-      },
-      { text: "-like shortcuts (e.g., " },
-      { kbd: true, text: "* " },
-      { text: " for lists, " },
-      { kbd: true, text: "# " },
-      { text: " for H1)." },
-    ],
-    type: "p",
-  },
-  {
-    children: [
-      {
-        children: [
-          {
-            text: "Blockquotes are great for highlighting important information.",
-          },
-        ],
-        type: "p",
-      },
-    ],
-    type: "blockquote",
-  },
-  {
-    children: [
-      { children: [{ text: "function hello() {" }], type: "code_line" },
-      {
-        children: [{ text: "  console.info('Code blocks are supported!');" }],
-        type: "code_line",
-      },
-      { children: [{ text: "}" }], type: "code_line" },
-    ],
-    lang: "javascript",
-    type: "code_block",
-  },
-  {
-    children: [
-      { text: "Create " },
-      {
-        children: [{ text: "links" }],
-        type: "a",
-        url: "/docs/link",
-      },
-      { text: ", " },
-      {
-        children: [{ text: "@mention" }],
-        type: "a",
-        url: "/docs/mention",
-      },
-      { text: " users like " },
-      { children: [{ text: "" }], type: "mention", value: "Alice" },
-      { text: ", or insert " },
-      {
-        children: [{ text: "emojis" }],
-        type: "a",
-        url: "/docs/emoji",
-      },
-      { text: " ✨. Use the " },
-      {
-        children: [{ text: "slash command" }],
-        type: "a",
-        url: "/docs/slash-command",
-      },
-      { text: " (/) for quick access to elements." },
-    ],
-    type: "p",
-  },
-  // Table Section
-  {
-    children: [{ text: "How Plate Compares" }],
-    type: "h3",
-  },
-  {
-    children: [
-      {
-        text: "Plate offers many features out-of-the-box as free, open-source plugins.",
-      },
-    ],
-    type: "p",
-  },
-  {
-    children: [
-      {
-        children: [
-          {
-            children: [{ children: [{ bold: true, text: "Feature" }], type: "p" }],
-            type: "th",
-          },
-          {
-            children: [
-              {
-                children: [{ bold: true, text: "Plate (Free & OSS)" }],
-                type: "p",
-              },
-            ],
-            type: "th",
-          },
-          {
-            children: [{ children: [{ bold: true, text: "Tiptap" }], type: "p" }],
-            type: "th",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "AI" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid Extension" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Comments" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid Extension" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Suggestions" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid (Comments Pro)" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Emoji Picker" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid Extension" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Table of Contents" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid Extension" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Drag Handle" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Paid Extension" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-      {
-        children: [
-          {
-            children: [{ children: [{ text: "Collaboration (Yjs)" }], type: "p" }],
-            type: "td",
-          },
-          {
-            children: [
-              {
-                attributes: { align: "center" },
-                children: [{ text: "✅" }],
-                type: "p",
-              },
-            ],
-            type: "td",
-          },
-          {
-            children: [{ children: [{ text: "Hocuspocus (OSS/Paid)" }], type: "p" }],
-            type: "td",
-          },
-        ],
-        type: "tr",
-      },
-    ],
-    type: "table",
-  },
-  // Media Section
-  {
-    children: [{ text: "Images and Media" }],
-    type: "h3",
-  },
-  {
-    children: [
-      {
-        text: "Embed rich media like images directly in your content. Supports ",
-      },
-      {
-        children: [{ text: "Media uploads" }],
-        type: "a",
-        url: "/docs/media",
-      },
-      {
-        text: " and ",
-      },
-      {
-        children: [{ text: "drag & drop" }],
-        type: "a",
-        url: "/docs/dnd",
-      },
-      {
-        text: " for a smooth experience.",
-      },
-    ],
-    type: "p",
-  },
-  {
-    attributes: { align: "center" },
-    caption: [
-      {
-        children: [{ text: "Images with captions provide context." }],
-        type: "p",
-      },
-    ],
-    children: [{ text: "" }],
-    type: "img",
-    url: "https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    width: "75%",
-  },
-  {
-    children: [{ text: "" }],
-    isUpload: true,
-    name: "sample.pdf",
-    type: "file",
-    url: "https://s26.q4cdn.com/900411403/files/doc_downloads/test.pdf",
-  },
-  {
-    children: [{ text: "" }],
-    type: "audio",
-    url: "https://samplelib.com/lib/preview/mp3/sample-3s.mp3",
-  },
-  {
-    children: [{ text: "Table of Contents" }],
-    type: "h3",
-  },
-  {
-    children: [{ text: "" }],
-    type: "toc",
-  },
-  {
-    children: [{ text: "" }],
-    type: "p",
-  },
-]);

@@ -13,7 +13,6 @@ import { BaseListKit } from "./plugins/list-base-kit";
 import { MarkdownKit } from "./plugins/markdown-kit";
 import { BaseMathKit } from "./plugins/math-base-kit";
 import { BaseMediaKit } from "./plugins/media-base-kit";
-import { BaseMentionKit } from "./plugins/mention-base-kit";
 import { BaseSuggestionKit } from "./plugins/suggestion-base-kit";
 import { BaseTableKit } from "./plugins/table-base-kit";
 import { BaseToggleKit } from "./plugins/toggle-base-kit";
@@ -29,7 +28,6 @@ export const BaseEditorKit = [
   ...BaseMathKit,
   ...BaseDateKit,
   ...BaseLinkKit,
-  ...BaseMentionKit,
   ...BaseBasicMarksKit,
   ...BaseFontKit,
   ...BaseListKit,

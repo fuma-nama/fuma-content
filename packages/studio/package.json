@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@ai-sdk/react": "2.0.28",
-    "@ariakit/react": "^0.4.20",
     "@emoji-mart/data": "1.2.1",
     "@platejs/ai": "^52.0.16",
     "@platejs/autoformat": "^52.0.11",
@@ -43,7 +42,6 @@
     "@platejs/markdown": "^52.0.11",
     "@platejs/math": "^52.0.11",
     "@platejs/media": "^52.0.11",
-    "@platejs/mention": "^52.0.15",
     "@platejs/resizable": "^52.0.11",
     "@platejs/selection": "^52.0.16",
     "@platejs/slash-command": "^52.0.15",
@@ -71,6 +69,7 @@
   },
   "devDependencies": {
     "@base-ui/react": "^1.0.0",
+    "@base-ui/utils": "^0.2.3",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-table": "^8.21.3",
     "@types/lodash.debounce": "^4.0.9",

@@ -1,6 +1,7 @@
 "use client";
 
 import { AIChatPlugin } from "@platejs/ai/react";
+import { filterWords } from "@platejs/combobox";
 import {
   CalendarIcon,
   ChevronRightIcon,
@@ -25,31 +26,33 @@ import { KEYS, type TComboboxInputElement } from "platejs";
 import type { PlateEditor, PlateElementProps } from "platejs/react";
 import { PlateElement } from "platejs/react";
 import type * as React from "react";
-
 import { insertBlock, insertInlineElement } from "@/components/editor/transforms";
-
 import {
   InlineCombobox,
+  InlineComboboxCollection,
   InlineComboboxContent,
   InlineComboboxEmpty,
   InlineComboboxGroup,
   InlineComboboxGroupLabel,
   InlineComboboxInput,
   InlineComboboxItem,
+  InlineComboboxList,
 } from "./inline-combobox";
 
-type Group = {
+interface Group {
   group: string;
-  items: {
-    icon: React.ReactNode;
-    value: string;
-    onSelect: (editor: PlateEditor, value: string) => void;
-    className?: string;
-    focusEditor?: boolean;
-    keywords?: string[];
-    label?: string;
-  }[];
-};
+  items: GroupItem[];
+}
+
+interface GroupItem {
+  icon: React.ReactNode;
+  value: string;
+  onSelect: (editor: PlateEditor, value: string) => void;
+  className?: string;
+  focusEditor?: boolean;
+  keywords?: string[];
+  label?: string;
+}
 
 const groups: Group[] = [
   {
@@ -210,32 +213,44 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
 
   return (
     <PlateElement {...props} as="span">
-      <InlineCombobox element={element} trigger="/">
+      <InlineCombobox
+        element={element}
+        trigger="/"
+        items={groups}
+        filter={(itemValue, search) => {
+          const item = itemValue as GroupItem;
+
+          return [item.value, ...(item.keywords ?? []), item.label].some(
+            (keyword) => keyword && filterWords(keyword, search),
+          );
+        }}
+      >
         <InlineComboboxInput />
 
         <InlineComboboxContent>
           <InlineComboboxEmpty>No results</InlineComboboxEmpty>
 
-          {groups.map(({ group, items }) => (
-            <InlineComboboxGroup key={group}>
-              <InlineComboboxGroupLabel>{group}</InlineComboboxGroupLabel>
+          <InlineComboboxList>
+            {(group: Group) => (
+              <InlineComboboxGroup key={group.group} items={group.items}>
+                <InlineComboboxGroupLabel>{group.group}</InlineComboboxGroupLabel>
 
-              {items.map(({ focusEditor, icon, keywords, label, value, onSelect }) => (
-                <InlineComboboxItem
-                  key={value}
-                  value={value}
-                  onClick={() => onSelect(editor, value)}
-                  label={label}
-                  focusEditor={focusEditor}
-                  group={group}
-                  keywords={keywords}
-                >
-                  <div className="mr-2 text-muted-foreground">{icon}</div>
-                  {label ?? value}
-                </InlineComboboxItem>
-              ))}
-            </InlineComboboxGroup>
-          ))}
+                <InlineComboboxCollection>
+                  {(item: GroupItem) => (
+                    <InlineComboboxItem
+                      key={item.value}
+                      value={item}
+                      onClick={() => item.onSelect(editor, item.value)}
+                      focusEditor={item.focusEditor}
+                    >
+                      <div className="mr-2 text-muted-foreground">{item.icon}</div>
+                      {item.label ?? item.value}
+                    </InlineComboboxItem>
+                  )}
+                </InlineComboboxCollection>
+              </InlineComboboxGroup>
+            )}
+          </InlineComboboxList>
         </InlineComboboxContent>
       </InlineCombobox>
 

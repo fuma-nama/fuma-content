@@ -12,7 +12,7 @@ const editorContainerVariants = cva(
   "relative w-full cursor-text select-text overflow-y-auto caret-primary selection:bg-brand/25 focus-visible:outline-none [&_.slate-selection-area]:z-50 [&_.slate-selection-area]:border [&_.slate-selection-area]:border-brand/25 [&_.slate-selection-area]:bg-brand/15",
   {
     defaultVariants: {
-      variant: "default",
+      variant: "card",
     },
     variants: {
       variant: {
@@ -22,7 +22,7 @@ const editorContainerVariants = cva(
           "has-[[data-slate-editor]:focus]:border-brand/50 has-[[data-slate-editor]:focus]:ring-2 has-[[data-slate-editor]:focus]:ring-brand/30",
           "has-aria-disabled:border-input has-aria-disabled:bg-muted",
         ),
-        default: "h-full",
+        card: "border rounded-xl",
         demo: "h-[650px]",
         select: cn(
           "group rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
@@ -73,8 +73,8 @@ const editorVariants = cva(
         ai: "w-full px-0 text-base md:text-sm",
         aiChat:
           "max-h-[min(70vh,320px)] w-full max-w-[700px] overflow-y-auto px-3 py-2 text-base md:text-sm",
-        comment: cn("rounded-none border-none bg-transparent text-sm"),
-        default: "size-full px-16 py-4 text-base",
+        comment: "rounded-none border-none bg-transparent text-sm",
+        default: "size-full px-8 py-4 text-base",
         fullWidth: "size-full px-16 pt-4 pb-72 text-base sm:px-24",
         none: "",
         select: "px-3 py-2 text-base data-readonly:w-fit",
