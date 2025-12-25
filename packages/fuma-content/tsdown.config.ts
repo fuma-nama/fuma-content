@@ -5,11 +5,9 @@ const external = ["next", "typescript", "bun"];
 export default defineConfig([
   {
     entry: [
-      "./src/{index,bin}.ts",
+      "./src/{index,dynamic,bin}.ts",
       "./src/{config,next,vite,bun}/index.ts",
       "./src/node/loader.ts",
-
-      "./src/config/{build,load-from-file}.ts",
 
       "./src/collections/*.ts",
       "./src/collections/{handlers,runtime}/*.ts",

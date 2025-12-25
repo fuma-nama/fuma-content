@@ -1,5 +1,5 @@
 import type { LoaderContext } from "webpack";
-import { createDynamicCore } from "@/config/dynamic";
+import { createDynamicCore } from "@/dynamic";
 import { createMdxLoader } from "@/collections/mdx/loader";
 import {
   getCore,
@@ -12,7 +12,7 @@ let instance: WebpackLoader | undefined;
 
 export default async function loader(
   this: LoaderContext<WebpackLoaderOptions>,
-  source: string,
+  source: string
 ): Promise<void> {
   const callback = this.async();
   const options = this.getOptions();
@@ -26,8 +26,8 @@ export default async function loader(
           core: getCore(options),
           buildConfig: false,
           mode: options.isDev ? "dev" : "production",
-        }),
-      ),
+        })
+      )
     );
   }
 

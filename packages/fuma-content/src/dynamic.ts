@@ -44,7 +44,7 @@ export function createDynamicCore({
         prev = {
           hash,
           init: (async () => {
-            const { loadConfig } = await import("../config/load-from-file");
+            const { loadConfig } = await import("./config/load-from-file");
 
             await core.init({
               config: loadConfig(core, buildConfig),

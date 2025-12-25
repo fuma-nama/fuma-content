@@ -28,27 +28,37 @@ export interface FIleCollectionHandler {
   dir: string;
   hasFile: (filePath: string) => boolean;
   isFileSupported: (filePath: string) => boolean;
+  /**
+   * get all included files, relative to `dir`
+   */
+  getFiles: () => Promise<string[]>;
   patterns: string[];
 }
 
 export function initFileCollection(
   collection: Collection,
   init: InitOptions,
-  config: FileHandlerConfig,
+  config: FileHandlerConfig
 ) {
   const { workspace } = init;
   const { supportedFormats, dir, files } = config;
-  const patterns =
-    files ?? (supportedFormats ? [`**/*.{${supportedFormats.join(",")}}`] : [`**/*`]);
   let matcher: picomatch.Matcher;
 
   collection.handlers.fs = {
-    patterns,
+    patterns: files ?? [
+      supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`,
+    ],
     dir: workspace ? path.resolve(workspace.dir, dir) : dir,
     isFileSupported(filePath) {
       if (!supportedFormats) return true;
 
       return supportedFormats.some((format) => filePath.endsWith(`.${format}`));
+    },
+    async getFiles() {
+      const { glob } = await import("tinyglobby");
+      return (await glob(this.patterns, { cwd: this.dir })).filter((v) =>
+        this.isFileSupported(v)
+      );
     },
     hasFile(filePath) {
       if (!this.isFileSupported(filePath)) return false;
@@ -56,7 +66,7 @@ export function initFileCollection(
       const relativePath = path.relative(this.dir, filePath);
       if (relativePath.startsWith(`..${path.sep}`)) return false;
 
-      return (matcher ??= picomatch(patterns))(relativePath);
+      return (matcher ??= picomatch(this.patterns))(relativePath);
     },
   };
 }

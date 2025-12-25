@@ -18,9 +18,11 @@ export interface JSONSchemaHandler {
 /**
  * Generate JSON schemas locally for collection schemas
  *
- * note: **it only works with Zod**
+ * Requires the `json-schema` handler to be implemented.
  */
-export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): Plugin {
+export default function jsonSchema({
+  insert = false,
+}: JSONSchemaOptions = {}): Plugin {
   function getSchemaPath(name: string) {
     return `json-schema/${name}.json`;
   }
@@ -50,7 +52,7 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
         if ("$schema" in obj) return;
         const schemaPath = path.join(
           outDir,
-          getSchemaPath(parent ? `${parent.name}.meta` : match.name),
+          getSchemaPath(parent ? `${parent.name}.meta` : match.name)
         );
         const updated = {
           $schema: path.relative(path.dirname(file), schemaPath),

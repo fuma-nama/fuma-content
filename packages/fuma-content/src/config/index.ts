@@ -2,7 +2,7 @@ import type { PluginOption } from "@/core";
 import type { Collection } from "@/collections";
 
 export interface GlobalConfig<
-  Collections extends Record<string, Collection> = Record<string, Collection>,
+  Collections extends Record<string, Collection> = Record<string, Collection>
 > {
   plugins?: PluginOption[];
   collections?: Collections;
@@ -23,7 +23,9 @@ export interface WorkspaceConfig {
 }
 
 export function defineConfig<
-  Collections extends Record<string, Collection> = Record<string, Collection>,
+  Collections extends Record<string, Collection> = Record<string, Collection>
 >(config: GlobalConfig<Collections> = {}): GlobalConfig<Collections> {
   return config;
 }
+
+export * from "./build";

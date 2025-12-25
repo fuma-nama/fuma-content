@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import type { Loader } from "@/plugins/with-loader";
-import type { DynamicCore } from "@/config/dynamic";
+import type { DynamicCore } from "@/dynamic";
 
 const querySchema = z
   .object({
@@ -25,11 +25,21 @@ type CacheEntry = z.infer<typeof cacheEntry>;
 
 export function createMdxLoader({ getCore }: DynamicCore): Loader {
   return {
-    async load({ getSource, development: isDevelopment, query, compiler, filePath }) {
+    async load({
+      getSource,
+      development: isDevelopment,
+      query,
+      compiler,
+      filePath,
+    }) {
       let core = await getCore();
       const value = await getSource();
       const matter = fumaMatter(value);
-      const { collection: collectionName, workspace, only } = querySchema.parse(query);
+      const {
+        collection: collectionName,
+        workspace,
+        only,
+      } = querySchema.parse(query);
       if (workspace) {
         core = core.getWorkspaces().get(workspace) ?? core;
       }
@@ -39,7 +49,9 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
       const { experimentalBuildCache = false } = core.getConfig();
       if (!isDevelopment && experimentalBuildCache) {
         const cacheDir = experimentalBuildCache;
-        const cacheKey = `${collectionName ?? "global"}_${generateCacheHash(filePath)}`;
+        const cacheKey = `${collectionName ?? "global"}_${generateCacheHash(
+          filePath
+        )}`;
 
         const cached = await fs
           .readFile(path.join(cacheDir, cacheKey))
@@ -54,20 +66,25 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
             JSON.stringify({
               ...out,
               hash: generateCacheHash(value),
-            } satisfies CacheEntry),
+            } satisfies CacheEntry)
           );
         };
       }
 
-      const collection = collectionName ? core.getCollection(collectionName) : undefined;
+      const collection = collectionName
+        ? core.getCollection(collectionName)
+        : undefined;
       const handler = collection?.handlers.mdx;
 
       if (collection && handler?.frontmatter) {
-        matter.data = await handler.frontmatter.run(matter.data as Record<string, unknown>, {
-          collection,
-          filePath,
-          source: value,
-        });
+        matter.data = await handler.frontmatter.run(
+          matter.data as Record<string, unknown>,
+          {
+            collection,
+            filePath,
+            source: value,
+          }
+        );
       }
 
       if (only === "frontmatter") {

@@ -24,9 +24,9 @@
       "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js"
     },
-    "./config/*": {
-      "types": "./dist/config/*.d.ts",
-      "import": "./dist/config/*.js"
+    "./dynamic": {
+      "types": "./dist/dynamic.d.ts",
+      "import": "./dist/dynamic.js"
     },
     "./next": {
       "types": "./dist/next/index.d.ts",
