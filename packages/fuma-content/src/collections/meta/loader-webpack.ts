@@ -12,7 +12,7 @@ let instance: WebpackLoader | undefined;
 
 export default async function loader(
   this: LoaderContext<WebpackLoaderOptions>,
-  source: string
+  source: string,
 ): Promise<void> {
   const callback = this.async();
   const options = this.getOptions();
@@ -30,8 +30,8 @@ export default async function loader(
         {
           json: "json",
           yaml: "js",
-        }
-      )
+        },
+      ),
     );
   }
 

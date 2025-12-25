@@ -38,16 +38,14 @@ export interface FIleCollectionHandler {
 export function initFileCollection(
   collection: Collection,
   init: InitOptions,
-  config: FileHandlerConfig
+  config: FileHandlerConfig,
 ) {
   const { workspace } = init;
   const { supportedFormats, dir, files } = config;
   let matcher: picomatch.Matcher;
 
   collection.handlers.fs = {
-    patterns: files ?? [
-      supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`,
-    ],
+    patterns: files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`],
     dir: workspace ? path.resolve(workspace.dir, dir) : dir,
     isFileSupported(filePath) {
       if (!supportedFormats) return true;
@@ -56,9 +54,7 @@ export function initFileCollection(
     },
     async getFiles() {
       const { glob } = await import("tinyglobby");
-      return (await glob(this.patterns, { cwd: this.dir })).filter((v) =>
-        this.isFileSupported(v)
-      );
+      return (await glob(this.patterns, { cwd: this.dir })).filter((v) => this.isFileSupported(v));
     },
     hasFile(filePath) {
       if (!this.isFileSupported(filePath)) return false;

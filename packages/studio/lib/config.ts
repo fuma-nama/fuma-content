@@ -1,5 +1,5 @@
 import { Core } from "fuma-content";
-import { buildConfig } from "fuma-content/config/build";
+import { buildConfig } from "fuma-content/config";
 
 let core: Core;
 

@@ -1,11 +1,8 @@
 "use client";
 
-/* eslint-disable react-hooks/refs -- Ref usage for color picker component refs */
-
-import { useComposedRef } from "@udecode/cn";
 import debounce from "lodash.debounce";
 import { EraserIcon, PlusIcon } from "lucide-react";
-import { useEditorRef, useEditorSelector } from "platejs/react";
+import { useEditorRef, useComposedRef, useEditorSelector } from "platejs/react";
 import React from "react";
 
 import { buttonVariants } from "@/components/ui/button";

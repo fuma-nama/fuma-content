@@ -10,9 +10,7 @@ import {
   useCaptionButton,
   useCaptionButtonState,
 } from "@platejs/caption/react";
-import { createPrimitiveComponent } from "@udecode/cn";
 import { cva } from "class-variance-authority";
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +41,7 @@ export function CaptionTextarea(props: React.ComponentProps<typeof CaptionTextar
       {...props}
       className={cn(
         "mt-2 w-full resize-none border-none bg-inherit p-0 font-[inherit] text-inherit",
-        "focus:outline-none focus:[&::placeholder]:opacity-0",
+        "focus:outline-none focus:placeholder:opacity-0",
         "text-center print:placeholder:text-transparent",
         props.className,
       )}
@@ -51,7 +49,7 @@ export function CaptionTextarea(props: React.ComponentProps<typeof CaptionTextar
   );
 }
 
-export const CaptionButton = createPrimitiveComponent(Button)({
-  propsHook: useCaptionButton,
-  stateHook: useCaptionButtonState,
-});
+export function CaptionButton(props: React.ComponentProps<typeof Button>) {
+  const state = useCaptionButtonState();
+  return <Button {...props} {...useCaptionButton(state)} />;
+}

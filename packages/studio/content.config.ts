@@ -1,6 +1,7 @@
 import { defineMDX } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import git from "fuma-content/plugins/git";
+import { studio } from "./plugin";
 
 export const docs = defineMDX({
   dir: "content/docs",
@@ -11,5 +12,5 @@ export const docs = defineMDX({
 });
 
 export default defineConfig({
-  plugins: [git()],
+  plugins: [git(), studio()],
 });

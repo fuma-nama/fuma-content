@@ -1,11 +1,9 @@
 "use client";
 
 import type * as React from "react";
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -15,8 +13,21 @@ import {
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { LayersIcon } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { usePathname } from "next/navigation";
 
-export function AppSidebar({ children, ...props }: React.ComponentProps<typeof Sidebar>) {
+export interface CollectionSidebarItem {
+  name: string;
+  type: string;
+}
+
+export function AppSidebar({
+  items,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { items: CollectionSidebarItem[] }) {
+  const pathname = usePathname();
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -36,19 +47,29 @@ export function AppSidebar({ children, ...props }: React.ComponentProps<typeof S
             <SidebarMenu>
               <Input placeholder="Search..." />
             </SidebarMenu>
-            <SidebarMenu>{children}</SidebarMenu>
+            <SidebarMenu>
+              {items.map((item) => {
+                const href = `/collection/${item.name}`;
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton
+                      tooltip={item.name}
+                      asChild
+                      isActive={pathname === href || pathname.startsWith(href + "/")}
+                    >
+                      <Link href={href}>
+                        <LayersIcon className="text-muted-foreground" />
+                        <p className="font-medium">{item.name}</p>
+                        <Badge className="ms-auto">{item.type}</Badge>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser
-          user={{
-            name: "shadcn",
-            email: "m@example.com",
-            avatar: "/avatars/shadcn.jpg",
-          }}
-        />
-      </SidebarFooter>
     </Sidebar>
   );
 }
