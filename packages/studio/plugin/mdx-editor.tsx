@@ -1,7 +1,6 @@
 "use client";
 
 import { MDXEditor } from "@/components/editor/md";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import grayMatter from "gray-matter";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import {
@@ -35,31 +34,23 @@ export function MDXEditorWithForm({
   }
 
   return (
-    <Tabs defaultValue="content" className="flex-1 flex flex-col min-h-0">
-      <TabsList>
-        <TabsTrigger value="frontmatter">Frontmatter</TabsTrigger>
-        <TabsTrigger value="content">Content</TabsTrigger>
-      </TabsList>
-      <TabsContent value="frontmatter" className="flex-1 overflow-auto">
-        <JSONSchemaEditorProvider
-          schema={jsonSchema}
-          defaultValues={{ value: defaultFrontmatter }}
-          onSave={async ({ value }) => {
-            await saveCollectionEntry(collection, {
-              id,
-              value: grayMatter.stringify(defaultValue, value),
-            });
-            toast.success("Frontmatter Saved");
-          }}
-          writeOnly
-          readOnly={false}
-        >
-          <JSONSchemaEditorContent />
-        </JSONSchemaEditorProvider>
-      </TabsContent>
-      <TabsContent value="content" className="flex-1 min-h-0">
-        <MDXEditor defaultValue={defaultValue} />
-      </TabsContent>
-    </Tabs>
+    <div className="flex flex-col gap-4 flex-1">
+      <JSONSchemaEditorProvider
+        schema={jsonSchema}
+        defaultValues={{ value: defaultFrontmatter }}
+        onSave={async ({ value }) => {
+          await saveCollectionEntry(collection, {
+            id,
+            value: grayMatter.stringify(defaultValue, value),
+          });
+          toast.success("Frontmatter Saved");
+        }}
+        writeOnly
+        readOnly={false}
+      >
+        <JSONSchemaEditorContent />
+      </JSONSchemaEditorProvider>
+      <MDXEditor defaultValue={defaultValue} />
+    </div>
   );
 }

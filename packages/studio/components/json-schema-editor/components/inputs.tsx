@@ -1,5 +1,12 @@
 "use client";
-import { type ComponentProps, type HTMLAttributes, type ReactNode, useState } from "react";
+import {
+  type ComponentProps,
+  type HTMLAttributes,
+  type ReactNode,
+  useState,
+  lazy,
+  Suspense,
+} from "react";
 import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 import {
@@ -18,6 +25,8 @@ import { FormatFlags, schemaToString } from "../utils/schema-to-string";
 import { anyFields, useFieldInfo, useResolvedSchema, useSchema } from "../schema";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import { Textarea } from "@/components/ui/textarea";
+
+const JsonEditor = lazy(() => import("./json-editor").then((mod) => ({ default: mod.JsonEditor })));
 
 function FieldLabel(props: ComponentProps<"label">) {
   return (
@@ -92,30 +101,18 @@ export function ObjectInput({
 }
 
 export function JsonInput({ fieldName }: { fieldName: string }) {
-  const controller = useController({
-    name: fieldName,
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [value, setValue] = useState(() => JSON.stringify(controller.field.value, null, 2));
-
   return (
-    <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
-      <textarea
-        {...controller.field}
-        value={value}
-        className="p-2 h-[240px] text-sm font-mono resize-none focus-visible:outline-none"
-        onChange={(v) => {
-          setValue(v.target.value);
-          try {
-            controller.field.onChange(JSON.parse(v.target.value));
-            setError(null);
-          } catch (e) {
-            if (e instanceof Error) setError(e.message);
-          }
-        }}
-      />
-      <p className="p-2 text-xs font-mono border-t text-red-400 empty:hidden">{error}</p>
-    </div>
+    <Suspense
+      fallback={
+        <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
+          <div className="p-2 h-[240px] text-sm font-mono flex items-center justify-center text-muted-foreground">
+            Loading editor...
+          </div>
+        </div>
+      }
+    >
+      <JsonEditor fieldName={fieldName} />
+    </Suspense>
   );
 }
 
