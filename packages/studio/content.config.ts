@@ -2,9 +2,14 @@ import { defineMDX } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import git from "fuma-content/plugins/git";
 import { studio } from "./plugin";
+import z from "zod";
 
 export const docs = defineMDX({
   dir: "content/docs",
+  frontmatter: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+  }),
   postprocess: {
     extractLinkReferences: true,
     includeProcessedMarkdown: true,

@@ -38,16 +38,7 @@ export const useChat = () => {
   const editor = useEditorRef();
   const options = usePluginOption(aiChatPlugin, "chatOptions");
 
-  // remove when you implement the route /api/ai/command
-  const abortControllerRef = React.useRef<AbortController | null>(null);
-  const _abortFakeStream = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-  };
-
-  const baseChat = useBaseChat<ChatMessage>({
+  const chat = useBaseChat<ChatMessage>({
     id: "editor",
     transport: new DefaultChatTransport({
       api: options.api || "/api/ai/command",
@@ -121,14 +112,8 @@ export const useChat = () => {
     ...options,
   });
 
-  const chat = {
-    ...baseChat,
-    _abortFakeStream,
-  };
-
   React.useEffect(() => {
     editor.setOption(AIChatPlugin, "chat", chat as any);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat.status, chat.messages, chat.error]);
 
   return chat;

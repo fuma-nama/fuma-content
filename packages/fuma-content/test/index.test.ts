@@ -8,7 +8,7 @@ import { defineMeta } from "@/collections/meta";
 import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
 import { buildConfig } from "@/config/build";
-import { fumaMatter } from "@/utils/fuma-matter";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
 
 test("format errors", async () => {
   const schema = z.object({

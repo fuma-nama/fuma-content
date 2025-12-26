@@ -78,7 +78,7 @@ export const commentPlugin = toTPlatePlugin<CommentConfig>(BaseCommentPlugin, {
 
         editor.tf.collapse();
         setOption("activeId", getDraftCommentKey());
-        setOption("commentingBlock", editor.selection?.focus.path.slice(0, 1));
+        if (editor.selection) setOption("commentingBlock", editor.selection.focus.path.slice(0, 1));
       },
     }),
   )

@@ -19,7 +19,7 @@ export default async function Page({ params }: PageProps<"/collection/[name]/[..
         <code>{document.name}</code>
         <Badge className="text-sm">{collection.typeInfo.id}</Badge>
       </h1>
-      {await handler.pages?.edit?.({ document })}
+      {await handler.pages?.edit?.({ document, collection })}
     </div>
   );
 }

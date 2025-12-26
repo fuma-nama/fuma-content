@@ -1,7 +1,7 @@
 import { buildConfig } from "@/config/build";
 import { buildMDX, type CompiledMDX } from "@/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
-import { fumaMatter } from "@/utils/fuma-matter";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import fs from "node:fs/promises";
 import { type CoreOptions, Core } from "@/core";
 import type { MDXComponents } from "mdx/types";

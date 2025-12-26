@@ -32,6 +32,11 @@ export interface MDXCollectionHandler {
   getMDXOptions?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
 
   /**
+   * Frontmatter schema (if defined)
+   */
+  frontmatterSchema?: StandardSchemaV1;
+
+  /**
    * Transform & validate frontmatter
    */
   frontmatter: AsyncPipe<Record<string, unknown> | undefined, CompilationContext>;
@@ -90,7 +95,7 @@ export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined
       supportedFormats: ["mdx", "md"],
       ...config,
     });
-    const mdxHandler = (collection.handlers.mdx = {
+    const mdxHandler: MDXCollectionHandler = (collection.handlers.mdx = {
       cwd: options.workspace ? path.resolve(options.workspace.dir) : process.cwd(),
       postprocess: config.postprocess,
       getMDXOptions: config.options,
@@ -103,6 +108,8 @@ export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined
 
     if (config.frontmatter) {
       const frontmatter = config.frontmatter;
+      // Store schema for use in studio/editors
+      mdxHandler.frontmatterSchema = frontmatter;
       mdxHandler.frontmatter.pipe((data, { filePath }) => {
         return validate(
           frontmatter,

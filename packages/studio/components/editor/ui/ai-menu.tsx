@@ -59,8 +59,10 @@ export function AIMenu() {
   React.useEffect(() => {
     if (streaming) {
       const anchor = api.aiChat.node({ anchor: true });
+      if (!anchor) return;
+
       setTimeout(() => {
-        const anchorDom = editor.api.toDOMNode(anchor?.[0])!;
+        const anchorDom = editor.api.toDOMNode(anchor[0])!;
         setAnchorElement(anchorDom);
       }, 0);
     }
@@ -82,7 +84,8 @@ export function AIMenu() {
 
   useEditorChat({
     onOpenBlockSelection: (blocks: NodeEntry[]) => {
-      show(editor.api.toDOMNode(blocks.at(-1)?.[0])!);
+      if (blocks.length > 0 && blocks[blocks.length - 1].length > 0)
+        show(editor.api.toDOMNode(blocks[blocks.length - 1][0])!);
     },
     onOpenChange: (open) => {
       if (!open) {
@@ -100,15 +103,14 @@ export function AIMenu() {
       show(editor.api.toDOMNode(ancestor)!);
     },
     onOpenSelection: () => {
-      show(editor.api.toDOMNode(editor.api.blocks().at(-1)?.[0])!);
+      const blocks = editor.api.blocks();
+      if (blocks.length > 0 && blocks[blocks.length - 1].length > 0)
+        show(editor.api.toDOMNode(blocks[blocks.length - 1][0])!);
     },
   });
 
   useHotkeys("esc", () => {
     api.aiChat.stop();
-
-    // remove when you implement the route /api/ai/command
-    (chat as any)._abortFakeStream();
   });
 
   const isLoading = status === "streaming" || status === "submitted";
@@ -603,9 +605,6 @@ export function AILoadingBar() {
 
   useHotkeys("esc", () => {
     api.aiChat.stop();
-
-    // remove when you implement the route /api/ai/command
-    (chat as any)._abortFakeStream();
   });
 
   if (

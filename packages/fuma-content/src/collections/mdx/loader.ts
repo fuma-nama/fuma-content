@@ -1,4 +1,4 @@
-import { fumaMatter } from "@/utils/fuma-matter";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import type { SourceMap } from "rollup";
 import { z } from "zod";
 import fs from "node:fs/promises";

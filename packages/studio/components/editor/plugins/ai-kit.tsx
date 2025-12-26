@@ -40,13 +40,15 @@ export const aiChatPlugin = AIChatPlugin.extend({
       onChunk: ({ chunk, isFirst, nodes, text: content }) => {
         if (isFirst && mode === "insert") {
           editor.tf.withoutSaving(() => {
+            if (!editor.selection) return;
+
             editor.tf.insertNodes(
               {
                 children: [{ text: "" }],
                 type: getPluginType(editor, KEYS.aiChat),
               },
               {
-                at: PathApi.next(editor.selection?.focus.path.slice(0, 1)),
+                at: PathApi.next(editor.selection.focus.path.slice(0, 1)),
               },
             );
           });

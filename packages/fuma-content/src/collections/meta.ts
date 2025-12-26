@@ -8,6 +8,7 @@ import { withLoader } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { type AsyncPipe, asyncPipe } from "@/utils/pipe";
+import { getJSONSchema } from "@/utils/validation";
 
 export interface MetaTransformationContext {
   path: string;
@@ -51,20 +52,8 @@ export function defineMeta<Schema extends StandardSchemaV1>(
       transform: asyncPipe(),
     };
     handlers["json-schema"] = {
-      async create() {
-        const { z, ZodType } = await import("zod");
-
-        if (config.schema instanceof ZodType)
-          return z.toJSONSchema(config.schema, {
-            io: "input",
-            unrepresentable: "any",
-          });
-        else
-          return (config.schema as unknown as Partial<StandardJSONSchemaV1>)[
-            "~standard"
-          ]?.jsonSchema.input({
-            target: "draft-2020-12",
-          });
+      create() {
+        if (config.schema) return getJSONSchema(config.schema);
       },
     };
   });

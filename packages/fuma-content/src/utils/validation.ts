@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from "@standard-schema/spec";
 
 export class ValidationError extends Error {
   title: string;
@@ -50,4 +50,17 @@ export async function validate<Schema extends StandardSchemaV1, Context>(
   }
 
   return data;
+}
+
+/**
+ * get JSON Schema from a Standard Schema
+ */
+export function getJSONSchema(schema: StandardSchemaV1) {
+  return (schema as unknown as Partial<StandardJSONSchemaV1>)["~standard"]?.jsonSchema.input({
+    target: "draft-2020-12",
+    libraryOptions: {
+      // for Zod
+      unrepresentable: "any",
+    },
+  });
 }
