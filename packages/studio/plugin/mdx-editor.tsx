@@ -9,6 +9,7 @@ import {
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { saveCollectionEntry } from "@/lib/actions";
+import { toast } from "sonner";
 
 interface MDXEditorWithFormProps {
   collection: string;
@@ -43,11 +44,12 @@ export function MDXEditorWithForm({
         <JSONSchemaEditorProvider
           schema={jsonSchema}
           defaultValues={{ value: defaultFrontmatter }}
-          onSave={async (frontmatter: { value: Record<string, unknown> }) => {
+          onSave={async ({ value }) => {
             await saveCollectionEntry(collection, {
               id,
-              value: grayMatter.stringify(defaultValue, frontmatter.value),
+              value: grayMatter.stringify(defaultValue, value),
             });
+            toast.success("Frontmatter Saved");
           }}
           writeOnly
           readOnly={false}

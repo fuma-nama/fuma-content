@@ -101,7 +101,6 @@ export function useFieldInfo(
 } {
   const { fieldInfoMap, ajv } = use(SchemaContext)!;
   const form = useFormContext();
-  console.log(form);
   const keyName = `${fieldName}:${depth}`;
   const [info, setInfo] = useState<FieldInfo>(() => {
     const value = form.getValues(fieldName as "body");

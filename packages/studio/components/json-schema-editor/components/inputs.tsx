@@ -17,6 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { FormatFlags, schemaToString } from "../utils/schema-to-string";
 import { anyFields, useFieldInfo, useResolvedSchema, useSchema } from "../schema";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
+import { Textarea } from "@/components/ui/textarea";
 
 function FieldLabel(props: ComponentProps<"label">) {
   return (
@@ -35,7 +36,7 @@ function FieldLabelName({
   return (
     <span {...props} className={cn(labelVariants(), "me-auto", className)}>
       {children}
-      {required && <span className="text-red-400/80 mx-1">*</span>}
+      {required && <span className="text-destructive mx-1">*</span>}
     </span>
   );
 }
@@ -227,39 +228,27 @@ export function FieldInput({
 
   if (field.type === "null") return;
 
-  if (field.type === "string" && field.format === "binary") {
+  if (field.enum) {
     return (
-      <div {...props}>
-        <label
-          htmlFor={fieldName}
-          className={cn(
-            buttonVariants({
-              variant: "secondary",
-              className: "w-full h-9 gap-2 truncate",
-            }),
-          )}
-        >
-          {value instanceof File ? (
-            <>
-              <span className="text-muted-foreground text-xs">Selected</span>
-              <span className="truncate w-0 flex-1 text-end">{value.name}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">Upload</span>
-          )}
-        </label>
-        <input
-          id={fieldName}
-          type="file"
-          multiple={false}
-          onChange={(e) => {
-            if (!e.target.files) return;
-            onChange(e.target.files.item(0));
-          }}
-          hidden
-          {...restField}
-        />
-      </div>
+      <Select
+        value={field.enum.indexOf(value).toString()}
+        onValueChange={(value) => {
+          onChange(value === "-1" ? undefined : value);
+        }}
+        disabled={restField.disabled}
+      >
+        <SelectTrigger id={fieldName} className={props.className} {...restField}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {field.enum.map((item, i) => (
+            <SelectItem key={i} value={i.toString()}>
+              {JSON.stringify(item)}
+            </SelectItem>
+          ))}
+          {!isRequired && <SelectItem value="-1">Unset</SelectItem>}
+        </SelectContent>
+      </Select>
     );
   }
 
@@ -282,40 +271,105 @@ export function FieldInput({
     );
   }
 
-  const isNumber = field.type === "integer" || field.type === "number";
-
-  return (
-    <div {...props} className={cn("flex flex-row gap-2", props.className)}>
-      <Input
-        id={fieldName}
-        placeholder="Enter value"
-        type={isNumber ? "number" : "text"}
-        step={field.type === "integer" ? 1 : undefined}
-        value={value ?? ""}
-        onChange={(e) => {
-          if (isNumber && !Number.isNaN(e.target.valueAsNumber)) {
-            onChange(e.target.valueAsNumber);
-          } else if (!isNumber) {
-            onChange(e.target.value);
-          }
-        }}
-        {...restField}
-      />
-      {fieldState.isDirty && (
-        <button
-          type="button"
-          // TODO: `react-hook-form` doesn't support setting a value to `undefined` (aka remove the value), if there's a default value defined.
-          // the default value is kept by `react-hook-form` internally, we cannot manipulate it.
-          // hence, we can only support resetting to the default value.
-          // perhaps when we migrate to Tanstack Form, we can reconsider this.
-          onClick={() => form.resetField(fieldName)}
-          className="text-muted-foreground"
-        >
-          <X className="size-4" />
-        </button>
-      )}
-    </div>
+  const resetBn = fieldState.isDirty && (
+    <button
+      type="button"
+      // TODO: `react-hook-form` doesn't support setting a value to `undefined` (aka remove the value), if there's a default value defined.
+      // the default value is kept by `react-hook-form` internally, we cannot manipulate it.
+      // hence, we can only support resetting to the default value.
+      // perhaps when we migrate to Tanstack Form, we can reconsider this.
+      onClick={() => form.resetField(fieldName)}
+      className="text-muted-foreground"
+    >
+      <X className="size-4" />
+    </button>
   );
+
+  if (field.type === "string") {
+    if (field.format === "binary") {
+      return (
+        <div {...props}>
+          <label
+            htmlFor={fieldName}
+            className={cn(
+              buttonVariants({
+                variant: "secondary",
+                className: "w-full h-9 gap-2 truncate",
+              }),
+            )}
+          >
+            {value instanceof File ? (
+              <>
+                <span className="text-muted-foreground text-xs">Selected</span>
+                <span className="truncate w-0 flex-1 text-end">{value.name}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">Upload</span>
+            )}
+          </label>
+          <input
+            id={fieldName}
+            type="file"
+            multiple={false}
+            onChange={(e) => {
+              if (!e.target.files) return;
+              onChange(e.target.files.item(0));
+            }}
+            hidden
+            {...restField}
+          />
+        </div>
+      );
+    }
+    if (field.format === "datetime" || field.format === "time" || field.format === "date")
+      return (
+        <div {...props} className={cn("flex flex-row gap-2", props.className)}>
+          <Input
+            id={fieldName}
+            type={field.format}
+            placeholder="Enter value"
+            value={value ?? ""}
+            onChange={(e) => onChange(e.target.value)}
+            {...restField}
+          />
+          {resetBn}
+        </div>
+      );
+
+    return (
+      <div {...props} className={cn("flex flex-row gap-2", props.className)}>
+        <Textarea
+          id={fieldName}
+          placeholder="Enter value"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          {...restField}
+        />
+        {resetBn}
+      </div>
+    );
+  }
+
+  if (field.type === "integer" || field.type === "number") {
+    return (
+      <div {...props} className={cn("flex flex-row gap-2", props.className)}>
+        <Input
+          id={fieldName}
+          placeholder="Enter value"
+          type="number"
+          step={field.type === "integer" ? 1 : undefined}
+          value={value ?? ""}
+          onChange={(e) => {
+            if (!Number.isNaN(e.target.valueAsNumber)) {
+              onChange(e.target.valueAsNumber);
+            }
+          }}
+          {...restField}
+        />
+        {resetBn}
+      </div>
+    );
+  }
 }
 
 export function FieldSet({

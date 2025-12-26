@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { getCore } from "@/lib/config";
 import type { ReactNode } from "react";
 
@@ -20,6 +21,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
       />
       <SidebarInset>
         <SiteHeader />
+        <Toaster />
         {children}
       </SidebarInset>
     </SidebarProvider>
