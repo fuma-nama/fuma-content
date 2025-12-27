@@ -1,12 +1,5 @@
 "use client";
-import {
-  type ComponentProps,
-  type HTMLAttributes,
-  type ReactNode,
-  useState,
-  lazy,
-  Suspense,
-} from "react";
+import { type ComponentProps, type HTMLAttributes, type ReactNode, useState } from "react";
 import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 import {
@@ -25,8 +18,6 @@ import { FormatFlags, schemaToString } from "../utils/schema-to-string";
 import { anyFields, useFieldInfo, useResolvedSchema, useSchema } from "../schema";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import { Textarea } from "@/components/ui/textarea";
-
-const JsonEditor = lazy(() => import("./json-editor").then((mod) => ({ default: mod.JsonEditor })));
 
 function FieldLabel(props: ComponentProps<"label">) {
   return (
@@ -97,22 +88,6 @@ export function ObjectInput({
         />
       )}
     </div>
-  );
-}
-
-export function JsonInput({ fieldName }: { fieldName: string }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
-          <div className="p-2 h-[240px] text-sm font-mono flex items-center justify-center text-muted-foreground">
-            Loading editor...
-          </div>
-        </div>
-      }
-    >
-      <JsonEditor fieldName={fieldName} />
-    </Suspense>
   );
 }
 

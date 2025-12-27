@@ -2,17 +2,18 @@
 import { useController } from "react-hook-form";
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
+import { load, dump } from "js-yaml";
 
-export function JsonEditor({ fieldName }: { fieldName: string }) {
+export function YamlEditor({ fieldName }: { fieldName: string }) {
   const controller = useController({
     name: fieldName,
   });
   const [error, setError] = useState<string | null>(null);
   const [value, setValue] = useState(() => {
     try {
-      return JSON.stringify(controller.field.value, null, 2);
+      return dump(controller.field.value);
     } catch {
-      return "{}";
+      return "";
     }
   });
 
@@ -20,7 +21,7 @@ export function JsonEditor({ fieldName }: { fieldName: string }) {
     const jsonValue = newValue ?? "";
     setValue(jsonValue);
     try {
-      const parsed = JSON.parse(jsonValue);
+      const parsed = load(jsonValue);
       controller.field.onChange(parsed);
       setError(null);
     } catch (e) {
@@ -34,7 +35,7 @@ export function JsonEditor({ fieldName }: { fieldName: string }) {
     <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
       <Editor
         height="240px"
-        language="json"
+        language="yaml"
         value={value}
         onChange={handleChange}
         theme="vs-dark"

@@ -8,7 +8,8 @@ import {
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { saveCollectionEntry } from "@/lib/actions";
-import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 
 interface MDXEditorWithFormProps {
   collection: string;
@@ -43,13 +44,24 @@ export function MDXEditorWithForm({
             id,
             value: grayMatter.stringify(defaultValue, value),
           });
-          toast.success("Frontmatter Saved");
         }}
         writeOnly
         readOnly={false}
       >
-        <JSONSchemaEditorContent />
+        <Tabs defaultValue="visual">
+          <TabsList>
+            <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+            <TabsTrigger value="yaml">YAML Editor</TabsTrigger>
+          </TabsList>
+          <TabsContent value="visual" className="-mt-6">
+            <JSONSchemaEditorContent />
+          </TabsContent>
+          <TabsContent value="yaml">
+            <YamlEditorLazy fieldName="value" />
+          </TabsContent>
+        </Tabs>
       </JSONSchemaEditorProvider>
+
       <MDXEditor defaultValue={defaultValue} />
     </div>
   );
