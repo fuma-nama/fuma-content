@@ -1,9 +1,10 @@
 "use client";
 
-import type * as React from "react";
+import * as React from "react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -11,65 +12,124 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { LayersIcon } from "lucide-react";
+import { FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export interface CollectionSidebarItem {
+  kind: "collection" | "document";
   name: string;
-  type: string;
+  href: string;
+  depth: number;
+  type?: string;
 }
 
 export function AppSidebar({
   items,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { items: CollectionSidebarItem[] }) {
-  const pathname = usePathname();
+  const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search);
 
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/" className="font-medium font-mono">
-                Fuma Content
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarMenuButton asChild>
+          <Link href="/" className="font-medium font-mono">
+            Fuma Content
+          </Link>
+        </SidebarMenuButton>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent className="flex flex-col gap-2">
-            <SidebarMenu>
-              <Input placeholder="Search..." />
-            </SidebarMenu>
-            <SidebarMenu>
-              {items.map((item) => {
-                const href = `/collection/${item.name}`;
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton
-                      tooltip={item.name}
-                      asChild
-                      isActive={pathname === href || pathname.startsWith(href + "/")}
-                    >
-                      <Link href={href}>
-                        <LayersIcon className="text-muted-foreground" />
-                        <p className="font-medium">{item.name}</p>
-                        <Badge className="ms-auto">{item.type}</Badge>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+            <div className="inline-flex items-center gap-2 border rounded-full bg-secondary text-secondary-foreground px-3 transition-colors focus-within:ring-2 focus-within:ring-ring">
+              <SearchIcon className="size-4 text-muted-foreground" />
+              <input
+                placeholder="Search..."
+                className="py-1.5 focus-visible:outline-none"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <SidebarMenu className="gap-0">
+              {items.map(
+                (item, i) =>
+                  item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (
+                    <SidebarCollectionItem key={i} item={item} />
+                  ),
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <ThemeToggle />
+      </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
+  const pathname = usePathname();
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        tooltip={item.name}
+        isActive={pathname === item.href}
+        style={
+          {
+            "--depth": item.depth,
+          } as object
+        }
+        className={cn(
+          "ps-[calc(var(--depth)*var(--spacing)*3)]",
+          !pathname.startsWith(item.href + "/") && "text-muted-foreground",
+        )}
+        asChild
+      >
+        <Link href={item.href}>
+          {
+            {
+              document: <FileIcon className="text-muted-foreground" />,
+              collection: <LayersIcon className="text-muted-foreground" />,
+            }[item.kind]
+          }
+          <span>{item.name}</span>
+          {item.type && <Badge className="ms-auto">{item.type}</Badge>}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function ThemeToggle() {
+  const { theme = "light", setTheme } = useTheme();
+
+  return (
+    <Select value={theme} onValueChange={setTheme}>
+      <SelectTrigger className="text-muted-foreground">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="light" className="gap-2">
+          <Sun />
+          Light
+        </SelectItem>
+        <SelectItem value="dark" className="gap-2">
+          <Moon />
+          Dark
+        </SelectItem>
+        <SelectItem value="system" className="gap-2">
+          <Monitor />
+          System
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 }

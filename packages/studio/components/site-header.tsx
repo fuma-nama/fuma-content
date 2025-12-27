@@ -1,14 +1,13 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ReactNode } from "react";
 
-export function SiteHeader() {
+export function SiteHeader({ children }: { children?: ReactNode }) {
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-        <h1 className="font-medium text-base">Editor</h1>
-      </div>
+    <header className="flex h-10 m-2 top-2 shrink-0 items-center gap-2 border rounded-lg sticky bg-popover text-popover-foreground z-30 px-4 shadow-md">
+      <SidebarTrigger className="-mx-2" />
+      <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+      {children}
     </header>
   );
 }
