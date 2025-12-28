@@ -13,6 +13,7 @@ import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 import { useRef, useState, useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckIcon, CircleIcon } from "lucide-react";
+import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
 
 interface MDXEditorWithFormProps {
   collection: string;
@@ -105,31 +106,48 @@ export function MDXEditorWithForm({
 
   return (
     <>
-      <JSONSchemaEditorProvider
-        schema={jsonSchema}
-        defaultValues={{ value: defaultFrontmatter }}
-        onUpdate={({ value }) => {
-          onSync(() => {
-            currentValue.current.frontmatter = value;
-          });
-        }}
-        writeOnly
-        readOnly={false}
-      >
-        <Tabs defaultValue="visual">
-          <TabsList>
-            <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-            <TabsTrigger value="yaml">YAML Editor</TabsTrigger>
-          </TabsList>
-          <TabsContent value="visual" className="-mt-6">
+      <Tabs defaultValue="visual">
+        <TabsList>
+          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+          <TabsTrigger value="code">Code Editor</TabsTrigger>
+        </TabsList>
+        <TabsContent value="visual" className="-mt-6">
+          <JSONSchemaEditorProvider
+            schema={jsonSchema}
+            defaultValue={defaultFrontmatter}
+            onValueChange={(value) => {
+              onSync(() => {
+                currentValue.current.frontmatter = value as Record<string, unknown>;
+              });
+            }}
+            writeOnly
+            readOnly={false}
+          >
             <JSONSchemaEditorContent />
-          </TabsContent>
-          <TabsContent value="yaml">
-            <YamlEditorLazy fieldName="value" />
-          </TabsContent>
-        </Tabs>
-      </JSONSchemaEditorProvider>
-      {mdxEditor}
+          </JSONSchemaEditorProvider>
+        </TabsContent>
+        <TabsContent value="code">
+          <YamlEditorLazy
+            defaultValue={defaultFrontmatter}
+            onValueChange={(value) => {
+              onSync(() => {
+                currentValue.current.frontmatter = value as Record<string, unknown>;
+              });
+            }}
+          />
+        </TabsContent>
+      </Tabs>
+      <Tabs defaultValue="visual" className="flex-1">
+        <TabsList>
+          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+          <TabsTrigger value="code">Code Editor</TabsTrigger>
+        </TabsList>
+        <TabsContent value="visual">{mdxEditor}</TabsContent>
+        <TabsContent value="code" className="size-full">
+          <MDXCodeEditorLazy defaultValue={defaultContent} onValueChange={() => null} />
+        </TabsContent>
+      </Tabs>
+
       {statusBar}
     </>
   );

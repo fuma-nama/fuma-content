@@ -30,7 +30,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
 
   return (
     <PlateElement
-      className="bg-secondary text-secondary-foreground border p-1 rounded-lg my-1"
+      className="bg-secondary text-secondary-foreground border p-1 rounded-lg my-1 has-data-popup-open:ring-2 has-data-popup-open:ring-ring"
       {...props}
     >
       <div
@@ -106,7 +106,7 @@ function CodeBlockCombobox() {
     >
       <ComboboxChipsInput
         placeholder="Select Language"
-        className="flex-1 font-mono text-sm me-auto"
+        className="flex-1 font-mono text-sm not-data-popup-open:text-muted-foreground"
       />
       <ComboboxContent className="max-w-[200px]">
         <ComboboxList>

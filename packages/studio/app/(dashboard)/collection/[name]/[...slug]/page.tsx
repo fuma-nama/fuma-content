@@ -20,11 +20,7 @@ export default async function Page({ params }: PageProps<"/collection/[name]/[..
           {collection.name}/{document.name}
         </Link>
       </SiteHeader>
-      <div className="flex flex-1 min-w-0 flex-col gap-2 px-2 py-6 md:px-6">
-        <h1 className="inline-flex items-center gap-2 mb-4 font-medium text-2xl">
-          <span className="text-muted-foreground">Editing</span>
-          <code>{document.name}</code>
-        </h1>
+      <div className="flex flex-1 min-w-0 flex-col gap-2 px-2 py-6">
         {await handler.pages?.edit?.({ document, collection })}
       </div>
     </>

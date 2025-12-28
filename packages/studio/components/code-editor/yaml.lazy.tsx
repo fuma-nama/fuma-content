@@ -1,9 +1,9 @@
 "use client";
-import { lazy, Suspense } from "react";
+import { type ComponentProps, lazy, Suspense } from "react";
 
 const Editor = lazy(() => import("./yaml").then((mod) => ({ default: mod.YamlEditor })));
 
-export function YamlEditorLazy({ fieldName }: { fieldName: string }) {
+export function YamlEditorLazy(props: ComponentProps<typeof Editor>) {
   return (
     <Suspense
       fallback={
@@ -14,7 +14,7 @@ export function YamlEditorLazy({ fieldName }: { fieldName: string }) {
         </div>
       }
     >
-      <Editor fieldName={fieldName} />
+      <Editor {...props} />
     </Suspense>
   );
 }

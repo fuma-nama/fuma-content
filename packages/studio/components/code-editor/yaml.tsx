@@ -1,37 +1,25 @@
 "use client";
-import { useController } from "react-hook-form";
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { load, dump } from "js-yaml";
 import { useTheme } from "next-themes";
 
-export function YamlEditor({ fieldName }: { fieldName: string }) {
-  const controller = useController({
-    name: fieldName,
-  });
+export function YamlEditor({
+  defaultValue,
+  onValueChange,
+}: {
+  defaultValue: unknown;
+  onValueChange: (v: unknown) => void;
+}) {
   const { resolvedTheme } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [value, setValue] = useState(() => {
     try {
-      return dump(controller.field.value);
+      return dump(defaultValue);
     } catch {
       return "";
     }
   });
-
-  const handleChange = (newValue: string | undefined) => {
-    const jsonValue = newValue ?? "";
-    setValue(jsonValue);
-    try {
-      const parsed = load(jsonValue);
-      controller.field.onChange(parsed);
-      setError(null);
-    } catch (e) {
-      if (e instanceof Error) {
-        setError(e.message);
-      }
-    }
-  };
 
   return (
     <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
@@ -39,7 +27,18 @@ export function YamlEditor({ fieldName }: { fieldName: string }) {
         height="240px"
         language="yaml"
         value={value}
-        onChange={handleChange}
+        onChange={(newValue = "") => {
+          setValue(newValue);
+          try {
+            const parsed = load(newValue);
+            onValueChange(parsed);
+            setError(null);
+          } catch (e) {
+            if (e instanceof Error) {
+              setError(e.message);
+            }
+          }
+        }}
         theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
         loading={
           <pre className="ps-17 py-5 text-sm size-full">

@@ -4,26 +4,26 @@ import { FieldSet } from "./components/inputs";
 import { SchemaProvider, EditorContextType, useResolvedSchema, useSchema } from "./schema";
 import { FormProvider, useForm } from "react-hook-form";
 
-export interface FormValues {
-  value: Record<string, unknown>;
+interface FormValues {
+  value: unknown;
 }
 
 export interface JSONSchemaProviderProps extends EditorContextType {
-  defaultValues: FormValues;
   children: ReactNode;
-  onUpdate: (values: FormValues) => void;
+  defaultValue: unknown;
+  onValueChange: (value: unknown) => void;
 }
 
 export function JSONSchemaEditorProvider({
   children,
-  defaultValues,
-  onUpdate,
+  defaultValue,
+  onValueChange,
   ...props
 }: JSONSchemaProviderProps) {
   const form = useForm<FormValues>({
-    defaultValues,
+    defaultValues: { value: defaultValue },
   });
-  const onUpdateEvent = useEffectEvent(onUpdate);
+  const onUpdateEvent = useEffectEvent(onValueChange);
 
   useEffect(() => {
     return form.subscribe({
@@ -31,16 +31,14 @@ export function JSONSchemaEditorProvider({
         values: true,
       },
       callback(data) {
-        onUpdateEvent(data.values);
+        onUpdateEvent(data.values.value);
       },
     });
   }, []);
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onUpdate)}>
-        <SchemaProvider {...props}>{children}</SchemaProvider>
-      </form>
+      <SchemaProvider {...props}>{children}</SchemaProvider>
     </FormProvider>
   );
 }
