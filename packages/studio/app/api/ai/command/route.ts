@@ -7,8 +7,8 @@ import {
   type UIMessageStreamWriter,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  generateObject,
-  streamObject,
+  Output,
+  generateText,
   streamText,
   tool,
 } from "ai";
@@ -50,19 +50,22 @@ export async function POST(req: NextRequest) {
         let toolName = toolNameParam;
 
         if (!toolName) {
-          const { object: AIToolName } = await generateObject({
-            enum: isSelecting ? ["generate", "edit", "comment"] : ["generate", "comment"],
+          const { output } = await generateText({
             model: gatewayProvider(model || "google/gemini-2.5-flash"),
-            output: "enum",
+            output: Output.choice({
+              options: isSelecting
+                ? (["generate", "edit", "comment"] as const)
+                : (["generate", "comment"] as const),
+            }),
             prompt: getChooseToolPrompt(messagesRaw),
           });
 
           writer.write({
-            data: AIToolName as ToolName,
+            data: output as ToolName,
             type: "data-toolName",
           });
 
-          toolName = AIToolName;
+          toolName = output;
         }
 
         const stream = streamText({
@@ -149,40 +152,43 @@ const getCommentTool = (
     description: "Comment on the content",
     inputSchema: z.object({}),
     execute: async () => {
-      const { elementStream } = streamObject({
+      const { partialOutputStream } = streamText({
         model,
-        output: "array",
         prompt: getCommentPrompt(editor, {
           messages: messagesRaw,
         }),
-        schema: z
-          .object({
-            blockId: z
-              .string()
-              .describe(
-                "The id of the starting block. If the comment spans multiple blocks, use the id of the first block.",
-              ),
-            comment: z.string().describe("A brief comment or explanation for this fragment."),
-            content: z
-              .string()
-              .describe(
-                String.raw`The original document fragment to be commented on.It can be the entire block, a small part within a block, or span multiple blocks. If spanning multiple blocks, separate them with two \n\n.`,
-              ),
-          })
-          .describe("A single comment"),
+        output: Output.array({
+          element: z
+            .object({
+              blockId: z
+                .string()
+                .describe(
+                  "The id of the starting block. If the comment spans multiple blocks, use the id of the first block.",
+                ),
+              comment: z.string().describe("A brief comment or explanation for this fragment."),
+              content: z
+                .string()
+                .describe(
+                  String.raw`The original document fragment to be commented on.It can be the entire block, a small part within a block, or span multiple blocks. If spanning multiple blocks, separate them with two \n\n.`,
+                ),
+            })
+            .describe("A single comment"),
+        }),
       });
 
-      for await (const comment of elementStream) {
-        const commentDataId = nanoid();
+      for await (const comments of partialOutputStream) {
+        for (const comment of comments) {
+          const commentDataId = nanoid();
 
-        writer.write({
-          id: commentDataId,
-          data: {
-            comment,
-            status: "streaming",
-          },
-          type: "data-comment",
-        });
+          writer.write({
+            id: commentDataId,
+            data: {
+              comment,
+              status: "streaming",
+            },
+            type: "data-comment",
+          });
+        }
       }
 
       writer.write({
