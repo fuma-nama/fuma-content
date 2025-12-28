@@ -293,9 +293,6 @@ importers:
       '@emoji-mart/data':
         specifier: 1.2.1
         version: 1.2.1
-      '@hookform/resolvers':
-        specifier: ^3.9.1
-        version: 3.10.0(react-hook-form@7.69.0(react@19.2.3))
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -407,12 +404,12 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
-      fuma-content:
-        specifier: workspace:^
-        version: link:../fuma-content
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
       js-yaml:
         specifier: ^4.1.1
         version: 4.1.1
@@ -501,6 +498,12 @@ importers:
       babel-plugin-react-compiler:
         specifier: 1.0.0
         version: 1.0.0
+      dedent:
+        specifier: ^1.7.1
+        version: 1.7.1(babel-plugin-macros@3.1.0)
+      fuma-content:
+        specifier: workspace:^
+        version: link:../fuma-content
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
@@ -1070,11 +1073,6 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
-
-  '@hookform/resolvers@3.10.0':
-    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
-    peerDependencies:
-      react-hook-form: ^7.0.0
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -7799,10 +7797,6 @@ snapshots:
   '@hono/node-server@1.19.7(hono@4.11.1)':
     dependencies:
       hono: 4.11.1
-
-  '@hookform/resolvers@3.10.0(react-hook-form@7.69.0(react@19.2.3))':
-    dependencies:
-      react-hook-form: 7.69.0(react@19.2.3)
 
   '@img/colour@1.0.0':
     optional: true

@@ -23,7 +23,6 @@
     "@base-ui/react": "^1.0.0",
     "@base-ui/utils": "^0.2.3",
     "@emoji-mart/data": "1.2.1",
-    "@hookform/resolvers": "^3.9.1",
     "@monaco-editor/react": "^4.7.0",
     "@platejs/ai": "^52.0.16",
     "@platejs/autoformat": "^52.0.11",
@@ -61,8 +60,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "fuma-content": "workspace:^",
     "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.1",
     "lodash.debounce": "^4.0.8",
     "lowlight": "^3.3.0",
@@ -87,13 +86,18 @@
     "vaul": "^1.1.2",
     "zod": "^4.2.1"
   },
+  "peerDependencies": {
+    "fuma-content": "workspace:^"
+  },
   "devDependencies": {
+    "fuma-content": "workspace:^",
     "@tailwindcss/postcss": "^4",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.19.27",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "dedent": "^1.7.1",
     "json-schema-typed": "^8.0.2",
     "lucide-react": "^0.562.0",
     "shadcn": "^3.6.2",
