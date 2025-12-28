@@ -9,7 +9,7 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const editorContainerVariants = cva(
-  "relative w-full cursor-text select-text overflow-y-auto caret-primary selection:bg-brand/25 focus-visible:outline-none [&_.slate-selection-area]:z-50 [&_.slate-selection-area]:border [&_.slate-selection-area]:border-brand/25 [&_.slate-selection-area]:bg-brand/15",
+  "w-full cursor-text select-text caret-primary selection:bg-brand/25 focus-visible:outline-none [&_.slate-selection-area]:z-50 [&_.slate-selection-area]:border [&_.slate-selection-area]:border-brand/25 [&_.slate-selection-area]:bg-brand/15",
   {
     defaultVariants: {
       variant: "card",
@@ -17,14 +17,13 @@ const editorContainerVariants = cva(
     variants: {
       variant: {
         comment: cn(
-          "flex flex-wrap justify-between gap-1 px-1 py-0.5 text-sm",
-          "rounded-md border-[1.5px] border-transparent bg-transparent",
+          "flex flex-wrap justify-between gap-1 px-1 py-0.5 text-sm overflow-y-auto rounded-md border-[1.5px] border-transparent bg-transparent",
           "has-[[data-slate-editor]:focus]:border-brand/50 has-[[data-slate-editor]:focus]:ring-2 has-[[data-slate-editor]:focus]:ring-brand/30",
           "has-aria-disabled:border-input has-aria-disabled:bg-muted",
         ),
         card: "border bg-card text-card-foreground rounded-xl",
         select: cn(
-          "group rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "group overflow-y-auto rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           "has-data-readonly:w-fit has-data-readonly:cursor-default has-data-readonly:border-transparent has-data-readonly:focus-within:[box-shadow:none]",
         ),
       },

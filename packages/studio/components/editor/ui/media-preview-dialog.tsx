@@ -48,7 +48,7 @@ export function MediaPreviewDialog() {
 
   return (
     <div
-      className={cn("fixed top-0 left-0 z-50 h-screen w-screen select-none", !isOpen && "hidden")}
+      className={cn("fixed inset-0 z-50 select-none", !isOpen && "hidden")}
       onContextMenu={(e) => e.stopPropagation()}
       {...maskLayerProps}
     >

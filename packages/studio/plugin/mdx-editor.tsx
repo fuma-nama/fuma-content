@@ -1,6 +1,6 @@
 "use client";
 
-import { MDXEditor } from "@/components/editor/md";
+import { MDXEditor, MDXEditorContainer, MDXEditorView } from "@/components/editor/md";
 import grayMatter from "gray-matter";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import {
@@ -79,25 +79,32 @@ export function MDXEditorWithForm({
       )}
     </div>
   );
+  const mdxEditor = (
+    <MDXEditor
+      defaultValue={defaultContent}
+      onUpdate={(options) => {
+        onSync(() => {
+          currentValue.current.content = options.getMarkdown();
+        });
+      }}
+    >
+      <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
+        <MDXEditorView />
+      </MDXEditorContainer>
+    </MDXEditor>
+  );
 
   if (!jsonSchema) {
     return (
       <>
-        <MDXEditor
-          defaultValue={defaultContent}
-          onUpdate={(options) => {
-            onSync(() => {
-              currentValue.current.content = options.getMarkdown();
-            });
-          }}
-        />
+        {mdxEditor}
         {statusBar}
       </>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 flex-1">
+    <>
       <JSONSchemaEditorProvider
         schema={jsonSchema}
         defaultValues={{ value: defaultFrontmatter }}
@@ -122,16 +129,8 @@ export function MDXEditorWithForm({
           </TabsContent>
         </Tabs>
       </JSONSchemaEditorProvider>
-
-      <MDXEditor
-        defaultValue={defaultContent}
-        onUpdate={(options) => {
-          onSync(() => {
-            currentValue.current.content = options.getMarkdown();
-          });
-        }}
-      />
+      {mdxEditor}
       {statusBar}
-    </div>
+    </>
   );
 }

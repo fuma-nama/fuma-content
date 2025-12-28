@@ -34,6 +34,7 @@ export function FloatingToolbar({
     hideToolbar: isFloatingLinkOpen || isAIChatOpen,
     ...state,
     floatingOptions: {
+      strategy: "fixed",
       middleware: [
         offset(12),
         flip({

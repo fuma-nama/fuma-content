@@ -2,16 +2,18 @@
 
 import { MarkdownPlugin } from "@platejs/markdown";
 import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
-import { useEffect, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useState, useTransition } from "react";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
 
 export function MDXEditor({
   defaultValue,
   onUpdate,
+  children,
 }: {
   defaultValue: string;
   onUpdate?: (options: { editor: PlateEditor; getMarkdown: () => string }) => void;
+  children?: ReactNode;
 }) {
   const [_, startTransition] = useTransition();
   const [isReady, setIsReady] = useState(false);
@@ -47,9 +49,14 @@ export function MDXEditor({
         });
       }}
     >
-      <EditorContainer>
-        <Editor />
-      </EditorContainer>
+      {children ?? (
+        <MDXEditorContainer>
+          <MDXEditorView />
+        </MDXEditorContainer>
+      )}
     </Plate>
   );
 }
+
+export const MDXEditorContainer = EditorContainer;
+export const MDXEditorView = Editor;
