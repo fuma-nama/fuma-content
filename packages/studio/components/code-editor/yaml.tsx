@@ -3,11 +3,13 @@ import { useController } from "react-hook-form";
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { load, dump } from "js-yaml";
+import { useTheme } from "next-themes";
 
 export function YamlEditor({ fieldName }: { fieldName: string }) {
   const controller = useController({
     name: fieldName,
   });
+  const { resolvedTheme } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [value, setValue] = useState(() => {
     try {
@@ -38,7 +40,7 @@ export function YamlEditor({ fieldName }: { fieldName: string }) {
         language="yaml"
         value={value}
         onChange={handleChange}
-        theme="vs-dark"
+        theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
         loading={
           <pre className="ps-17 py-5 text-sm size-full">
             <code>{value}</code>

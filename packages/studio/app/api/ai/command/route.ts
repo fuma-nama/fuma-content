@@ -17,7 +17,7 @@ import { type SlateEditor, createSlateEditor, nanoid } from "platejs";
 import { z } from "zod";
 
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
-import { markdownJoinerTransform } from "@/lib/markdown-joiner-transform";
+import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 
 import { getChooseToolPrompt, getCommentPrompt, getEditPrompt, getGeneratePrompt } from "./prompts";
 

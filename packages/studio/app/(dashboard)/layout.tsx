@@ -37,7 +37,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" items={items.flat()} />
+      <AppSidebar items={items.flat()} />
       <SidebarInset>
         {children}
         <Toaster />

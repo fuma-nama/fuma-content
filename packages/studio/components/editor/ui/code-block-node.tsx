@@ -29,7 +29,10 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
   const readOnly = useReadOnly();
 
   return (
-    <PlateElement className="bg-card p-1 rounded-lg my-1" {...props}>
+    <PlateElement
+      className="bg-secondary text-secondary-foreground border p-1 rounded-lg my-1"
+      {...props}
+    >
       <div
         className="flex items-center select-none px-3 pb-1 contain-layout"
         contentEditable={false}

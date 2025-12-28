@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Logo } from "./icons/logo";
 
 export interface CollectionSidebarItem {
   kind: "collection" | "document";
@@ -36,10 +37,11 @@ export function AppSidebar({
   const deferredSearch = React.useDeferredValue(search);
 
   return (
-    <Sidebar {...props}>
+    <Sidebar variant="floating" {...props}>
       <SidebarHeader>
         <SidebarMenuButton asChild>
-          <Link href="/" className="font-medium font-mono">
+          <Link href="/" className="ps-1 font-semibold text-lg font-mono">
+            <Logo className="size-6!" />
             Fuma Content
           </Link>
         </SidebarMenuButton>

@@ -404,7 +404,6 @@ export function SettingsDialog() {
               {renderApiKeyInput('uploadthing', 'Uploadthing API key')}
             </div>
           </div> */}
-          `
           <Button size="lg" className="w-full" type="submit">
             Save changes
           </Button>
