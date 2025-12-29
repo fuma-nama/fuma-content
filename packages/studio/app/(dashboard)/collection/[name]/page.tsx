@@ -15,7 +15,7 @@ export default async function Page({ params }: PageProps<"/collection/[name]">) 
       <SiteHeader>
         <h1 className="font-mono text-sm">{collection.name}</h1>
       </SiteHeader>
-      <div className="flex flex-1 min-w-0 flex-col gap-2 p-6">
+      <div className="flex flex-1 min-w-0 flex-col gap-2 px-2 py-6">
         <h1 className="mb-2 inline-flex items-center gap-2 font-mono font-semibold text-2xl">
           {collection.name}
           <Badge className="text-sm">{collection.typeInfo.id}</Badge>

@@ -15,5 +15,6 @@ export interface StudioHandler {
 
   pages?: {
     edit?: FC<{ document: StudioDocument; collection: Collection }>;
+    docuemntOptions?: FC<{ document: StudioDocument; collection: Collection }>;
   };
 }

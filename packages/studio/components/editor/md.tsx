@@ -5,6 +5,7 @@ import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
 import { type ReactNode, useEffect, useState, useTransition } from "react";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
+import { HistoryApi } from "platejs";
 
 export function MDXEditor({
   defaultValue,
@@ -29,7 +30,10 @@ export function MDXEditor({
 
   useEffect(() => {
     startTransition(() => {
-      editor.tf.setValue(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
+      HistoryApi.withoutSaving(editor, () => {
+        editor.tf.setValue(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
+      });
+
       setIsReady(true);
     });
     return () => setIsReady(false);
