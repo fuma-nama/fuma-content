@@ -2,7 +2,7 @@
 
 import { PlaceholderPlugin } from "@platejs/media/react";
 
-import { AudioLinesIcon, FileUpIcon, FilmIcon, ImageIcon, LinkIcon } from "lucide-react";
+import { FilmIcon, ImageIcon, LinkIcon } from "lucide-react";
 import { isUrl, KEYS } from "platejs";
 import { useEditorRef } from "platejs/react";
 import * as React from "react";
@@ -33,7 +33,7 @@ import {
   ToolbarSplitButtonSecondary,
 } from "../../ui/toolbar";
 
-const MEDIA_CONFIG: Record<
+export const MEDIA_CONFIG: Record<
   string,
   {
     accept: string[];
@@ -42,18 +42,6 @@ const MEDIA_CONFIG: Record<
     tooltip: string;
   }
 > = {
-  [KEYS.audio]: {
-    accept: ["audio/*"],
-    icon: <AudioLinesIcon className="size-4" />,
-    title: "Insert Audio",
-    tooltip: "Audio",
-  },
-  [KEYS.file]: {
-    accept: ["*"],
-    icon: <FileUpIcon className="size-4" />,
-    title: "Insert File",
-    tooltip: "File",
-  },
   [KEYS.img]: {
     accept: ["image/*"],
     icon: <ImageIcon className="size-4" />,

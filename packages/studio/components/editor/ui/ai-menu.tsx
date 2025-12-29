@@ -133,7 +133,7 @@ export function AIMenu() {
       if (!anchorNode) return;
 
       const block = editor.api.block({ at: anchorNode[1] });
-      setAnchorElement(editor.api.toDOMNode(block?.[0]!)!);
+      if (block) setAnchorElement(editor.api.toDOMNode(block[0])!);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
