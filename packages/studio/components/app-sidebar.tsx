@@ -21,13 +21,19 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 
-export interface CollectionSidebarItem {
-  kind: "collection" | "document";
-  name: string;
-  href: string;
-  depth: number;
-  type?: string;
-}
+export type CollectionSidebarItem =
+  | {
+      kind: "collection";
+      id: string;
+      name: string;
+      badge?: string;
+    }
+  | {
+      kind: "document";
+      id: string;
+      collectionId: string;
+      name: string;
+    };
 
 export function AppSidebar({
   items,
@@ -35,6 +41,9 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & { items: CollectionSidebarItem[] }) {
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()));
+  }, [items, deferredSearch]);
 
   return (
     <Sidebar variant="floating" {...props}>
@@ -59,12 +68,9 @@ export function AppSidebar({
               />
             </div>
             <SidebarMenu className="gap-0">
-              {items.map(
-                (item, i) =>
-                  item.name.toLowerCase().includes(deferredSearch.toLowerCase()) && (
-                    <SidebarCollectionItem key={i} item={item} />
-                  ),
-              )}
+              {filteredItems.map((item, i) => (
+                <SidebarCollectionItem key={i} item={item} />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -78,24 +84,24 @@ export function AppSidebar({
 
 function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
   const pathname = usePathname();
+  const href =
+    item.kind === "collection"
+      ? `/collection/${item.id}`
+      : `/collection/${item.collectionId}/${item.id}`;
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         tooltip={item.name}
-        isActive={pathname === item.href}
-        style={
-          {
-            "--depth": item.depth,
-          } as object
-        }
+        isActive={pathname === href}
         className={cn(
-          "ps-[calc(var(--depth)*var(--spacing)*3)]",
-          !pathname.startsWith(item.href + "/") && "text-muted-foreground",
+          item.kind === "collection" && "ps-3",
+          item.kind === "document" && "ps-5",
+          !pathname.startsWith(href + "/") && "text-muted-foreground",
         )}
         asChild
       >
-        <Link href={item.href}>
+        <Link href={href}>
           {
             {
               document: <FileIcon className="text-muted-foreground" />,
@@ -103,7 +109,9 @@ function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
             }[item.kind]
           }
           <span>{item.name}</span>
-          {item.type && <Badge className="ms-auto">{item.type}</Badge>}
+          {item.kind === "collection" && item.badge && (
+            <Badge className="ms-auto">{item.badge}</Badge>
+          )}
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>

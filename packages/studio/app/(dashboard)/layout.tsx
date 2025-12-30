@@ -7,15 +7,14 @@ import type { ReactNode } from "react";
 export default async function Layout({ children }: { children: ReactNode }) {
   const core = await getCore();
   const items = await Promise.all(
-    core.getCollections(true).map(async (item) => {
-      const handler = item.handlers.studio;
+    core.getCollections(true).map(async (collection) => {
+      const handler = collection.handlers.studio;
       const sidebarItems: CollectionSidebarItem[] = [
         {
           kind: "collection",
-          name: item.name,
-          href: `/collection/${item.name}`,
-          type: item.typeInfo.id,
-          depth: 1,
+          id: collection.name,
+          name: collection.name,
+          badge: collection.typeInfo.id,
         },
       ];
 
@@ -25,8 +24,8 @@ export default async function Layout({ children }: { children: ReactNode }) {
           sidebarItems.push({
             kind: "document",
             name: doc.name,
-            href: `/collection/${item.name}/${doc.id}`,
-            depth: 2,
+            id: doc.id,
+            collectionId: collection.name,
           });
         }
       }

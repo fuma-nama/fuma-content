@@ -1,4 +1,6 @@
+import type { StudioDocument } from "@/plugin/types";
 import { Core } from "fuma-content";
+import type { Collection } from "fuma-content/collections";
 import { buildConfig } from "fuma-content/config";
 
 let core: Promise<Core>;
@@ -18,4 +20,19 @@ export async function getCore(): Promise<Core> {
   })();
 
   return core;
+}
+
+export async function requireDocument<Doc extends StudioDocument = StudioDocument>(
+  collectionId: string,
+  documentId: string,
+): Promise<{ collection: Collection; document: Doc }> {
+  const core = await getCore();
+  const collection = core.getCollection(collectionId);
+  if (!collection) throw new Error(`Missing Collection ${collectionId}`);
+  const handler = collection.handlers.studio;
+  if (!handler) throw new Error(`Missing Studio Handler for ${collectionId}`);
+  const document: Doc | undefined = await handler.getDocument(documentId);
+  if (!document) throw new Error(`Missing Document ${documentId}`);
+
+  return { collection, document };
 }

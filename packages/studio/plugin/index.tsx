@@ -72,6 +72,15 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
         );
       },
     },
+    actions: {
+      async deleteDocument(options) {
+        try {
+          await fs.rm(options.document.filePath);
+        } catch {
+          // ignore
+        }
+      },
+    },
   };
 }
 
