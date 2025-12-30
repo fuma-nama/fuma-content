@@ -7,17 +7,17 @@ import {
   JSONSchemaEditorContent,
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
-import { saveCollectionEntry } from "@/lib/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 import { useRef, useState, useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckIcon, CircleIcon } from "lucide-react";
 import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
+import { saveMDXDocument } from "./actions";
 
 interface MDXEditorWithFormProps {
-  collection: string;
-  id: string;
+  collectionId: string;
+  documentId: string;
 
   jsonSchema?: JSONSchema;
   content: string;
@@ -28,11 +28,11 @@ interface MDXEditorWithFormProps {
  * Combined MDX editor with frontmatter form using JSON Schema
  */
 export function MDXEditorWithForm({
-  id,
+  collectionId,
+  documentId,
   jsonSchema,
   content: defaultContent,
   frontmatter: defaultFrontmatter = {},
-  collection,
 }: MDXEditorWithFormProps) {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"sync" | "updated">("sync");
@@ -51,10 +51,7 @@ export function MDXEditorWithForm({
       startTransition(async () => {
         syncAction?.();
         const { frontmatter, content } = currentValue.current;
-        await saveCollectionEntry(collection, {
-          id,
-          value: grayMatter.stringify(content, frontmatter),
-        });
+        await saveMDXDocument(collectionId, documentId, grayMatter.stringify(content, frontmatter));
         setStatus("sync");
       });
     }, 500);

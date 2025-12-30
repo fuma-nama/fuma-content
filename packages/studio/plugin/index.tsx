@@ -3,11 +3,12 @@ import "fuma-content/collections";
 import fs from "node:fs/promises";
 import path from "node:path";
 import grayMatter from "gray-matter";
-import type { StudioHandler } from "./types";
+import type { MDXStudioDocument, StudioHandler } from "./types";
+import type { Collection } from "fuma-content/collections";
 
 declare module "fuma-content/collections" {
   export interface CollectionHandlers {
-    studio: StudioHandler;
+    studio?: StudioHandler<any>;
   }
 }
 
@@ -15,58 +16,61 @@ export function studio(): Plugin {
   return {
     name: "studio",
     collection(collection) {
-      const { fs: fsHandler, mdx } = collection.handlers;
-
       // mdx collection
-      if (fsHandler && mdx) {
-        collection.handlers.studio ??= {
-          async getDocuments() {
-            const files = await fsHandler.getFiles();
+      collection.handlers.studio ??= mdx(collection);
+    },
+  };
+}
 
-            return files.map((file) => {
-              const filePath = path.join(fsHandler.dir, file);
+function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefined {
+  const { mdx: mdxHandler, fs: fsHandler } = collection.handlers;
+  if (!mdxHandler || !fsHandler) return;
 
-              return {
-                id: file,
-                name: file,
-                async getValue() {
-                  try {
-                    return (await fs.readFile(filePath)).toString();
-                  } catch {
-                    return;
-                  }
-                },
-                async setValue(value) {
-                  await fs.writeFile(filePath, value as string);
-                },
-              };
-            });
-          },
-          async getDocument(id) {
-            const docs = await this.getDocuments();
-            return docs.find((doc) => doc.id === id);
-          },
-          pages: {
-            async edit({ document, collection }) {
-              const { MDXEditorWithForm } = await import("./mdx-editor");
-              const parsed = grayMatter((await document.getValue()) as string);
+  async function read(doc: MDXStudioDocument) {
+    try {
+      return (await fs.readFile(doc.filePath)).toString();
+    } catch {
+      return;
+    }
+  }
 
-              const jsonSchema = mdx.frontmatterSchema
-                ? JSON.parse(JSON.stringify(getJSONSchema(mdx.frontmatterSchema)))
-                : undefined;
-              return (
-                <MDXEditorWithForm
-                  id={document.id}
-                  collection={collection.name}
-                  jsonSchema={jsonSchema}
-                  frontmatter={parsed.data as Record<string, unknown>}
-                  content={parsed.content}
-                />
-              );
-            },
-          },
+  return {
+    async getDocuments() {
+      const files = await fsHandler.getFiles();
+
+      return files.map((file) => {
+        const filePath = path.join(fsHandler.dir, file);
+
+        return {
+          type: "mdx",
+          id: file,
+          name: file,
+          filePath,
         };
-      }
+      });
+    },
+    async getDocument(id) {
+      const docs = await this.getDocuments();
+      return docs.find((doc) => doc.id === id);
+    },
+    pages: {
+      async edit({ document, collection }) {
+        const { MDXEditorWithForm } = await import("./mdx-editor");
+        const parsed = grayMatter((await read(document)) ?? "");
+
+        const jsonSchema = mdxHandler.frontmatterSchema
+          ? JSON.parse(JSON.stringify(getJSONSchema(mdxHandler.frontmatterSchema)))
+          : undefined;
+        return (
+          <MDXEditorWithForm
+            documentId={document.id}
+            collectionId={collection.name}
+            jsonSchema={jsonSchema}
+            frontmatter={parsed.data}
+            content={parsed.content}
+          />
+        );
+      },
     },
   };
 }

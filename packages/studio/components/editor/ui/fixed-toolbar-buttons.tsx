@@ -34,7 +34,6 @@ import { MarkToolbarButton } from "./mark-toolbar-button";
 import { MEDIA_CONFIG, MediaToolbarButton } from "./media-toolbar-button";
 import { ModeToolbarButton } from "./mode-toolbar-button";
 import { TableToolbarButton } from "./table-toolbar-button";
-import { ToggleToolbarButton } from "./toggle-toolbar-button";
 import { TurnIntoToolbarButton } from "./turn-into-toolbar-button";
 
 export function FixedToolbarButtons() {
@@ -97,7 +96,6 @@ export function FixedToolbarButtons() {
             <NumberedListToolbarButton />
             <BulletedListToolbarButton />
             <TodoListToolbarButton />
-            <ToggleToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>

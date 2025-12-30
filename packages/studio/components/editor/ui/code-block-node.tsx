@@ -26,7 +26,6 @@ import "./code-block-node.css";
 
 export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
   const { editor, element } = props;
-  const readOnly = useReadOnly();
 
   return (
     <PlateElement
@@ -37,7 +36,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
         className="flex items-center select-none px-3 pb-1 contain-layout"
         contentEditable={false}
       >
-        {!readOnly && <CodeBlockCombobox />}
+        <CodeBlockCombobox />
 
         {isLangSupported(element.lang) && (
           <Button
@@ -74,6 +73,7 @@ interface Item {
 function CodeBlockCombobox() {
   const editor = useEditorRef();
   const element = useElement<TCodeBlockElement>();
+  const readOnly = useReadOnly();
   const items = React.useMemo(() => {
     return lowlight.listLanguages().map((lang) => {
       const info = highlight.getLanguage(lang)!;
@@ -89,6 +89,10 @@ function CodeBlockCombobox() {
     const name = highlight.getLanguage(element.lang)?.name ?? element.lang;
     return items.find((item) => item.label === name) ?? null;
   }, [element.lang]);
+
+  if (readOnly) {
+    return <p className="font-mono text-sm text-muted-foreground me-auto">{value?.label}</p>;
+  }
 
   return (
     <Combobox

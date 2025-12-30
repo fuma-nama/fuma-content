@@ -33,7 +33,6 @@ import { MediaKit } from "@/components/editor/plugins/media-kit";
 import { SlashKit } from "@/components/editor/plugins/slash-kit";
 import { SuggestionKit } from "@/components/editor/plugins/suggestion-kit";
 import { TableKit } from "@/components/editor/plugins/table-kit";
-import { ToggleKit } from "@/components/editor/plugins/toggle-kit";
 
 export const EditorKit = [
   ...CopilotKit,
@@ -43,7 +42,6 @@ export const EditorKit = [
   ...BasicBlocksKit,
   ...CodeBlockKit,
   ...TableKit,
-  ...ToggleKit,
   ...MediaKit,
   ...CalloutKit,
   ...ColumnKit,
