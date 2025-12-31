@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
+import { DocumentActionsContext } from "./collection/document/actions";
 
 export type CollectionSidebarItem =
   | {
@@ -88,8 +89,7 @@ function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
     item.kind === "collection"
       ? `/collection/${item.id}`
       : `/collection/${item.collectionId}/${item.id}`;
-
-  return (
+  let node = (
     <SidebarMenuItem>
       <SidebarMenuButton
         tooltip={item.name}
@@ -116,6 +116,15 @@ function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
+  if (item.kind === "document") {
+    node = (
+      <DocumentActionsContext collectionId={item.collectionId} documentId={item.id} allowDelete>
+        {node}
+      </DocumentActionsContext>
+    );
+  }
+
+  return node;
 }
 
 function ThemeToggle() {
