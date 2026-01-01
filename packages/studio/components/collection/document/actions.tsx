@@ -15,16 +15,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
+import { DocumentItem } from "@/lib/query/collections";
 
-export function DocumentActionsDropdown({
-  collectionId,
-  documentId,
-  allowDelete = false,
-}: {
-  collectionId: string;
-  documentId: string;
-  allowDelete?: boolean;
-}) {
+export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
   return (
     <DropdownMenu>
       <Button variant="ghost" size="icon" className="text-muted-foreground ms-auto" asChild>
@@ -33,11 +26,11 @@ export function DocumentActionsDropdown({
         </DropdownMenuTrigger>
       </Button>
       <DropdownMenuContent>
-        {allowDelete && (
+        {document.permissions.delete && (
           <DropdownMenuItem
             variant="destructive"
             onClick={() => {
-              void deleteDocumentAction(documentId, collectionId);
+              void deleteDocumentAction(document.id, document.collectionId);
             }}
           >
             <TrashIcon />
@@ -50,25 +43,21 @@ export function DocumentActionsDropdown({
 }
 
 export function DocumentActionsContext({
-  collectionId,
-  documentId,
-  allowDelete = false,
+  document,
   children,
 }: {
-  collectionId: string;
-  documentId: string;
-  allowDelete?: boolean;
+  document: DocumentItem;
   children: ReactElement;
 }) {
   return (
     <ContextMenu>
       <ContextMenuTrigger render={children} />
       <ContextMenuContent>
-        {allowDelete && (
+        {document.permissions.delete && (
           <ContextMenuItem
             variant="destructive"
             onClick={() => {
-              void deleteDocumentAction(documentId, collectionId);
+              void deleteDocumentAction(document.id, document.collectionId);
             }}
           >
             <TrashIcon />

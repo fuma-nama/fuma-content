@@ -21,31 +21,30 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
+import { eq, useLiveQuery, ilike, or } from "@tanstack/react-db";
+import {
+  collection,
+  documentCollection,
+  type CollectionItem,
+  type DocumentItem,
+} from "@/lib/query/collections";
 
-export type CollectionSidebarItem =
-  | {
-      kind: "collection";
-      id: string;
-      name: string;
-      badge?: string;
-    }
-  | {
-      kind: "document";
-      id: string;
-      collectionId: string;
-      name: string;
-    };
-
-export function AppSidebar({
-  items,
-  ...props
-}: React.ComponentProps<typeof Sidebar> & { items: CollectionSidebarItem[] }) {
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [search, setSearch] = React.useState("");
-  const deferredSearch = React.useDeferredValue(search);
-  const filteredItems = React.useMemo(() => {
-    return items.filter((item) => item.name.toLowerCase().includes(deferredSearch.toLowerCase()));
-  }, [items, deferredSearch]);
-
+  const { data: items = [] } = useLiveQuery(
+    (q) => {
+      return q
+        .from({ collection })
+        .join({ docs: documentCollection }, ({ collection, docs }) =>
+          eq(collection.id, docs.collectionId),
+        )
+        .where((b) =>
+          or(ilike(b.collection.name, `${search}%`), ilike(b.docs?.name, `${search}%`)),
+        );
+    },
+    [search],
+  );
+  console.log(items);
   return (
     <Sidebar variant="floating" {...props}>
       <SidebarHeader>
@@ -69,9 +68,18 @@ export function AppSidebar({
               />
             </div>
             <SidebarMenu className="gap-0">
-              {filteredItems.map((item, i) => (
-                <SidebarCollectionItem key={i} item={item} />
-              ))}
+              {items.map((item, i) => {
+                const subsequence = items.some(
+                  (other, j) => j < i && other.collection.id === item.collection.id,
+                );
+
+                return (
+                  <React.Fragment key={`${item.collection.id}-${item.docs?.id}`}>
+                    {!subsequence && <SidebarCollectionItem item={item.collection} />}
+                    {item.docs && <SidebarDocumentItem item={item.docs} />}
+                  </React.Fragment>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -83,48 +91,47 @@ export function AppSidebar({
   );
 }
 
-function SidebarCollectionItem({ item }: { item: CollectionSidebarItem }) {
+function SidebarDocumentItem({ item }: { item: DocumentItem }) {
   const pathname = usePathname();
-  const href =
-    item.kind === "collection"
-      ? `/collection/${item.id}`
-      : `/collection/${item.collectionId}/${item.id}`;
-  let node = (
+  const href = `/collection/${item.collectionId}/${item.id}`;
+  return (
+    <DocumentActionsContext document={item}>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={item.name}
+          isActive={pathname === href}
+          className={cn("ps-5", !pathname.startsWith(href + "/") && "text-muted-foreground")}
+          asChild
+        >
+          <Link href={href}>
+            <FileIcon className="text-muted-foreground" />
+            <span>{item.name}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </DocumentActionsContext>
+  );
+}
+
+function SidebarCollectionItem({ item }: { item: CollectionItem }) {
+  const pathname = usePathname();
+  const href = `/collection/${item.id}`;
+  return (
     <SidebarMenuItem>
       <SidebarMenuButton
         tooltip={item.name}
         isActive={pathname === href}
-        className={cn(
-          item.kind === "collection" && "ps-3",
-          item.kind === "document" && "ps-5",
-          !pathname.startsWith(href + "/") && "text-muted-foreground",
-        )}
+        className={cn("ps-3", !pathname.startsWith(href + "/") && "text-muted-foreground")}
         asChild
       >
         <Link href={href}>
-          {
-            {
-              document: <FileIcon className="text-muted-foreground" />,
-              collection: <LayersIcon className="text-muted-foreground" />,
-            }[item.kind]
-          }
+          <LayersIcon className="text-muted-foreground" />
           <span>{item.name}</span>
-          {item.kind === "collection" && item.badge && (
-            <Badge className="ms-auto">{item.badge}</Badge>
-          )}
+          {item.badge && <Badge className="ms-auto">{item.badge}</Badge>}
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
-  if (item.kind === "document") {
-    node = (
-      <DocumentActionsContext collectionId={item.collectionId} documentId={item.id} allowDelete>
-        {node}
-      </DocumentActionsContext>
-    );
-  }
-
-  return node;
 }
 
 function ThemeToggle() {
