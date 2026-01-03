@@ -1,5 +1,12 @@
 # fuma-content
 
+## 1.0.3
+
+### Patch Changes
+
+- 86a78b0: add extra type utils
+- 86a78b0: support Vite 8
+
 ## 1.0.2
 
 ### Patch Changes
