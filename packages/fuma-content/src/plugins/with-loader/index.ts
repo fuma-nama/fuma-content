@@ -39,6 +39,13 @@ export interface LoaderInput {
 export interface LoaderOutput {
   code: string;
   map?: unknown;
+
+  /**
+   * only supported on Vite 8 at the moment, specify the output module type.
+   *
+   * on unsupported environments, it will be ignored.
+   */
+  moduleType?: "js" | "json";
 }
 
 export interface WithLoaderConfig {

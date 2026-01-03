@@ -29,7 +29,6 @@ export default async function loader(
         }),
         {
           json: "json",
-          yaml: "js",
         },
       ),
     );

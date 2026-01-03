@@ -19,10 +19,9 @@ export function createMetaLoader(
   { getCore }: DynamicCore,
   resolve: {
     json?: "json" | "js";
-    yaml?: "yaml" | "js";
   } = {},
 ): Loader {
-  const { json: resolveJson = "js", yaml: resolveYaml = "js" } = resolve;
+  const { json: resolveJson = "js" } = resolve;
 
   function parse(filePath: string, source: string) {
     try {
@@ -76,10 +75,11 @@ export function createMetaLoader(
             resolveJson === "json"
               ? JSON.stringify(data)
               : `export default ${JSON.stringify(data)}`,
+          moduleType: resolveJson,
         };
       } else {
         return {
-          code: resolveYaml === "yaml" ? dump(data) : `export default ${JSON.stringify(data)}`,
+          code: `export default ${JSON.stringify(data)}`,
         };
       }
     },

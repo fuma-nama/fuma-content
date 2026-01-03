@@ -9,7 +9,7 @@ export function toBun(test: RegExp = /.+/, loader: Loader) {
 
     return {
       contents: output.code,
-      loader: "js",
+      loader: output.moduleType ?? "js",
     };
   }
 

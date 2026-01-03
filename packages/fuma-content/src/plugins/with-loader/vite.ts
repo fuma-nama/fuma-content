@@ -28,6 +28,7 @@ export function toVite(name: string, test: RegExp | undefined, loader: Loader): 
       return {
         code: result.code,
         map: result.map as SourceMap,
+        moduleType: result.moduleType,
       };
     },
   };
