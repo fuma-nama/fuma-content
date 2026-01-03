@@ -1,9 +1,10 @@
 "use client";
 import { DocumentActionsDropdown } from "@/components/collection/document/actions";
 import { SiteHeader } from "@/components/site-header";
-import { documentCollection } from "@/lib/query/collections";
-import { useLiveQuery, eq, and } from "@tanstack/react-db";
+import { documentCollection } from "@/lib/data/store";
+import { eq, and } from "@tanstack/react-db";
 import Link from "next/link";
+import { useLiveQuery } from "@/lib/data/consumer";
 
 export function Header({ collectionId, documentId }: { collectionId: string; documentId: string }) {
   const query = useLiveQuery((q) =>

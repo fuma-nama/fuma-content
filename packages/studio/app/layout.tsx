@@ -19,11 +19,7 @@ export const metadata: Metadata = {
   title: "Fuma Content Studio",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>

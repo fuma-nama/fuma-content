@@ -1,7 +1,7 @@
 "use server";
 
 import { getCore, requireDocument } from "./config";
-import { CollectionItem, DocumentItem } from "./query/collections";
+import { CollectionItem, DocumentItem } from "./data/store";
 
 export async function getCollectionItems(): Promise<CollectionItem[]> {
   const core = await getCore();

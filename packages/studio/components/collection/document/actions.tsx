@@ -15,7 +15,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
-import { DocumentItem } from "@/lib/query/collections";
+import { DocumentItem } from "@/lib/data/store";
 
 export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
   return (

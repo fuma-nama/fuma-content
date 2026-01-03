@@ -21,13 +21,14 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
-import { eq, useLiveQuery, ilike, or } from "@tanstack/react-db";
+import { eq, ilike, or } from "@tanstack/react-db";
 import {
   collection,
   documentCollection,
   type CollectionItem,
   type DocumentItem,
-} from "@/lib/query/collections";
+} from "@/lib/data/store";
+import { useLiveQuery } from "@/lib/data/consumer";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [search, setSearch] = React.useState("");
@@ -44,7 +45,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     },
     [search],
   );
-  console.log(items);
+
   return (
     <Sidebar variant="floating" {...props}>
       <SidebarHeader>
@@ -69,9 +70,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             </div>
             <SidebarMenu className="gap-0">
               {items.map((item, i) => {
-                const subsequence = items.some(
-                  (other, j) => j < i && other.collection.id === item.collection.id,
-                );
+                const subsequence = i > 0 && items[i - 1].collection.id === item.collection.id;
 
                 return (
                   <React.Fragment key={`${item.collection.id}-${item.docs?.id}`}>

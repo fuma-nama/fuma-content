@@ -1,16 +1,19 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { StudioPrefetchBoundary } from "@/lib/data/prefetch";
 import type { ReactNode } from "react";
 
-export default async function Layout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        {children}
-        <Toaster />
-      </SidebarInset>
-    </SidebarProvider>
+    <StudioPrefetchBoundary>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          {children}
+          <Toaster />
+        </SidebarInset>
+      </SidebarProvider>
+    </StudioPrefetchBoundary>
   );
 }

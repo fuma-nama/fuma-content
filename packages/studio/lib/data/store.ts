@@ -1,6 +1,6 @@
-import { createCollection, parseLoadSubsetOptions } from "@tanstack/react-db";
+import { createCollection } from "@tanstack/react-db";
 import { queryCollectionOptions } from "@tanstack/query-db-collection";
-import { queryClient } from "./client";
+import { queryClient } from "./query";
 import { getCollectionItems, getDocumentItems } from "../actions";
 
 export interface CollectionItem {
