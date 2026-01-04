@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
-import { queryClient } from "./query";
-import { getCollectionItems, getDocumentItems } from "../actions";
+import { getCollectionItems, getDocumentItems } from "./actions";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { queryClient } from "./query";
+import { BoundaryClient } from "./boundary.client";
 
 export async function StudioPrefetchBoundary({ children }: { children: ReactNode }) {
   await queryClient.prefetchQuery({
@@ -13,5 +14,9 @@ export async function StudioPrefetchBoundary({ children }: { children: ReactNode
     queryFn: () => getDocumentItems(),
   });
 
-  return <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>;
+  return (
+    <BoundaryClient>
+      <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>
+    </BoundaryClient>
+  );
 }

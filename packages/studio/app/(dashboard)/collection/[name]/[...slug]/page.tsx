@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCore, requireDocument } from "@/lib/config";
+import { requireDocument } from "@/lib/config";
 import { Header } from "./page.client";
 
 export default async function Page({ params }: PageProps<"/collection/[name]/[...slug]">) {

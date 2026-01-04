@@ -6,7 +6,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteDocumentAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
@@ -15,7 +14,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
-import { DocumentItem } from "@/lib/data/store";
+import { documentCollection, type DocumentItem } from "@/lib/data/store";
 
 export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
   return (
@@ -30,7 +29,7 @@ export function DocumentActionsDropdown({ document }: { document: DocumentItem }
           <DropdownMenuItem
             variant="destructive"
             onClick={() => {
-              void deleteDocumentAction(document.id, document.collectionId);
+              documentCollection.delete(`${document.collectionId}-${document.id}`);
             }}
           >
             <TrashIcon />
@@ -57,7 +56,7 @@ export function DocumentActionsContext({
           <ContextMenuItem
             variant="destructive"
             onClick={() => {
-              void deleteDocumentAction(document.id, document.collectionId);
+              documentCollection.delete(`${document.collectionId}-${document.id}`);
             }}
           >
             <TrashIcon />

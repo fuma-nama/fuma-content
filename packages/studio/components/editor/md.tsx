@@ -1,11 +1,13 @@
 "use client";
 
 import { MarkdownPlugin } from "@platejs/markdown";
+import type { Value } from "platejs";
 import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
-import { type ReactNode, useEffect, useState, useTransition } from "react";
+import { type ReactNode, use, useRef } from "react";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
-import { HistoryApi } from "platejs";
+
+const mdMap: Record<string, Promise<Value>> = {};
 
 export function MDXEditor({
   defaultValue,
@@ -16,35 +18,28 @@ export function MDXEditor({
   onUpdate?: (options: { editor: PlateEditor; getMarkdown: () => string }) => void;
   children?: ReactNode;
 }) {
-  const [_, startTransition] = useTransition();
-  const [isReady, setIsReady] = useState(false);
+  const isReadyRef = useRef(false);
   const editor = usePlateEditor({
     plugins: EditorKit,
-    value: [
-      {
-        type: "p",
-        children: [{ text: defaultValue }],
-      },
-    ],
+    skipInitialization: true,
   });
+  const deserilaizedDefault = use(
+    (mdMap[defaultValue] ??= new Promise((res) => {
+      res(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
+    })),
+  );
 
-  useEffect(() => {
-    startTransition(() => {
-      HistoryApi.withoutSaving(editor, () => {
-        editor.tf.setValue(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
-      });
-
-      setIsReady(true);
+  if (!isReadyRef.current) {
+    editor.tf.init({
+      value: deserilaizedDefault,
     });
-    return () => setIsReady(false);
-  }, []);
+    isReadyRef.current = true;
+  }
 
   return (
     <Plate
       editor={editor}
       onValueChange={() => {
-        if (!isReady) return;
-
         onUpdate?.({
           editor,
           getMarkdown() {

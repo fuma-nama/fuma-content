@@ -21,14 +21,13 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
-import { eq, ilike, or } from "@tanstack/react-db";
+import { eq, ilike, or, useLiveQuery } from "@tanstack/react-db";
 import {
   collection,
   documentCollection,
   type CollectionItem,
   type DocumentItem,
 } from "@/lib/data/store";
-import { useLiveQuery } from "@/lib/data/consumer";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [search, setSearch] = React.useState("");

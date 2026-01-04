@@ -1,7 +1,7 @@
 "use server";
 
-import { getCore, requireDocument } from "./config";
-import { CollectionItem, DocumentItem } from "./data/store";
+import { getCore, requireDocument } from "../config";
+import type { CollectionItem, DocumentItem } from "./store";
 
 export async function getCollectionItems(): Promise<CollectionItem[]> {
   const core = await getCore();
@@ -41,7 +41,7 @@ export async function getDocumentItems(): Promise<DocumentItem[]> {
 
 export async function deleteDocumentAction(documentId: string, collectionId: string) {
   const { collection, document } = await requireDocument(collectionId, documentId);
-  const { deleteDocument } = collection.handlers.studio!.actions ?? {};
+  const { deleteDocument } = collection.handlers.studio.actions ?? {};
   if (deleteDocument) {
     await deleteDocument({ collection, document });
   } else {
