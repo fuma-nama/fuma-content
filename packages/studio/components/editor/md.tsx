@@ -18,22 +18,21 @@ export function MDXEditor({
   onUpdate?: (options: { editor: PlateEditor; getMarkdown: () => string }) => void;
   children?: ReactNode;
 }) {
-  const isReadyRef = useRef(false);
+  const initializedRef = useRef(false);
   const editor = usePlateEditor({
     plugins: EditorKit,
     skipInitialization: true,
   });
-  const deserilaizedDefault = use(
+  const deserializedDefault = use(
     (mdMap[defaultValue] ??= new Promise((res) => {
       res(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
     })),
   );
-
-  if (!isReadyRef.current) {
+  if (!initializedRef.current) {
     editor.tf.init({
-      value: deserilaizedDefault,
+      value: deserializedDefault,
     });
-    isReadyRef.current = true;
+    initializedRef.current = true;
   }
 
   return (

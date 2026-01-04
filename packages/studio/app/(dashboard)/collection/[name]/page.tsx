@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { getCore } from "@/lib/config";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { createDocumentContext, CreateDocumentDialog } from "./client";
 
 export default async function Page({ params }: PageProps<"/collection/[name]">) {
   const core = await getCore();
@@ -10,6 +11,7 @@ export default async function Page({ params }: PageProps<"/collection/[name]">) 
   if (!collection) notFound();
 
   const handler = collection.handlers.studio;
+  const documents = await handler?.getDocuments();
   return (
     <>
       <SiteHeader>
@@ -28,9 +30,21 @@ export default async function Page({ params }: PageProps<"/collection/[name]">) 
             </Badge>
           ))}
         </div>
-        {handler ? (
-          <div className="grid grid-cols-1 border rounded-lg bg-card text-card-foreground">
-            {(await handler.getDocuments()).map((doc) => (
+        {handler && documents ? (
+          <div className="grid grid-cols-1 border rounded-lg bg-card text-card-foreground overflow-hidden">
+            <div className="flex items-center gap-2 bg-secondary ps-4 pe-2 py-2">
+              <p className="text-sm text-muted-foreground me-auto">{documents.length} Items</p>
+              {handler.dialogs?.create && (
+                <CreateDocumentDialog>
+                  {await handler.dialogs.create({
+                    collection,
+                    clientContext: createDocumentContext,
+                  })}
+                </CreateDocumentDialog>
+              )}
+            </div>
+
+            {documents.map((doc) => (
               <Link
                 key={doc.id}
                 href={`/collection/${collection.name}/${doc.id}`}

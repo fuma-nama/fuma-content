@@ -1,5 +1,6 @@
 import type { StudioDocument } from "@/plugin/types";
 import { type CollectionWithHandler, Core } from "fuma-content";
+import { Collection, CollectionHandlers } from "fuma-content/collections";
 import { buildConfig } from "fuma-content/config";
 
 let core: Promise<Core>;
@@ -21,17 +22,39 @@ export async function getCore(): Promise<Core> {
   return core;
 }
 
+export async function requireCollection<Handler extends keyof CollectionHandlers = never>(
+  collectionId: string,
+  handlers: Handler[],
+): Promise<CollectionWithHandler<Handler>> {
+  const core = await getCore();
+  const collection = core.getCollection(collectionId);
+  if (!collection) throw new Error(`Missing Collection ${collectionId}`);
+
+  if (hasHandler(collection, handlers)) {
+    return collection;
+  }
+
+  throw new Error(`Missing ${handlers.join(", ")} handlers for ${collectionId}`);
+}
+
 export async function requireDocument<Doc extends StudioDocument = StudioDocument>(
   collectionId: string,
   documentId: string,
 ): Promise<{ collection: CollectionWithHandler<"studio">; document: Doc }> {
-  const core = await getCore();
-  const collection = core.getCollection(collectionId);
-  if (!collection) throw new Error(`Missing Collection ${collectionId}`);
-  const handler = collection.handlers.studio;
-  if (!handler) throw new Error(`Missing Studio Handler for ${collectionId}`);
-  const document: Doc | undefined = await handler.getDocument(documentId);
+  const collection = await requireCollection(collectionId, ["studio"]);
+  const document: Doc | undefined = await collection.handlers.studio.getDocument(documentId);
   if (!document) throw new Error(`Missing Document ${documentId}`);
 
   return { collection: collection as CollectionWithHandler<"studio">, document };
+}
+
+export function hasHandler<Handler extends keyof CollectionHandlers = never>(
+  collection: Collection,
+  handlers: Handler[],
+): collection is CollectionWithHandler<Handler> {
+  for (const handler of handlers) {
+    if (collection.handlers[handler] === undefined) return false;
+  }
+
+  return true;
 }

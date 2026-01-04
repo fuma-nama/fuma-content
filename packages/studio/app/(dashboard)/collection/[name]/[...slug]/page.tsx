@@ -9,7 +9,7 @@ export default async function Page({ params }: PageProps<"/collection/[name]/[..
   return (
     <>
       <Header collectionId={collection.name} documentId={document.id} />
-      <div className="flex flex-1 min-w-0 flex-col gap-2 px-2 py-6">
+      <div className="flex flex-1 min-w-0 flex-col gap-2 p-2">
         {await collection.handlers.studio.pages?.edit?.({ document, collection })}
       </div>
     </>

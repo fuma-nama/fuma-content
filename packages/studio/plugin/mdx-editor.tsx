@@ -13,9 +13,15 @@ import { useRef, useState, useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckIcon, CircleIcon } from "lucide-react";
 import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
-import { saveMDXDocument } from "./actions";
+import { createMDXDocument, saveMDXDocument } from "./actions";
+import { useForm } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import type { CreateClientContext } from "./types";
+import { removeUndefined } from "@/lib/utils/remove-undefined";
 
-interface MDXEditorWithFormProps {
+interface MDXDocUpdateEditorProps {
   collectionId: string;
   documentId: string;
 
@@ -24,16 +30,64 @@ interface MDXEditorWithFormProps {
   frontmatter?: Record<string, unknown>;
 }
 
+export function MDXDocCreateEditor({
+  collectionId,
+  clientContext: { useDialog },
+}: {
+  collectionId: string;
+  clientContext: CreateClientContext;
+}) {
+  const { setOpen, onCreate } = useDialog();
+  const form = useForm({
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={form.handleSubmit(async (values) => {
+        const created = await createMDXDocument(collectionId, values.name, "");
+        onCreate(created);
+        setOpen(false);
+      })}
+    >
+      <Label htmlFor="name">Name</Label>
+      <Input id="name" {...form.register("name")} placeholder="hello-world" />
+
+      <Button type="submit" className="mt-4">
+        Create
+      </Button>
+    </form>
+  );
+}
+
+export function MDXDocUpdateEditor({ collectionId, documentId, ...rest }: MDXDocUpdateEditorProps) {
+  return (
+    <MDXDocEditor
+      {...rest}
+      onSync={(content) => {
+        return saveMDXDocument(collectionId, documentId, content);
+      }}
+    />
+  );
+}
+
 /**
  * Combined MDX editor with frontmatter form using JSON Schema
  */
-export function MDXEditorWithForm({
-  collectionId,
-  documentId,
+function MDXDocEditor({
   jsonSchema,
   content: defaultContent,
   frontmatter: defaultFrontmatter = {},
-}: MDXEditorWithFormProps) {
+  onSync: onSyncCallback,
+}: {
+  jsonSchema?: JSONSchema;
+  content: string;
+  frontmatter?: Record<string, unknown>;
+  onSync: (value: string) => void | Promise<void>;
+}) {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"sync" | "updated">("sync");
   const timerRef = useRef<number | null>(null);
@@ -51,78 +105,36 @@ export function MDXEditorWithForm({
       startTransition(async () => {
         syncAction?.();
         const { frontmatter, content } = currentValue.current;
-        await saveMDXDocument(collectionId, documentId, grayMatter.stringify(content, frontmatter));
+        await onSyncCallback(grayMatter.stringify(content, removeUndefined(frontmatter, true)));
         setStatus("sync");
       });
     }, 500);
   };
 
-  const statusBar = (
-    <div className="sticky bottom-2 rounded-full bg-popover text-xs text-popover-foreground inline-flex items-center gap-1 px-3 py-1.5 border shadow-lg z-20 mx-auto">
-      {isPending ? (
-        <>
-          <Spinner className="text-primary" />
-          <span className="text-muted-foreground">Saving</span>
-        </>
-      ) : status === "sync" ? (
-        <>
-          <CheckIcon className="size-4 text-green-400" />
-          <span>In Sync</span>
-        </>
-      ) : (
-        <>
-          <CircleIcon className="size-4 fill-current stroke-transparent text-orange-400" />
-          <p>Updated</p>
-        </>
-      )}
-    </div>
-  );
-  const mdxEditor = (
-    <MDXEditor
-      defaultValue={defaultContent}
-      onUpdate={(options) => {
-        onSync(() => {
-          currentValue.current.content = options.getMarkdown();
-        });
-      }}
-    >
-      <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
-        <MDXEditorView />
-      </MDXEditorContainer>
-    </MDXEditor>
-  );
-
-  if (!jsonSchema) {
-    return (
-      <>
-        {mdxEditor}
-        {statusBar}
-      </>
-    );
-  }
-
   return (
     <>
-      <Tabs defaultValue="visual">
+      <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
         <TabsList>
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
-        <TabsContent value="visual" className="-mt-6">
-          <JSONSchemaEditorProvider
-            schema={jsonSchema}
-            defaultValue={defaultFrontmatter}
-            onValueChange={(value) => {
-              onSync(() => {
-                currentValue.current.frontmatter = value as Record<string, unknown>;
-              });
-            }}
-            writeOnly
-            readOnly={false}
-          >
-            <JSONSchemaEditorContent />
-          </JSONSchemaEditorProvider>
-        </TabsContent>
+        {jsonSchema && (
+          <TabsContent value="visual" className="-mt-6">
+            <JSONSchemaEditorProvider
+              schema={jsonSchema}
+              defaultValue={defaultFrontmatter}
+              onValueChange={(value) => {
+                onSync(() => {
+                  currentValue.current.frontmatter = value as Record<string, unknown>;
+                });
+              }}
+              writeOnly
+              readOnly={false}
+            >
+              <JSONSchemaEditorContent />
+            </JSONSchemaEditorProvider>
+          </TabsContent>
+        )}
         <TabsContent value="code">
           <YamlEditorLazy
             defaultValue={defaultFrontmatter}
@@ -139,13 +151,43 @@ export function MDXEditorWithForm({
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
-        <TabsContent value="visual">{mdxEditor}</TabsContent>
+        <TabsContent value="visual">
+          <MDXEditor
+            defaultValue={defaultContent}
+            onUpdate={(options) => {
+              onSync(() => {
+                currentValue.current.content = options.getMarkdown();
+              });
+            }}
+          >
+            <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
+              <MDXEditorView />
+            </MDXEditorContainer>
+          </MDXEditor>
+        </TabsContent>
         <TabsContent value="code" className="size-full">
           <MDXCodeEditorLazy defaultValue={defaultContent} onValueChange={() => null} />
         </TabsContent>
       </Tabs>
 
-      {statusBar}
+      <div className="sticky bottom-2 rounded-full bg-popover text-xs text-popover-foreground inline-flex items-center gap-1 px-3 py-1.5 border shadow-lg z-20 mx-auto">
+        {isPending ? (
+          <>
+            <Spinner className="text-primary" />
+            <span className="text-muted-foreground">Saving</span>
+          </>
+        ) : status === "sync" ? (
+          <>
+            <CheckIcon className="size-4 text-green-400" />
+            <span>In Sync</span>
+          </>
+        ) : (
+          <>
+            <CircleIcon className="size-4 fill-current stroke-transparent text-orange-400" />
+            <p>Updated</p>
+          </>
+        )}
+      </div>
     </>
   );
 }

@@ -55,14 +55,14 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
     },
     pages: {
       async edit({ document, collection }) {
-        const { MDXEditorWithForm } = await import("./mdx-editor");
+        const { MDXDocUpdateEditor } = await import("./mdx-editor");
         const parsed = grayMatter((await read(document)) ?? "");
 
         const jsonSchema = mdxHandler.frontmatterSchema
           ? JSON.parse(JSON.stringify(getJSONSchema(mdxHandler.frontmatterSchema)))
           : undefined;
         return (
-          <MDXEditorWithForm
+          <MDXDocUpdateEditor
             documentId={document.id}
             collectionId={collection.name}
             jsonSchema={jsonSchema}
@@ -70,6 +70,13 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
             content={parsed.content}
           />
         );
+      },
+    },
+    dialogs: {
+      async create({ collection, clientContext }) {
+        const { MDXDocCreateEditor } = await import("./mdx-editor");
+
+        return <MDXDocCreateEditor collectionId={collection.name} clientContext={clientContext} />;
       },
     },
     actions: {
