@@ -4,7 +4,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { queryClient } from "./query";
 import { BoundaryClient } from "./boundary.client";
 
-export async function StudioPrefetchBoundary({ children }: { children: ReactNode }) {
+export async function DataBoundary({ children }: { children: ReactNode }) {
   await queryClient.prefetchQuery({
     queryKey: ["collections"],
     queryFn: () => getCollectionItems(),

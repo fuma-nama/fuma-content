@@ -7,6 +7,7 @@ export interface CollectionItem {
   id: string;
   name: string;
   badge?: string;
+  handlers?: Record<string, null>;
 }
 
 export interface DocumentItem {

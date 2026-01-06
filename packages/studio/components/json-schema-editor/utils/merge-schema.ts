@@ -1,5 +1,5 @@
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
-import { deepEqual } from "./deep-equal";
+import { deepEqual } from "../../../lib/utils/deep-equal";
 
 /**
  * Merge `allOf` object schema

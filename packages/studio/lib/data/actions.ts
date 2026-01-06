@@ -9,6 +9,7 @@ export async function getCollectionItems(): Promise<CollectionItem[]> {
     id: collection.name,
     name: collection.name,
     badge: collection.typeInfo.id,
+    handlers: Object.fromEntries(Object.keys(collection.handlers).map((k) => [k, null])),
   }));
 }
 

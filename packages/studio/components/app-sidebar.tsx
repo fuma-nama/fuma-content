@@ -28,6 +28,7 @@ import {
   type CollectionItem,
   type DocumentItem,
 } from "@/lib/data/store";
+import { CollectionActionsContext } from "./collection/actions";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [search, setSearch] = React.useState("");
@@ -115,20 +116,22 @@ function SidebarCollectionItem({ item }: { item: CollectionItem }) {
   const pathname = usePathname();
   const href = `/collection/${item.id}`;
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        tooltip={item.name}
-        isActive={pathname === href}
-        className={cn("ps-3", !pathname.startsWith(href + "/") && "text-muted-foreground")}
-        asChild
-      >
-        <Link href={href}>
-          <LayersIcon className="text-muted-foreground" />
-          <span>{item.name}</span>
-          {item.badge && <Badge className="ms-auto">{item.badge}</Badge>}
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+    <CollectionActionsContext collection={item}>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={item.name}
+          isActive={pathname === href}
+          className={cn("ps-3", !pathname.startsWith(href + "/") && "text-muted-foreground")}
+          asChild
+        >
+          <Link href={href}>
+            <LayersIcon className="text-muted-foreground" />
+            <span>{item.name}</span>
+            {item.badge && <Badge className="ms-auto">{item.badge}</Badge>}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </CollectionActionsContext>
   );
 }
 

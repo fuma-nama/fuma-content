@@ -72,12 +72,9 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
         );
       },
     },
-    dialogs: {
-      async create({ collection, clientContext }) {
-        const { MDXDocCreateEditor } = await import("./mdx-editor");
-
-        return <MDXDocCreateEditor collectionId={collection.name} clientContext={clientContext} />;
-      },
+    async client() {
+      const { clientContext } = await import("./mdx-editor");
+      return clientContext;
     },
     actions: {
       async deleteDocument(options) {

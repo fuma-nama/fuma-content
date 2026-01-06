@@ -18,7 +18,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import type { CreateClientContext } from "./types";
+import type { ClientContext } from "./types";
 import { removeUndefined } from "@/lib/utils/remove-undefined";
 
 interface MDXDocUpdateEditorProps {
@@ -30,38 +30,36 @@ interface MDXDocUpdateEditorProps {
   frontmatter?: Record<string, unknown>;
 }
 
-export function MDXDocCreateEditor({
-  collectionId,
-  clientContext: { useDialog },
-}: {
-  collectionId: string;
-  clientContext: CreateClientContext;
-}) {
-  const { setOpen, onCreate } = useDialog();
-  const form = useForm({
-    defaultValues: {
-      name: "",
+export const clientContext: ClientContext = {
+  dialogs: {
+    createDocument({ collectionId, useDialog }) {
+      const { setOpen, onCreate } = useDialog();
+      const form = useForm({
+        defaultValues: {
+          name: "",
+        },
+      });
+
+      return (
+        <form
+          className="flex flex-col gap-2"
+          onSubmit={form.handleSubmit(async (values) => {
+            const created = await createMDXDocument(collectionId, values.name, "");
+            onCreate(created);
+            setOpen(false);
+          })}
+        >
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" {...form.register("name")} placeholder="hello-world" />
+
+          <Button type="submit" className="mt-4">
+            Create
+          </Button>
+        </form>
+      );
     },
-  });
-
-  return (
-    <form
-      className="flex flex-col gap-2"
-      onSubmit={form.handleSubmit(async (values) => {
-        const created = await createMDXDocument(collectionId, values.name, "");
-        onCreate(created);
-        setOpen(false);
-      })}
-    >
-      <Label htmlFor="name">Name</Label>
-      <Input id="name" {...form.register("name")} placeholder="hello-world" />
-
-      <Button type="submit" className="mt-4">
-        Create
-      </Button>
-    </form>
-  );
-}
+  },
+};
 
 export function MDXDocUpdateEditor({ collectionId, documentId, ...rest }: MDXDocUpdateEditorProps) {
   return (

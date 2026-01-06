@@ -15,8 +15,13 @@ import {
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
 import { documentCollection, type DocumentItem } from "@/lib/data/store";
+import { usePathname, useRouter } from "next/navigation";
+import { isActive } from "@/lib/utils/urls";
 
 export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <DropdownMenu>
       <Button variant="ghost" size="icon" className="text-muted-foreground ms-auto" asChild>
@@ -30,6 +35,9 @@ export function DocumentActionsDropdown({ document }: { document: DocumentItem }
             variant="destructive"
             onClick={() => {
               documentCollection.delete(`${document.collectionId}-${document.id}`);
+              if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
+                router.push(`/collection/${document.collectionId}`);
+              }
             }}
           >
             <TrashIcon />
@@ -48,6 +56,9 @@ export function DocumentActionsContext({
   document: DocumentItem;
   children: ReactElement;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <ContextMenu>
       <ContextMenuTrigger render={children} />
@@ -57,6 +68,9 @@ export function DocumentActionsContext({
             variant="destructive"
             onClick={() => {
               documentCollection.delete(`${document.collectionId}-${document.id}`);
+              if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
+                router.push(`/collection/${document.collectionId}`);
+              }
             }}
           >
             <TrashIcon />

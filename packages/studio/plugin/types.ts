@@ -14,14 +14,19 @@ export interface MDXStudioDocument extends StudioDocument {
   filePath: string;
 }
 
-export interface CreateClientContext {
-  useDialog: () => CreateClientContextUseDialog;
+export interface CreateDocumentDialogContext {
+  collectionId: string;
+  useDialog: () => {
+    open: boolean;
+    setOpen: (v: boolean) => void;
+    onCreate: (item: DocumentItem) => void;
+  };
 }
 
-export interface CreateClientContextUseDialog {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  onCreate: (item: DocumentItem) => void;
+export interface ClientContext {
+  dialogs?: {
+    createDocument?: FC<CreateDocumentDialogContext>;
+  };
 }
 
 export interface StudioHandler<Doc extends StudioDocument> {
@@ -32,9 +37,10 @@ export interface StudioHandler<Doc extends StudioDocument> {
     edit?: FC<{ document: Doc; collection: Collection }>;
   };
 
-  dialogs?: {
-    create?: FC<{ collection: Collection; clientContext: CreateClientContext }>;
-  };
+  /**
+   * the properties inside should be exported from a file with "use client".
+   */
+  client?: () => Awaitable<ClientContext>;
 
   actions?: {
     deleteDocument?: (options: { collection: Collection; document: Doc }) => Awaitable<void>;
