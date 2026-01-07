@@ -1,4 +1,4 @@
-import type { StudioDocument } from "@/plugin/types";
+import type { StudioDocument } from "lib/types";
 import { type CollectionWithHandler, Core } from "fuma-content";
 import { Collection, CollectionHandlers } from "fuma-content/collections";
 import { buildConfig } from "fuma-content/config";
@@ -13,7 +13,7 @@ export async function getCore(): Promise<Core> {
     });
 
     await core.init({
-      config: buildConfig(await import("@/content.config")),
+      config: buildConfig(await import("../../content.config")),
     });
 
     return core;

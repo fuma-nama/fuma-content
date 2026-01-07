@@ -55,7 +55,7 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
     },
     pages: {
       async edit({ document, collection }) {
-        const { MDXDocUpdateEditor } = await import("./mdx-editor");
+        const { MDXDocUpdateEditor } = await import("./mdx/client");
         const parsed = grayMatter((await read(document)) ?? "");
 
         const jsonSchema = mdxHandler.frontmatterSchema
@@ -73,7 +73,7 @@ function mdx(collection: Collection): StudioHandler<MDXStudioDocument> | undefin
       },
     },
     async client() {
-      const { clientContext } = await import("./mdx-editor");
+      const { clientContext } = await import("./mdx/client");
       return clientContext;
     },
     actions: {

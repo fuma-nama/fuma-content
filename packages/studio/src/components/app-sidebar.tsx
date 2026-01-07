@@ -143,17 +143,17 @@ function ThemeToggle() {
       <SelectTrigger className="text-muted-foreground">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="light" className="gap-2">
-          <Sun />
+      <SelectContent className="text-muted-foreground">
+        <SelectItem value="light">
+          <Sun className="size-4" />
           Light
         </SelectItem>
-        <SelectItem value="dark" className="gap-2">
-          <Moon />
+        <SelectItem value="dark">
+          <Moon className="size-4" fill="currentColor" />
           Dark
         </SelectItem>
-        <SelectItem value="system" className="gap-2">
-          <Monitor />
+        <SelectItem value="system">
+          <Monitor className="size-4" />
           System
         </SelectItem>
       </SelectContent>

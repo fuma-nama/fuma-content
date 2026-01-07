@@ -30,6 +30,7 @@ export interface ClientContext {
 }
 
 export interface StudioHandler<Doc extends StudioDocument> {
+  init?: () => Awaitable<void>;
   getDocuments: () => Awaitable<Doc[]>;
   getDocument: (id: string) => Awaitable<Doc | undefined>;
 

@@ -1,7 +1,7 @@
 import { defineMDX } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import git from "fuma-content/plugins/git";
-import { studio } from "./plugin";
+import { studio } from "./lib";
 import z from "zod";
 
 export const docs = defineMDX({

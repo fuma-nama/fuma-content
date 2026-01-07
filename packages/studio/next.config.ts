@@ -1,11 +1,9 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
-  serverExternalPackages: ["fuma-content"],
-  outputFileTracingRoot: path.join(__dirname, "../../"),
+  serverExternalPackages: ["@fuma-content/studio"],
 };
 
 export default nextConfig;

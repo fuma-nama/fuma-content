@@ -1,9 +1,10 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["./plugin/index.tsx"],
+  entry: ["./lib/index.tsx", "./lib/bin.ts"],
   format: "esm",
   dts: true,
   target: "node22",
   unbundle: true,
+  onSuccess() {},
 });

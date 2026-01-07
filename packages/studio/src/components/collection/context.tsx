@@ -1,5 +1,5 @@
 "use client";
-import type { ClientContext } from "@/plugin";
+import type { ClientContext } from "lib";
 import { createContext, ReactNode, use, useMemo } from "react";
 
 const ClientContext = createContext<Map<string, ClientContext> | null>(null);

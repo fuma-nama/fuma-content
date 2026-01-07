@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { getCore } from "@/lib/config";
 import { DataBoundary } from "@/lib/data/boundary";
-import { ClientContext } from "@/plugin";
+import { ClientContext } from "lib";
 import type { ReactNode } from "react";
 
 export default async function Layout({ children }: { children: ReactNode }) {

@@ -1,7 +1,7 @@
 "use server";
 import fs from "node:fs/promises";
 import { requireCollection, requireDocument } from "@/lib/config";
-import type { MDXStudioDocument, StudioDocument } from "./types";
+import type { MDXStudioDocument, StudioDocument } from "../types";
 import path from "node:path";
 import type { DocumentItem } from "@/lib/data/store";
 
