@@ -1,7 +1,6 @@
 import type { StudioDocument } from "lib/types";
 import { type CollectionWithHandler, Core } from "fuma-content";
 import { Collection, CollectionHandlers } from "fuma-content/collections";
-import { buildConfig } from "fuma-content/config";
 
 let core: Promise<Core>;
 
@@ -9,11 +8,12 @@ export async function getCore(): Promise<Core> {
   core ??= (async () => {
     const core = new Core({
       outDir: ".content",
-      configPath: "content.config.ts",
+      configPath: process.env.STUDIO_CONFIG,
+      cwd: process.env.STUDIO_PARENT_DIR,
     });
 
     await core.init({
-      config: buildConfig(await import("../../content.config")),
+      config: await import("virtual:content.config"),
     });
 
     return core;

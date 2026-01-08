@@ -6,5 +6,4 @@ export default defineConfig({
   dts: true,
   target: "node22",
   unbundle: true,
-  onSuccess() {},
 });

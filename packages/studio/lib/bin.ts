@@ -23,16 +23,24 @@ void main();
 
 async function main() {
   const isCI = process.env.CI === "1";
-  const HOST = options.bind;
-  const PORT = options.port;
+  const { bind: HOST, port: PORT } = options;
   const nextBinPath = path.join(__dirname, "../node_modules/next/dist/bin/next");
+  // where the main app locates
+  const appDir = path.join(__dirname, "../");
+  const studioConfig = path.resolve("content.config.ts");
+  const studioDist = path.resolve(".studio");
 
   intro(`Fuma Content ${appVersion}`);
+  log.info(`Config Path: ${studioConfig}`);
+
   const env = {
     ...process.env,
     HOSTNAME: HOST,
     PORT: String(PORT),
+    STUDIO_PARENT_DIR: process.cwd(),
     STUDIO_VERSION: appVersion,
+    STUDIO_DIST: studioDist,
+    STUDIO_CONFIG: studioConfig,
     CI: "1",
     DISABLE_ANALYTICS: "true",
   };
@@ -40,17 +48,24 @@ async function main() {
   {
     const spin = spinner();
     spin.start("Building App (powered by Next.js)");
-    const buildResult = x("node", [nextBinPath, "build"], {
-      nodeOptions: {
-        stdio: ["ignore", "pipe", "pipe"],
-        env,
-        cwd: path.join(__dirname, "../"),
-      },
-      throwOnError: true,
-    });
+    const storedLogs: string[] = [];
+    try {
+      const buildResult = x("node", [nextBinPath, "build"], {
+        nodeOptions: {
+          stdio: ["ignore", "pipe", "pipe"],
+          env,
+          cwd: appDir,
+        },
+        throwOnError: true,
+      });
 
-    for await (const line of buildResult) {
-      spin.message(`Building App: ${line.trim()}`);
+      for await (const line of buildResult) {
+        spin.message(`Building App: ${line.trim()}`);
+        storedLogs.push(line);
+      }
+    } catch (e) {
+      spin.error(storedLogs.join("\n"));
+      process.exit();
     }
 
     spin.stop("Compiled to .studio directory");
@@ -60,7 +75,7 @@ async function main() {
     nodeOptions: {
       stdio: ["ignore", "pipe", "pipe"],
       env,
-      cwd: path.join(__dirname, "../"),
+      cwd: appDir,
     },
   });
 

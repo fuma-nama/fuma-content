@@ -22,7 +22,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@lib/*": ["./lib/*"]
-    }
+    },
+    "types": ["./lib/env.d.ts"]
   },
   "include": [
     "next-env.d.ts",
