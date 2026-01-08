@@ -21,6 +21,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@fuma-content/studio": "workspace:^",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/mdx": "^2.0.13",
     "@types/node": "^24.10.4",

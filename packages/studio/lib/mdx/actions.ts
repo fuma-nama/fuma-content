@@ -40,6 +40,7 @@ export async function createMDXDocument(
     throw new Error(`document ${name} already exists`);
   }
 
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, content);
   return {
     collectionId,
