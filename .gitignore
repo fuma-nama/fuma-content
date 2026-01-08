@@ -36,3 +36,5 @@ yarn-error.log*
 .DS_Store
 *.pem
 next-env.d.ts
+
+.studio

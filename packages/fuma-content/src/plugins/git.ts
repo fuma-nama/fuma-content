@@ -41,9 +41,7 @@ export default function git(options: GitPluginOptions = {}): Plugin {
   return {
     name: "git",
     config() {
-      const { workspace } = this.core.getOptions();
-      const cwd = workspace ? path.resolve(workspace.dir) : process.cwd();
-
+      const { cwd } = this.core.getOptions();
       client = createGitClient(cwd);
     },
     collection(collection) {

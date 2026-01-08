@@ -7,7 +7,6 @@ import { defineConfig, type GlobalConfig } from "@/config";
 import { defineMeta } from "@/collections/meta";
 import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
-import { buildConfig } from "@/config/build";
 import { fumaMatter } from "@/collections/mdx/fuma-matter";
 
 test("format errors", async () => {
@@ -142,7 +141,7 @@ for (const { name, config } of cases) {
     });
 
     await core.init({
-      config: buildConfig(config as Record<string, unknown>),
+      config: config as Record<string, unknown>,
     });
 
     const { entries, workspaces } = await core.emit();

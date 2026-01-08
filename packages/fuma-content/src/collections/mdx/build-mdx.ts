@@ -111,7 +111,7 @@ export async function buildMDX(
   let vfile = new VFile({
     value: source,
     path: filePath,
-    cwd: handler?.cwd,
+    cwd: core.getOptions().cwd,
     data: {
       frontmatter,
       _compiler,

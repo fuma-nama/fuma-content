@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import * as path from "node:path";
+import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
 import type { FSWatcher } from "chokidar";

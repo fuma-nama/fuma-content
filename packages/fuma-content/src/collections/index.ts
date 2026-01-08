@@ -1,14 +1,13 @@
-import type { WorkspaceConfig } from "@/config";
 import type { JSONSchemaHandler } from "@/plugins/json-schema";
 import type { FIleCollectionHandler } from "@/collections/handlers/fs";
 import type { MDXCollectionHandler } from "@/collections/mdx";
 import type { MetaCollectionHandler } from "@/collections/meta";
 import type { VersionControlHandler } from "@/plugins/git";
-import type { PluginOption } from "@/core";
+import type { Core, PluginOption } from "@/core";
 
 export interface InitOptions {
   name: string;
-  workspace?: WorkspaceConfig;
+  core: Core;
 }
 
 export interface Collection {

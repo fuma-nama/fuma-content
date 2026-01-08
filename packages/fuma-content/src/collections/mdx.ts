@@ -23,7 +23,6 @@ interface CompilationContext {
 }
 
 export interface MDXCollectionHandler {
-  readonly cwd: string;
   readonly dynamic: boolean;
   readonly lazy: boolean;
 
@@ -90,13 +89,12 @@ export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined
     : Record<string, unknown>
 > {
   const { lazy = false, dynamic = false } = config;
-  return createCollection(mdxTypeInfo, (collection, options) => {
-    initFileCollection(collection, options, {
+  return createCollection(mdxTypeInfo, (collection, init) => {
+    initFileCollection(collection, init, {
       supportedFormats: ["mdx", "md"],
       ...config,
     });
     const mdxHandler: MDXCollectionHandler = (collection.handlers.mdx = {
-      cwd: options.workspace ? path.resolve(options.workspace.dir) : process.cwd(),
       postprocess: config.postprocess,
       getMDXOptions: config.options,
       dynamic,
@@ -205,7 +203,7 @@ function plugin(): Plugin {
     if (!fsHandler || !mdxHandler) return;
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.server;
-    const base = slash(path.relative(process.cwd(), fsHandler.dir));
+    const base = slash(core._toRuntimePath(fsHandler.dir));
     let initializer: string;
     codegen.addNamespaceImport(
       "Config",
@@ -266,19 +264,20 @@ function plugin(): Plugin {
     const fsHandler = collection.handlers.fs;
     if (!fsHandler || !mdxHandler || !mdxHandler.dynamic) return;
     const { core, codegen } = context;
-    const { configPath, workspace, outDir } = core.getOptions();
     const runtimePath = RuntimePaths.dynamic;
-    const base = slash(path.relative(process.cwd(), fsHandler.dir));
+    const base = slash(core._toRuntimePath(fsHandler.dir));
     codegen.addNamespaceImport("Config", codegen.formatImportPath(core.getOptions().configPath));
     codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
 
-    const coreOptions: CoreOptions = {
-      configPath,
-      workspace,
-      outDir,
+    const coreOptions = core.getOptions();
+    const serializableCoreOptions: CoreOptions = {
+      ...coreOptions,
+      configPath: core._toRuntimePath(coreOptions.configPath),
+      outDir: core._toRuntimePath(coreOptions.outDir),
+      cwd: core._toRuntimePath(coreOptions.cwd),
     };
     let initializer = `mdxStoreDynamic<typeof Config, "${collection.name}">(Config, ${JSON.stringify(
-      coreOptions,
+      serializableCoreOptions,
     )}, "${collection.name}", "${base}", ${await generateDocCollectionFrontmatterGlob(context, collection, true)})`;
 
     initializer = mdxHandler.storeInitializer.run(initializer, {

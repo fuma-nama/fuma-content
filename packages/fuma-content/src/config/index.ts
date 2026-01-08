@@ -6,7 +6,7 @@ export interface GlobalConfig<
 > {
   plugins?: PluginOption[];
   collections?: Collections;
-  workspaces?: Record<string, Omit<WorkspaceConfig, "name">>;
+  workspaces?: Record<string, WorkspaceConfig>;
 
   /**
    * specify a directory to access & store cache (disabled during development mode).
@@ -14,10 +14,20 @@ export interface GlobalConfig<
    * The cache will never be updated, delete the cache folder to clean.
    */
   experimentalBuildCache?: string;
+
+  /**
+   * configure code generation
+   */
+  emit?: {
+    target?: "default" | "vite";
+    /**
+     * add .js extenstion to imports
+     */
+    jsExtension?: boolean;
+  };
 }
 
 export interface WorkspaceConfig {
-  name: string;
   dir: string;
   config: GlobalConfig | { default: GlobalConfig };
 }
@@ -27,5 +37,3 @@ export function defineConfig<
 >(config: GlobalConfig<Collections> = {}): GlobalConfig<Collections> {
   return config;
 }
-
-export * from "./build";

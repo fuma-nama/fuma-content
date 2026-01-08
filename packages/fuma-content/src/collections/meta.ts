@@ -9,6 +9,7 @@ import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { type AsyncPipe, asyncPipe } from "@/utils/pipe";
 import { getJSONSchema } from "@/utils/validation";
+import { slash } from "@/utils/code-generator";
 
 export interface MetaTransformationContext {
   path: string;
@@ -76,7 +77,7 @@ function plugin(): Plugin {
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
-    const base = path.relative(process.cwd(), fsHandler.dir);
+    const base = slash(core._toRuntimePath(fsHandler.dir));
     const glob = await codegen.generateGlobImport(fsHandler.patterns, {
       query: {
         collection: collection.name,

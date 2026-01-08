@@ -40,13 +40,13 @@ export function initFileCollection(
   init: InitOptions,
   config: FileHandlerConfig,
 ) {
-  const { workspace } = init;
-  const { supportedFormats, dir, files } = config;
+  const { cwd } = init.core.getOptions();
+  const { supportedFormats } = config;
   let matcher: picomatch.Matcher;
 
   collection.handlers.fs = {
-    patterns: files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`],
-    dir: workspace ? path.resolve(workspace.dir, dir) : dir,
+    patterns: config.files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`],
+    dir: path.resolve(cwd, config.dir),
     isFileSupported(filePath) {
       if (!supportedFormats) return true;
 

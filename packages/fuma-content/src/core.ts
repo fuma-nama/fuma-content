@@ -1,4 +1,3 @@
-import type { LoadedConfig } from "@/config/build";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { FSWatcher } from "chokidar";
@@ -8,6 +7,11 @@ import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
 import { CodeGenerator } from "@/utils/code-generator";
 import type { Awaitable } from "@/types";
+import type { GlobalConfig } from "./config";
+
+export interface ResolvedConfig extends Omit<GlobalConfig, "collections"> {
+  collections: Map<string, Collection>;
+}
 
 export interface EmitEntry {
   /**
@@ -45,7 +49,7 @@ export interface Plugin {
   /**
    * on config loaded/updated
    */
-  config?: (this: PluginContext, config: LoadedConfig) => Awaitable<void | LoadedConfig>;
+  config?: (this: PluginContext, config: ResolvedConfig) => Awaitable<void | ResolvedConfig>;
 
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
@@ -87,19 +91,15 @@ export interface ServerContext {
   watcher?: FSWatcher;
 }
 
-export interface CoreOptions {
+export type CoreOptions = Partial<ResolvedCoreOptions>;
+
+/**
+ * the resolved options, all paths are absolute
+ */
+export interface ResolvedCoreOptions {
+  cwd: string;
   configPath: string;
   outDir: string;
-  plugins?: PluginOption[];
-
-  emit?: {
-    target?: "default" | "vite";
-    /**
-     * add .js extenstion to imports
-     */
-    jsExtension?: boolean;
-  };
-
   /**
    * the workspace info if this instance is created as a workspace
    */
@@ -146,9 +146,9 @@ async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
 
 export class Core {
   private readonly workspaces = new Map<string, Core>();
-  private readonly options: CoreOptions;
+  private readonly options: ResolvedCoreOptions;
   private plugins: Plugin[] = [];
-  private config!: LoadedConfig;
+  private config!: ResolvedConfig;
   static defaultOptions = {
     configPath: "content.config.ts",
     outDir: ".content",
@@ -161,17 +161,32 @@ export class Core {
    */
   readonly cache = new Map<string, unknown>();
 
-  constructor(options: CoreOptions) {
-    this.options = options;
+  constructor(options: CoreOptions = {}) {
+    const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
+    this.options = {
+      ...options,
+      cwd,
+      outDir: path.resolve(cwd, options.outDir ?? Core.defaultOptions.outDir),
+      configPath: path.resolve(cwd, options.configPath ?? Core.defaultOptions.configPath),
+    };
   }
 
-  async init({ config: newConfig }: { config: Awaitable<LoadedConfig> }) {
-    this.config = await newConfig;
+  async init({
+    config: newConfig,
+    plugins: customPlugins,
+  }: {
+    /**
+     * either the default export or all exports of config file.
+     */
+    config: Awaitable<Record<string, unknown>>;
+    plugins?: PluginOption;
+  }) {
+    this.config = this.buildConfig(await newConfig);
     this.cache.clear();
     this.workspaces.clear();
     const loadedCollectionTypeIds = new Set<string>();
     this.plugins = await getPlugins([
-      this.options.plugins,
+      customPlugins,
       this.config.plugins,
       ...this.config.collections.values().map(({ typeInfo }) => {
         if (loadedCollectionTypeIds.has(typeInfo.id)) return false;
@@ -187,14 +202,13 @@ export class Core {
       if (out) this.config = out;
     }
 
-    const { workspace, outDir } = this.options;
     // only support workspaces with max depth 1
-    if (!workspace) {
+    if (!this.options.workspace && this.config.workspaces) {
       await Promise.all(
         Object.entries(this.config.workspaces).map(async ([name, workspace]) => {
           const child = new Core({
             ...this.options,
-            outDir: path.join(outDir, name),
+            cwd: path.resolve(this.options.cwd, workspace.dir),
             workspace: {
               name,
               parent: this,
@@ -202,7 +216,7 @@ export class Core {
             },
           });
 
-          await child.init({ config: workspace.config });
+          await child.init({ config: workspace.config as Record<string, unknown> });
           this.workspaces.set(name, child);
         }),
       );
@@ -223,7 +237,7 @@ export class Core {
   getOptions() {
     return this.options;
   }
-  getConfig(): LoadedConfig {
+  getConfig(): ResolvedConfig {
     return this.config;
   }
   /**
@@ -275,7 +289,8 @@ export class Core {
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
-    const { workspace, outDir, emit: { target, jsExtension } = {} } = this.options;
+    const { workspace, outDir } = this.options;
+    const { target, jsExtension } = this.config.emit ?? {};
     const { filterPlugin, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const globCache = new Map<string, Promise<string[]>>();
@@ -344,5 +359,41 @@ export class Core {
     );
 
     return out;
+  }
+
+  /**
+   * convert absolute path into a runtime path (relative to **runtime** cwd)
+   */
+  _toRuntimePath(absolutePath: string) {
+    return path.relative(process.cwd(), absolutePath);
+  }
+
+  private buildConfig(config: Record<string, unknown>): ResolvedConfig {
+    const collections = new Map<string, Collection>();
+    let globalConfig: GlobalConfig;
+
+    if ("default" in config) {
+      globalConfig = config.default as GlobalConfig;
+      for (const [k, v] of Object.entries(config)) {
+        if (k === "default") continue;
+
+        globalConfig.collections ??= {};
+        globalConfig.collections[k] = v as Collection;
+      }
+    } else {
+      globalConfig = config as GlobalConfig;
+    }
+
+    if (globalConfig.collections) {
+      for (const [name, collection] of Object.entries(globalConfig.collections)) {
+        collection.init?.({ name, core: this });
+        collections.set(name, collection);
+      }
+    }
+
+    return {
+      ...globalConfig,
+      collections,
+    };
   }
 }

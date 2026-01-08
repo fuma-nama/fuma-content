@@ -1,4 +1,3 @@
-import { buildConfig } from "@/config/build";
 import { buildMDX, type CompiledMDX } from "@/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/collections/mdx/fuma-matter";
@@ -38,7 +37,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
   corePromise ??= (async () => {
     const core = new Core(coreOptions);
     await core.init({
-      config: buildConfig(config as Record<string, unknown>),
+      config: config as Record<string, unknown>,
     });
     return core;
   })();

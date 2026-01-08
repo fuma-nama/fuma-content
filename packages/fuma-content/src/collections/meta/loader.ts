@@ -1,5 +1,5 @@
 import type { Loader, LoaderInput } from "@/plugins/with-loader";
-import { dump, load } from "js-yaml";
+import { load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";
 import type { MetaTransformationContext } from "@/collections/meta";

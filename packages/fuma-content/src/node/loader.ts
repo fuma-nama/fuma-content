@@ -4,10 +4,7 @@ import { createCache } from "@/utils/async-cache";
 import { createDynamicCore } from "@/dynamic";
 
 const configLoader = createDynamicCore({
-  core: new Core({
-    configPath: Core.defaultOptions.configPath,
-    outDir: Core.defaultOptions.outDir,
-  }),
+  core: new Core(),
   buildConfig: true,
   mode: "production",
 });

@@ -27,6 +27,6 @@ import { frontmatter as __fd_glob_3 } from "./generate-index/folder/test.mdx?col
 import { frontmatter as __fd_glob_2 } from "./generate-index/index.mdx?collection=blogs&only=frontmatter"
 import { frontmatter as __fd_glob_1 } from "./generate-index/folder/test.mdx?collection=docs&only=frontmatter"
 import { frontmatter as __fd_glob_0 } from "./generate-index/index.mdx?collection=docs&only=frontmatter"
-export const docs = mdxStoreDynamic<typeof Config, "docs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures"}, "docs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_0, "folder/test.mdx": __fd_glob_1, });
-export const blogs = mdxStoreDynamic<typeof Config, "blogs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures"}, "blogs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_2, "folder/test.mdx": __fd_glob_3, }).$data($extractedReferences());
+export const docs = mdxStoreDynamic<typeof Config, "docs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures","cwd":""}, "docs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_0, "folder/test.mdx": __fd_glob_1, });
+export const blogs = mdxStoreDynamic<typeof Config, "blogs">(Config, {"configPath":"packages/fuma-content/test/fixtures/config.ts","outDir":"packages/fuma-content/test/fixtures","cwd":""}, "blogs", "packages/fuma-content/test/fixtures/generate-index", {"index.mdx": __fd_glob_2, "folder/test.mdx": __fd_glob_3, }).$data($extractedReferences());
 ```

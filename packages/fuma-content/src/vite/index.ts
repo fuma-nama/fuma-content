@@ -1,7 +1,6 @@
 import type { PluginOption } from "vite";
-import { buildConfig } from "@/config/build";
 import type { FSWatcher } from "chokidar";
-import { Core } from "@/core";
+import { Core, type Plugin } from "@/core";
 
 export interface PluginOptions {
   /**
@@ -29,9 +28,10 @@ export default async function content(
   pluginOptions: PluginOptions = {},
 ): Promise<PluginOption[]> {
   const options = applyDefaults(pluginOptions);
-  const core = createViteCore(options);
+  const core = new Core(options);
   await core.init({
-    config: buildConfig(config),
+    config,
+    plugins: [vitePlugin()],
   });
 
   const ctx = core.getPluginContext();
@@ -53,22 +53,24 @@ export default async function content(
 
 export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
   const { loadConfig } = await import("@/config/load-from-file");
-  const core = createViteCore(applyDefaults(pluginOptions));
+  const core = new Core(applyDefaults(pluginOptions));
   await core.init({
     config: loadConfig(core, true),
+    plugins: [vitePlugin()],
   });
   return core;
 }
 
-function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
-  return new Core({
-    configPath,
-    outDir,
-    emit: {
-      target: "vite",
-      jsExtension: false,
+function vitePlugin(): Plugin {
+  return {
+    name: "vite",
+    config(config) {
+      config.emit ??= {
+        target: "vite",
+        jsExtension: false,
+      };
     },
-  });
+  };
 }
 
 function applyDefaults(options: PluginOptions): Required<PluginOptions> {
