@@ -1,5 +1,14 @@
 # fuma-content
 
+## 1.0.3
+
+### Patch Changes
+
+- 86a78b0: add extra type utils
+- 7891c02: Implement `cwd` option
+- 86a78b0: support Vite 8
+- 7891c02: Refine `workspace` config to leverage `cwd` instead
+
 ## 1.0.2
 
 ### Patch Changes
