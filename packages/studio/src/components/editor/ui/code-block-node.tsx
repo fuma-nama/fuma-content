@@ -22,7 +22,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import "./codeblock/styles.css";
 
 export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
   const { editor, element } = props;

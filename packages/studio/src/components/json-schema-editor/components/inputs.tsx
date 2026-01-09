@@ -520,6 +520,22 @@ export function FieldSet({
       </fieldset>
     );
   }
+
+  if (!field.type) {
+    return (
+      <FieldSet
+        {...props}
+        name={name}
+        fieldName={fieldName}
+        isRequired={isRequired}
+        field={anyFields}
+        depth={depth + 1}
+        slotType={slotType}
+        toolbar={toolbar}
+      />
+    );
+  }
+
   return (
     <fieldset {...props} className={cn("flex flex-col gap-1.5", props.className)}>
       <FieldLabel htmlFor={fieldName}>

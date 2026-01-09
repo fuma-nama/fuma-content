@@ -1,5 +1,5 @@
 "use client";
-import { type ReactNode, useEffect, useEffectEvent } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { FieldSet } from "./components/inputs";
 import { SchemaProvider, EditorContextType, useResolvedSchema, useSchema } from "./schema";
 import { FormProvider, useForm } from "react-hook-form";
@@ -23,7 +23,8 @@ export function JSONSchemaEditorProvider({
   const form = useForm<FormValues>({
     defaultValues: { value: defaultValue },
   });
-  const onUpdateEvent = useEffectEvent(onValueChange);
+  const onValueChangeRef = useRef(onValueChange);
+  onValueChangeRef.current = onValueChange;
 
   useEffect(() => {
     return form.subscribe({
@@ -31,7 +32,7 @@ export function JSONSchemaEditorProvider({
         values: true,
       },
       callback(data) {
-        onUpdateEvent(data.values.value);
+        onValueChangeRef.current(data.values.value);
       },
     });
   }, []);
