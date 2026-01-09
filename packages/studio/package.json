@@ -10,17 +10,16 @@
   "license": "MIT",
   "author": "Fuma Nama",
   "repository": "github:fuma-nama/fuma-content",
-  "publishConfig": {
-    "access": "public"
-  },
   "bin": {
     "content-studio": "./dist/bin.mjs"
   },
   "files": [
     "dist",
+    "next.config.ts",
     "postcss.config.mjs",
     "src",
-    "tsconfig.build.json"
+    "tsconfig.build.json",
+    "tsconfig.json"
   ],
   "exports": {
     ".": {
@@ -28,11 +27,14 @@
       "import": "./dist/index.mjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "dev": "next dev",
-    "dev:plugin": "tsdown --watch",
-    "build": "next build && tsdown",
-    "start": "next start",
+    "dev": "tsdown --watch",
+    "dev:app": "next dev",
+    "build": "tsdown",
+    "preview:app": "next build && next start",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {

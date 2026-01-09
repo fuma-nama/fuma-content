@@ -5,5 +5,6 @@ export default defineConfig({
   format: "esm",
   dts: true,
   target: "node22",
+  external: ["virtual:content.config"],
   unbundle: true,
 });
