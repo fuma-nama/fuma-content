@@ -46,11 +46,17 @@ export interface Plugin {
    */
   name: string;
 
+  /** when `true`, only keep the last plugin with same `name`. */
+  dedupe?: boolean;
+
   /**
    * on config loaded/updated
    */
   config?: (this: PluginContext, config: ResolvedConfig) => Awaitable<void | ResolvedConfig>;
 
+  /**
+   * called after collection initialization
+   */
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
   /**
@@ -133,12 +139,21 @@ export interface EmitOutput {
 }
 
 async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
-  const plugins: Plugin[] = [];
+  async function load(pluginOptions: PluginOption[]): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
 
-  for (const option of await Promise.all(pluginOptions)) {
-    if (!option) continue;
-    if (Array.isArray(option)) plugins.push(...(await getPlugins(option)));
-    else plugins.push(option);
+    for (const option of await Promise.all(pluginOptions)) {
+      if (!option) continue;
+      if (Array.isArray(option)) plugins.push(...(await load(option)));
+      else plugins.push(option);
+    }
+    return plugins;
+  }
+
+  let plugins: Plugin[] = [];
+  for (const plugin of await load(pluginOptions)) {
+    if (plugin.dedupe) plugins = plugins.filter((other) => other.name !== plugin.name);
+    plugins.push(plugin);
   }
 
   return plugins;
@@ -181,19 +196,13 @@ export class Core {
     config: Awaitable<Record<string, unknown>>;
     plugins?: PluginOption;
   }) {
-    this.config = this.buildConfig(await newConfig);
+    this.config = this.initConfig(await newConfig);
     this.cache.clear();
     this.workspaces.clear();
-    const loadedCollectionTypeIds = new Set<string>();
     this.plugins = await getPlugins([
       customPlugins,
       this.config.plugins,
-      ...this.config.collections.values().map(({ typeInfo }) => {
-        if (loadedCollectionTypeIds.has(typeInfo.id)) return false;
-
-        loadedCollectionTypeIds.add(typeInfo.id);
-        return typeInfo.plugins;
-      }),
+      ...this.config.collections.values().map((collection) => collection.plugins),
     ]);
 
     const ctx = this.getPluginContext();
@@ -368,7 +377,7 @@ export class Core {
     return path.relative(process.cwd(), absolutePath);
   }
 
-  private buildConfig(config: Record<string, unknown>): ResolvedConfig {
+  private initConfig(config: Record<string, unknown>): ResolvedConfig {
     const collections = new Map<string, Collection>();
     let globalConfig: GlobalConfig;
 

@@ -1,4 +1,7 @@
+import { CollectionHandler, getHandler } from "@/collections";
+import { FileCollectionHandler } from "@/collections/storage/fs";
 import type { EmitEntry, Plugin } from "@/core";
+import { Awaitable } from "@/types";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -11,8 +14,20 @@ export interface JSONSchemaOptions {
   insert?: boolean;
 }
 
-export interface JSONSchemaHandler {
-  create: () => object | undefined | Promise<object | undefined>;
+export interface JSONSchemaHandler extends CollectionHandler<"json-schema", {}> {
+  create: () => Awaitable<object | undefined>;
+}
+
+export function jsonSchemaHandler(options: {
+  jsonSchema: () => Awaitable<object | undefined>;
+}): JSONSchemaHandler {
+  return {
+    name: "json-schema",
+    requirements: [],
+    create() {
+      return options.jsonSchema();
+    },
+  };
 }
 
 /**
@@ -33,7 +48,7 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
 
       server.watcher.on("add", async (file) => {
         const match = this.core.getCollections().find((collection) => {
-          const handler = collection.handlers.fs;
+          const handler = getHandler<FileCollectionHandler>(collection, "storage");
           if (!handler) return false;
           return handler.hasFile(file);
         });
@@ -64,7 +79,7 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
       const files: EmitEntry[] = [];
 
       for (const collection of this.core.getCollections()) {
-        const handler = collection.handlers["json-schema"];
+        const handler = getHandler<JSONSchemaHandler>(collection, "json-schema");
         if (!handler) continue;
 
         const jsonSchema = await handler.create();

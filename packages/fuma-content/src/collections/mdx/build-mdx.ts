@@ -5,11 +5,12 @@ import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/re
 import type { Core } from "@/core";
 import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
-import type { Collection } from "@/collections";
+import { getHandler, type Collection } from "@/collections";
 import { createCache } from "@/utils/async-cache";
 import type { CompilerOptions } from "@/plugins/with-loader";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
+import { MDXCollectionHandler } from "../mdx";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -76,7 +77,7 @@ export async function buildMDX(
   collection: Collection | undefined,
   { filePath, frontmatter, source, _compiler, environment, isDevelopment }: BuildMDXOptions,
 ): Promise<VFile> {
-  const handler = collection?.handlers.mdx;
+  const handler = collection ? getHandler<MDXCollectionHandler>(collection, "mdx") : undefined;
   const processorCache = createCache(core.cache).$value<MDXProcessor>();
 
   function getProcessor(format: "md" | "mdx") {

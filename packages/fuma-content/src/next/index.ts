@@ -3,6 +3,7 @@ import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
 import type { FSWatcher } from "chokidar";
+import { getHandler } from "@/collections";
 
 export interface NextOptions {
   /**
@@ -59,12 +60,6 @@ async function init(dev: boolean, core: Core): Promise<void> {
       ignored: [outDir],
     });
     watcher.add(configPath);
-    for (const collection of core.getCollections(true)) {
-      const handler = collection.handlers.fs;
-      if (handler) {
-        watcher.add(handler.dir);
-      }
-    }
 
     watcher.once("ready", () => {
       console.log("[MDX] started dev server");

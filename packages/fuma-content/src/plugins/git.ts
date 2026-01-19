@@ -2,6 +2,8 @@ import path from "node:path";
 import { type Output, x } from "tinyexec";
 import type { Plugin } from "@/core";
 import { createCache } from "@/utils/async-cache";
+import { CollectionHandler, getHandler } from "@/collections";
+import { Awaitable } from "@/types";
 
 export interface VersionControlFileData {
   /**
@@ -14,11 +16,11 @@ export interface VersionControlFileData {
   creationDate: Date | null;
 }
 
-export interface VersionControlHandler {
+export interface GitHandler extends CollectionHandler<"git", {}> {
   /**
    * receive the version control client.
    */
-  client: (context: { client: VersionControlClient }) => void | Promise<void>;
+  client: (context: { client: VersionControlClient }) => Awaitable<void>;
 }
 
 export interface GitPluginOptions {
@@ -26,6 +28,14 @@ export interface GitPluginOptions {
    * Filter the collections to include by names
    */
   filter?: (collection: string) => boolean;
+}
+
+export function gitHandler(options: Pick<GitHandler, "client">): GitHandler {
+  return {
+    name: "git",
+    requirements: [],
+    client: options.client,
+  };
 }
 
 /**
@@ -47,7 +57,7 @@ export default function git(options: GitPluginOptions = {}): Plugin {
     collection(collection) {
       if (!filter(collection.name)) return;
 
-      const handler = collection.handlers["version-control"];
+      const handler = getHandler<GitHandler>(collection, "git");
       if (!handler) return;
       return handler.client({ client });
     },

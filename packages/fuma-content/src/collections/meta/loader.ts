@@ -2,8 +2,9 @@ import type { Loader, LoaderInput } from "@/plugins/with-loader";
 import { load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";
-import type { MetaTransformationContext } from "@/collections/meta";
+import { MetaCollectionHandler, type MetaTransformationContext } from "@/collections/meta";
 import type { DynamicCore } from "@/dynamic";
+import { getHandler } from "..";
 
 const querySchema = z
   .object({
@@ -46,7 +47,9 @@ export function createMetaLoader(
       }
 
       const collection = core.getCollection(collectionName);
-      const handler = collection?.handlers.meta;
+      const handler = collection
+        ? getHandler<MetaCollectionHandler>(collection, "meta")
+        : undefined;
       let data: unknown = parse(filePath, source);
       if (!handler) return data;
 

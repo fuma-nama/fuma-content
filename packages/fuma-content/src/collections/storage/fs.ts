@@ -1,6 +1,6 @@
 import picomatch from "picomatch";
 import path from "node:path";
-import type { Collection, InitOptions } from "@/collections";
+import { CollectionHandler } from "..";
 
 export interface FileHandlerConfig {
   /**
@@ -21,7 +21,8 @@ export interface FileHandlerConfig {
   supportedFormats?: string[];
 }
 
-export interface FIleCollectionHandler {
+export interface FileCollectionHandler extends CollectionHandler<"storage", {}> {
+  type: "fs";
   /**
    * content directory (absolute)
    */
@@ -35,18 +36,29 @@ export interface FIleCollectionHandler {
   patterns: string[];
 }
 
-export function initFileCollection(
-  collection: Collection,
-  init: InitOptions,
-  config: FileHandlerConfig,
-) {
-  const { cwd } = init.core.getOptions();
+export function fileStorageHandler(config: FileHandlerConfig): FileCollectionHandler {
   const { supportedFormats } = config;
   let matcher: picomatch.Matcher;
 
-  collection.handlers.fs = {
+  return {
+    name: "storage",
+    requirements: [],
+    type: "fs",
     patterns: config.files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`],
-    dir: path.resolve(cwd, config.dir),
+    get dir(): string {
+      throw new Error("not initialized");
+    },
+    init(collection, { core }) {
+      const dir = (this.dir = path.resolve(core.getOptions().cwd, config.dir));
+
+      collection.plugins.push({
+        name: `collection:${collection.name}:fs`,
+        configureServer({ watcher }) {
+          if (!watcher) return;
+          watcher.add(dir);
+        },
+      });
+    },
     isFileSupported(filePath) {
       if (!supportedFormats) return true;
 

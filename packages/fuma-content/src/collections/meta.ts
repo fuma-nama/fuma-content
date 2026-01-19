@@ -1,63 +1,53 @@
-import { type Collection, type CollectionTypeInfo, createCollection } from "@/collections";
-import { type FileHandlerConfig, initFileCollection } from "@/collections/handlers/fs";
+import { type Collection, CollectionHandler, getHandler } from "@/collections";
 import type { EmitCodeGeneratorContext, Plugin } from "@/core";
-import type { StandardSchemaV1, StandardJSONSchemaV1 } from "@standard-schema/spec";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
 import { withLoader } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { type AsyncPipe, asyncPipe } from "@/utils/pipe";
-import { getJSONSchema } from "@/utils/validation";
 import { slash } from "@/utils/code-generator";
+import type { FileCollectionHandler } from "./storage/fs";
 
 export interface MetaTransformationContext {
   path: string;
   source: string;
 }
 
-export interface MetaCollectionHandler {
+export interface MetaCollectionHandler<
+  Schema extends StandardSchemaV1 | undefined = undefined,
+> extends CollectionHandler<
+  "meta",
+  {
+    storage: FileCollectionHandler;
+  }
+> {
+  schema?: Schema;
   /**
    * Transform metadata
    */
   transform: AsyncPipe<unknown, MetaTransformationContext>;
-  schema?: StandardSchemaV1;
+  $inferInput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : unknown;
+  $inferOutput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : unknown;
 }
 
-export interface MetaCollectionConfig<Schema extends StandardSchemaV1> extends FileHandlerConfig {
+export interface MetaCollectionConfig<Schema extends StandardSchemaV1 | undefined = undefined> {
   schema?: Schema;
 }
 
-export type MetaCollection<_Data> = Collection & {
-  _type?: _Data;
-};
-
-const metaTypeInfo: CollectionTypeInfo = {
-  id: "meta",
-  plugins: [plugin()],
-};
-
-export function defineMeta<Schema extends StandardSchemaV1>(
+export function metaHandler<Schema extends StandardSchemaV1 | undefined = undefined>(
   config: MetaCollectionConfig<Schema>,
-): MetaCollection<
-  Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : Record<string, unknown>
-> {
-  return createCollection(metaTypeInfo, (collection, options) => {
-    const handlers = collection.handlers;
-    initFileCollection(collection, options, {
-      supportedFormats: ["json", "yaml"],
-      ...config,
-    });
-    handlers.meta = {
-      schema: config.schema,
-      transform: asyncPipe(),
-    };
-    handlers["json-schema"] = {
-      create() {
-        if (config.schema) return getJSONSchema(config.schema);
-      },
-    };
-  });
+): MetaCollectionHandler<Schema> {
+  return {
+    name: "meta",
+    requirements: ["storage"],
+    schema: config.schema,
+    transform: asyncPipe(),
+    init(collection) {
+      collection.plugins.push(plugin());
+    },
+  };
 }
 
 function plugin(): Plugin {
@@ -67,7 +57,7 @@ function plugin(): Plugin {
     context: EmitCodeGeneratorContext,
     collection: Collection,
   ) {
-    const fsHandler = collection.handlers.fs;
+    const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
     if (!fsHandler) return;
     const { codegen, core } = context;
 
@@ -93,15 +83,17 @@ function plugin(): Plugin {
 
   const base: Plugin = {
     name: "meta",
+    dedupe: true,
     configureServer(server) {
       if (!server.watcher) return;
 
       server.watcher.on("all", async (event, file) => {
         if (event === "change") return;
         const updatedCollection = this.core.getCollections().find((collection) => {
-          const handlers = collection.handlers;
-          if (!handlers.meta || !handlers.fs) return false;
-          return handlers.fs.hasFile(file);
+          const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
+          const metaHandler = getHandler<MetaCollectionHandler>(collection, "meta");
+          if (!metaHandler || !fsHandler) return false;
+          return fsHandler.hasFile(file);
         });
 
         if (!updatedCollection) return;

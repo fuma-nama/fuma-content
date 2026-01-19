@@ -1,5 +1,4 @@
-import { type Collection, type CollectionTypeInfo, createCollection } from "@/collections";
-import { type FileHandlerConfig, initFileCollection } from "@/collections/handlers/fs";
+import { type Collection, CollectionHandler, getHandler } from "@/collections";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { CoreOptions, EmitCodeGeneratorContext, Plugin } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
@@ -15,6 +14,8 @@ import { slash } from "@/utils/code-generator";
 import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
 import { type AsyncPipe, asyncPipe, type Pipe, pipe } from "@/utils/pipe";
+import { gitHandler, GitHandler } from "@/plugins/git";
+import { FileCollectionHandler } from "./storage/fs";
 
 interface CompilationContext {
   collection: Collection;
@@ -22,7 +23,30 @@ interface CompilationContext {
   source: string;
 }
 
-export interface MDXCollectionHandler {
+export interface MDXCollectionConfig<
+  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
+> {
+  postprocess?: Partial<PostprocessOptions>;
+  frontmatter?: FrontmatterSchema;
+  options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
+  lazy?: boolean;
+  dynamic?: boolean;
+}
+
+const RuntimePaths = {
+  browser: "fuma-content/collections/mdx/runtime-browser",
+  dynamic: "fuma-content/collections/mdx/runtime-dynamic",
+  server: "fuma-content/collections/mdx/runtime",
+};
+
+export interface MDXCollectionHandler<
+  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
+> extends CollectionHandler<
+  "mdx",
+  {
+    storage: FileCollectionHandler;
+  }
+> {
   readonly dynamic: boolean;
   readonly lazy: boolean;
 
@@ -33,7 +57,7 @@ export interface MDXCollectionHandler {
   /**
    * Frontmatter schema (if defined)
    */
-  frontmatterSchema?: StandardSchemaV1;
+  frontmatterSchema?: FrontmatterSchema;
 
   /**
    * Transform & validate frontmatter
@@ -54,105 +78,78 @@ export interface MDXCollectionHandler {
       environment: "browser" | "server" | "dynamic";
     }
   >;
-}
 
-export interface MDXCollectionConfig<
-  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
-> extends FileHandlerConfig {
-  postprocess?: Partial<PostprocessOptions>;
-  frontmatter?: FrontmatterSchema;
-  options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
-  lazy?: boolean;
-  dynamic?: boolean;
-}
-
-export interface MDXCollection<Frontmatter> extends Collection {
-  _frontmatter?: Frontmatter;
-}
-
-const mdxTypeInfo: CollectionTypeInfo = {
-  id: "mdx",
-  plugins: [plugin()],
-};
-
-const RuntimePaths = {
-  browser: "fuma-content/collections/mdx/runtime-browser",
-  dynamic: "fuma-content/collections/mdx/runtime-dynamic",
-  server: "fuma-content/collections/mdx/runtime",
-};
-
-export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
-  config: MDXCollectionConfig<FrontmatterSchema>,
-): MDXCollection<
-  FrontmatterSchema extends StandardSchemaV1
+  $inferFrontmatter?: FrontmatterSchema extends StandardSchemaV1
     ? StandardSchemaV1.InferOutput<FrontmatterSchema>
-    : Record<string, unknown>
-> {
+    : Record<string, unknown>;
+}
+
+export function mdxHandler<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
+  config: MDXCollectionConfig<FrontmatterSchema>,
+): [MDXCollectionHandler<FrontmatterSchema>, GitHandler] {
   const { lazy = false, dynamic = false } = config;
-  return createCollection(mdxTypeInfo, (collection, init) => {
-    initFileCollection(collection, init, {
-      supportedFormats: ["mdx", "md"],
-      ...config,
-    });
-    const mdxHandler: MDXCollectionHandler = (collection.handlers.mdx = {
-      postprocess: config.postprocess,
-      getMDXOptions: config.options,
-      dynamic,
-      lazy: lazy,
-      vfile: asyncPipe(),
-      frontmatter: asyncPipe(),
-      storeInitializer: pipe(),
-    });
+  const mdxHandler: MDXCollectionHandler<FrontmatterSchema> = {
+    name: "mdx",
+    requirements: ["storage"],
+    postprocess: config.postprocess,
+    getMDXOptions: config.options,
+    dynamic,
+    lazy: lazy,
+    vfile: asyncPipe(),
+    frontmatter: asyncPipe(),
+    storeInitializer: pipe(),
+    init(collection) {
+      collection.plugins.push(plugin());
+    },
+  };
 
-    if (config.frontmatter) {
-      const frontmatter = config.frontmatter;
-      // Store schema for use in studio/editors
-      mdxHandler.frontmatterSchema = frontmatter;
-      mdxHandler.frontmatter.pipe((data, { filePath }) => {
-        return validate(
-          frontmatter,
-          data,
-          undefined,
-          `invalid frontmatter in ${filePath}`,
-        ) as Promise<Record<string, unknown>>;
-      });
-    }
+  if (config.frontmatter) {
+    const frontmatter = config.frontmatter;
+    // Store schema for use in studio/editors
+    mdxHandler.frontmatterSchema = frontmatter;
+    mdxHandler.frontmatter.pipe((data, { filePath }) => {
+      return validate(
+        frontmatter,
+        data,
+        undefined,
+        `invalid frontmatter in ${filePath}`,
+      ) as Promise<Record<string, unknown>>;
+    });
+  }
 
-    if (mdxHandler.postprocess?.extractLinkReferences) {
+  if (mdxHandler.postprocess?.extractLinkReferences) {
+    mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
+      codegen.addNamedImport(["$extractedReferences"], RuntimePaths[environment]);
+      return `${initializer}.$data($extractedReferences())`;
+    });
+  }
+
+  const vcHandler = gitHandler({
+    client({ client }) {
       mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
-        codegen.addNamedImport(["$extractedReferences"], RuntimePaths[environment]);
-        return `${initializer}.$data($extractedReferences())`;
+        codegen.addNamedImport(["$versionControl"], RuntimePaths[environment]);
+        return `${initializer}.$data($versionControl())`;
       });
-    }
 
-    collection.handlers["version-control"] = {
-      client({ client }) {
-        const mdxHandler = collection.handlers.mdx;
-        if (!mdxHandler) return;
-
-        mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
-          codegen.addNamedImport(["$versionControl"], RuntimePaths[environment]);
-          return `${initializer}.$data($versionControl())`;
-        });
-
-        mdxHandler.vfile.pipe(async (file) => {
-          const vcData = await client.getFileData({ filePath: file.path });
-          file.data["mdx-export"] ??= [];
-          file.data["mdx-export"].push(
-            {
-              name: "lastModified",
-              value: vcData.lastModified,
-            },
-            {
-              name: "creationDate",
-              value: vcData.creationDate,
-            },
-          );
-          return file;
-        });
-      },
-    };
+      mdxHandler.vfile.pipe(async (file) => {
+        const vcData = await client.getFileData({ filePath: file.path });
+        file.data["mdx-export"] ??= [];
+        file.data["mdx-export"].push(
+          {
+            name: "lastModified",
+            value: vcData.lastModified,
+          },
+          {
+            name: "creationDate",
+            value: vcData.creationDate,
+          },
+        );
+        return file;
+      });
+    },
   });
+
+  return [mdxHandler, vcHandler];
 }
 
 function plugin(): Plugin {
@@ -163,7 +160,7 @@ function plugin(): Plugin {
     collection: Collection,
     eager = false,
   ) {
-    const handler = collection.handlers.fs;
+    const handler = collection.handlers.storage as FileCollectionHandler;
     if (!handler) return "";
     return context.codegen.generateGlobImport(handler.patterns, {
       query: {
@@ -182,7 +179,7 @@ function plugin(): Plugin {
     collection: Collection,
     eager = false,
   ) {
-    const handler = collection.handlers.fs;
+    const handler = collection.handlers.storage as FileCollectionHandler;
     if (!handler) return "";
     return context.codegen.generateGlobImport(handler.patterns, {
       query: {
@@ -198,8 +195,8 @@ function plugin(): Plugin {
     context: EmitCodeGeneratorContext,
     collection: Collection,
   ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
+    const mdxHandler = getHandler<MDXCollectionHandler>(collection, "mdx");
+    const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
     if (!fsHandler || !mdxHandler) return;
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.server;
@@ -235,8 +232,8 @@ function plugin(): Plugin {
     context: EmitCodeGeneratorContext,
     collection: Collection,
   ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
+    const mdxHandler = getHandler<MDXCollectionHandler>(collection, "mdx");
+    const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
     if (!fsHandler || !mdxHandler) return;
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.browser;
@@ -260,9 +257,9 @@ function plugin(): Plugin {
     context: EmitCodeGeneratorContext,
     collection: Collection,
   ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
-    if (!fsHandler || !mdxHandler || !mdxHandler.dynamic) return;
+    const mdxHandler = getHandler<MDXCollectionHandler>(collection, "mdx");
+    const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
+    if (!fsHandler || !mdxHandler) return;
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.dynamic;
     const base = slash(core._toRuntimePath(fsHandler.dir));
@@ -289,15 +286,17 @@ function plugin(): Plugin {
 
   const base: Plugin = {
     name: "mdx",
+    dedupe: true,
     configureServer(server) {
       if (!server.watcher) return;
 
       server.watcher.on("all", async (event, file) => {
         const updatedCollection = this.core.getCollections().find((collection) => {
-          const handlers = collection.handlers;
-          if (!handlers.mdx || !handlers.fs) return false;
-          if (event === "change" && !handlers.mdx.dynamic) return false;
-          return handlers.fs.hasFile(file);
+          const mdxHandler = getHandler<MDXCollectionHandler>(collection, "mdx");
+          const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
+          if (!fsHandler || !mdxHandler) return;
+          if (event === "change" && !mdxHandler.dynamic) return false;
+          return fsHandler.hasFile(file);
         });
 
         if (!updatedCollection) return;
