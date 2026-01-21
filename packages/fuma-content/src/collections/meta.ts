@@ -1,178 +1,148 @@
-import { type Collection, CollectionHandler, getHandler } from "@/collections";
-import type { EmitCodeGeneratorContext, Plugin } from "@/core";
+import type { EmitCodeGeneratorContext } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import path from "node:path";
 import type { Configuration } from "webpack";
-import { withLoader } from "@/plugins/with-loader";
+import { LoaderConfig, loaderHook } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
-import { type AsyncPipe, asyncPipe } from "@/utils/pipe";
+import { asyncPipe } from "@/utils/pipe";
 import { slash } from "@/utils/code-generator";
-import type { FileCollectionHandler } from "./storage/fs";
+import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 
 export interface MetaTransformationContext {
   path: string;
   source: string;
 }
 
-export interface MetaCollectionHandler<
+export interface MetaCollectionConfig<
   Schema extends StandardSchemaV1 | undefined = undefined,
-> extends CollectionHandler<
-  "meta",
-  {
-    storage: FileCollectionHandler;
-  }
-> {
+> extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
+  schema?: Schema;
+}
+
+export class MetaCollection<
+  Schema extends StandardSchemaV1 | undefined = StandardSchemaV1 | undefined,
+> extends FileSystemCollection {
   schema?: Schema;
   /**
    * Transform metadata
    */
-  transform: AsyncPipe<unknown, MetaTransformationContext>;
+  readonly onLoad = asyncPipe<unknown, MetaTransformationContext>();
   $inferInput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : unknown;
   $inferOutput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : unknown;
-}
 
-export interface MetaCollectionConfig<Schema extends StandardSchemaV1 | undefined = undefined> {
-  schema?: Schema;
-}
+  constructor(config: MetaCollectionConfig) {
+    super({
+      dir: config.dir,
+      files: config.files,
+      supportedFormats: ["json", "yaml"],
+    });
+    this.schema = config.schema;
+    this.onServer.pipe(({ core, server }) => {
+      if (!server.watcher) return;
 
-export function metaHandler<Schema extends StandardSchemaV1 | undefined = undefined>(
-  config: MetaCollectionConfig<Schema>,
-): MetaCollectionHandler<Schema> {
-  return {
-    name: "meta",
-    requirements: ["storage"],
-    schema: config.schema,
-    transform: asyncPipe(),
-    init(collection) {
-      collection.plugins.push(plugin());
-    },
-  };
-}
+      server.watcher.on("all", async (event, file) => {
+        if (event === "change" || !this.hasFile(file)) return;
 
-function plugin(): Plugin {
-  const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
+        await core.emit({
+          filterCollection: (collection) => collection === this,
+          filterWorkspace: () => false,
+          write: true,
+        });
+      });
+    });
+    this.onEmit.pipe((entries, { createCodeGenerator }) => {
+      return Promise.all([
+        ...entries,
+        createCodeGenerator("meta.ts", (ctx) => this.generateCollectionStore(ctx)),
+      ]);
+    });
+    this.pluginHook(loaderHook).loaders.push(jsonLoader());
+  }
 
-  async function generateCollectionStore(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-  ) {
-    const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
-    if (!fsHandler) return;
+  private async generateCollectionStore(context: EmitCodeGeneratorContext) {
     const { codegen, core } = context;
-
     codegen.addNamedImport(["metaStore"], "fuma-content/collections/meta/runtime");
     codegen.addNamespaceImport(
       "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
-    const base = slash(core._toRuntimePath(fsHandler.dir));
-    const glob = await codegen.generateGlobImport(fsHandler.patterns, {
+    const base = slash(core._toRuntimePath(this.dir));
+    const glob = await codegen.generateGlobImport(this.patterns, {
       query: {
-        collection: collection.name,
+        collection: this.name,
         workspace: context.workspace,
       },
       import: "default",
-      base: fsHandler.dir,
+      base: this.dir,
       eager: true,
     });
-    const initializer = `metaStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${glob})`;
-    codegen.push(`export const ${collection.name} = ${initializer};`);
+    const initializer = `metaStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${glob})`;
+    codegen.push(`export const ${this.name} = ${initializer};`);
   }
+}
 
-  const base: Plugin = {
-    name: "meta",
-    dedupe: true,
-    configureServer(server) {
-      if (!server.watcher) return;
+function jsonLoader(): LoaderConfig {
+  const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
 
-      server.watcher.on("all", async (event, file) => {
-        if (event === "change") return;
-        const updatedCollection = this.core.getCollections().find((collection) => {
-          const fsHandler = getHandler<FileCollectionHandler>(collection, "storage");
-          const metaHandler = getHandler<MetaCollectionHandler>(collection, "meta");
-          if (!metaHandler || !fsHandler) return false;
-          return fsHandler.hasFile(file);
-        });
+  return {
+    id: "json",
+    test: metaLoaderGlob,
+    configureNext(nextConfig) {
+      const { configPath, outDir } = this.core.getOptions();
+      const loaderPath = "fuma-content/collections/meta/loader-webpack";
+      const loaderOptions: WebpackLoaderOptions = {
+        configPath,
+        outDir,
+        absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
+        isDev: process.env.NODE_ENV === "development",
+      };
 
-        if (!updatedCollection) return;
-        await this.core.emit({
-          filterPlugin: (plugin) => plugin.name === "meta",
-          filterWorkspace: () => false,
-          write: true,
-        });
-      });
-    },
-    emit() {
-      return Promise.all([
-        this.createCodeGenerator("meta.ts", async (ctx) => {
-          for (const collection of this.core.getCollections()) {
-            await generateCollectionStore(ctx, collection);
-          }
-        }),
-      ]);
-    },
-    next: {
-      config(nextConfig) {
-        const { configPath, outDir } = this.core.getOptions();
-        const loaderPath = "fuma-content/collections/meta/loader-webpack";
-        const loaderOptions: WebpackLoaderOptions = {
-          configPath,
-          outDir,
-          absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
-          isDev: process.env.NODE_ENV === "development",
-        };
-
-        return {
-          ...nextConfig,
-          turbopack: {
-            ...nextConfig.turbopack,
-            rules: {
-              ...nextConfig.turbopack?.rules,
-              "*.json": {
-                loaders: [
-                  {
-                    loader: loaderPath,
-                    options: loaderOptions as unknown as TurbopackLoaderOptions,
-                  },
-                ],
-                as: "*.json",
-              },
-              "*.yaml": {
-                loaders: [
-                  {
-                    loader: loaderPath,
-                    options: loaderOptions as unknown as TurbopackLoaderOptions,
-                  },
-                ],
-                as: "*.js",
-              },
-            },
-          },
-          webpack(config: Configuration, options) {
-            config.module ||= {};
-            config.module.rules ||= [];
-            config.module.rules.push({
-              test: metaLoaderGlob,
-              enforce: "pre",
-              use: [
+      return {
+        ...nextConfig,
+        turbopack: {
+          ...nextConfig.turbopack,
+          rules: {
+            ...nextConfig.turbopack?.rules,
+            "*.json": {
+              loaders: [
                 {
                   loader: loaderPath,
-                  options: loaderOptions,
+                  options: loaderOptions as unknown as TurbopackLoaderOptions,
                 },
               ],
-            });
-
-            return nextConfig.webpack?.(config, options) ?? config;
+              as: "*.json",
+            },
+            "*.yaml": {
+              loaders: [
+                {
+                  loader: loaderPath,
+                  options: loaderOptions as unknown as TurbopackLoaderOptions,
+                },
+              ],
+              as: "*.js",
+            },
           },
-        };
-      },
-    },
-  };
+        },
+        webpack(config: Configuration, options) {
+          config.module ||= {};
+          config.module.rules ||= [];
+          config.module.rules.push({
+            test: metaLoaderGlob,
+            enforce: "pre",
+            use: [
+              {
+                loader: loaderPath,
+                options: loaderOptions,
+              },
+            ],
+          });
 
-  return withLoader(base, {
-    test: metaLoaderGlob,
+          return nextConfig.webpack?.(config, options) ?? config;
+        },
+      };
+    },
     async createLoader(environment) {
       const { createMetaLoader } = await import("./meta/loader");
       return createMetaLoader(
@@ -184,5 +154,5 @@ function plugin(): Plugin {
         },
       );
     },
-  });
+  };
 }

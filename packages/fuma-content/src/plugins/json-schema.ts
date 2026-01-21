@@ -1,6 +1,5 @@
-import { CollectionHandler, getHandler } from "@/collections";
-import { FileCollectionHandler } from "@/collections/storage/fs";
-import type { EmitEntry, Plugin } from "@/core";
+import { defineCollectionHook } from "@/collections";
+import type { Plugin } from "@/core";
 import { Awaitable } from "@/types";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -14,21 +13,28 @@ export interface JSONSchemaOptions {
   insert?: boolean;
 }
 
-export interface JSONSchemaHandler extends CollectionHandler<"json-schema", {}> {
-  create: () => Awaitable<object | undefined>;
+export interface JSONSchemaHook {
+  schemaPath?: string;
+  create?: () => Awaitable<object | undefined>;
 }
 
-export function jsonSchemaHandler(options: {
-  jsonSchema: () => Awaitable<object | undefined>;
-}): JSONSchemaHandler {
-  return {
-    name: "json-schema",
-    requirements: [],
-    create() {
-      return options.jsonSchema();
-    },
-  };
-}
+export const jsonSchemaHook = defineCollectionHook<JSONSchemaHook>((collection) => {
+  const hook: JSONSchemaHook = {};
+  function getSchemaPath(name: string) {
+    return `json-schema/${name}.json`;
+  }
+
+  collection.onEmit.pipe(async (entries) => {
+    const jsonSchema = await hook.create?.();
+    if (!jsonSchema) return entries;
+    entries.push({
+      path: hook.schemaPath ?? getSchemaPath(collection.name),
+      content: JSON.stringify(jsonSchema, null, 2),
+    });
+    return entries;
+  });
+  return hook;
+});
 
 /**
  * Generate JSON schemas locally for collection schemas
@@ -75,22 +81,6 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
         await fs.writeFile(file, JSON.stringify(updated, null, 2));
       });
     },
-    async emit() {
-      const files: EmitEntry[] = [];
-
-      for (const collection of this.core.getCollections()) {
-        const handler = getHandler<JSONSchemaHandler>(collection, "json-schema");
-        if (!handler) continue;
-
-        const jsonSchema = await handler.create();
-        if (!jsonSchema) continue;
-        files.push({
-          path: getSchemaPath(collection.name),
-          content: JSON.stringify(jsonSchema, null, 2),
-        });
-      }
-
-      return files;
-    },
+    async emit() {},
   };
 }

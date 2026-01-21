@@ -2,9 +2,8 @@ import type { Loader, LoaderInput } from "@/plugins/with-loader";
 import { load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";
-import { MetaCollectionHandler, type MetaTransformationContext } from "@/collections/meta";
+import { MetaCollection, type MetaTransformationContext } from "@/collections/meta";
 import type { DynamicCore } from "@/dynamic";
-import { getHandler } from "..";
 
 const querySchema = z
   .object({
@@ -46,23 +45,20 @@ export function createMetaLoader(
         core = core.getWorkspaces().get(workspace) ?? core;
       }
 
-      const collection = core.getCollection(collectionName);
-      const handler = collection
-        ? getHandler<MetaCollectionHandler>(collection, "meta")
-        : undefined;
+      let collection = core.getCollection(collectionName);
       let data: unknown = parse(filePath, source);
-      if (!handler) return data;
+      if (!collection || !(collection instanceof MetaCollection)) return data;
 
       const context: MetaTransformationContext = {
         path: filePath,
         source,
       };
 
-      if (handler.schema) {
-        data = await validate(handler.schema, data, context, `invalid data in ${filePath}`);
+      if (collection.schema) {
+        data = await validate(collection.schema, data, context, `invalid data in ${filePath}`);
       }
 
-      return handler.transform.run(data, context);
+      return collection.onLoad.run(data, context);
     };
   }
 

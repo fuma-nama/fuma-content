@@ -3,7 +3,6 @@ import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
 import type { FSWatcher } from "chokidar";
-import { getHandler } from "@/collections";
 
 export interface NextOptions {
   /**

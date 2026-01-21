@@ -26,3 +26,5 @@ export const docs = defineMDX({
 export default defineConfig({
   plugins: [git(), studio()],
 });
+
+collection().input().handlers().output();

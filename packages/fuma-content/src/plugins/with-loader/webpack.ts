@@ -28,7 +28,7 @@ export function getCore(options: WebpackLoaderOptions) {
 }
 
 /**
- * need to handle the `test` regex in Webpack config instead.
+ * Note: need to handle the `test` regex in Webpack config instead.
  */
 export function toWebpack(loader: Loader): WebpackLoader {
   return async function (source, callback) {

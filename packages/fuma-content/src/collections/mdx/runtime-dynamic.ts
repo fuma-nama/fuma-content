@@ -8,7 +8,7 @@ import type { FC } from "react";
 import jsxRuntimeDefault from "react/jsx-runtime";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { GetCollectionConfig } from "@/types";
-import type { MDXCollection } from "@/collections/mdx";
+import { MDXCollection } from "@/collections/mdx";
 import path from "node:path";
 import { createCache } from "@/utils/async-cache";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
@@ -44,7 +44,8 @@ export async function mdxStoreDynamic<Config, Name extends string>(
   const core = await corePromise;
   const frontmatter = _frontmatter as Record<string, GetFrontmatter<Config, Name>>;
   const collection = core.getCollection(name);
-  if (!collection || !collection.handlers.mdx) throw new Error("invalid collection name");
+  if (!collection || !(collection instanceof MDXCollection))
+    throw new Error("invalid collection name");
 
   const merged: Record<string, MDXStoreDynamicData<GetFrontmatter<Config, Name>>> = {};
   const cache = createCache<CompiledMDX<GetFrontmatter<Config, Name>>>();

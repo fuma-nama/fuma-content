@@ -1,5 +1,5 @@
 import type { GlobalConfig } from "@/config";
-import type { Collection } from "@/collections";
+import { Collection } from "./collections";
 
 // `Config` should be an object of all exports in config file.
 export type GetCollectionConfig<Config, Name extends string> =

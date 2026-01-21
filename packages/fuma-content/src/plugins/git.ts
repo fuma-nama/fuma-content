@@ -2,7 +2,7 @@ import path from "node:path";
 import { type Output, x } from "tinyexec";
 import type { Plugin } from "@/core";
 import { createCache } from "@/utils/async-cache";
-import { CollectionHandler, getHandler } from "@/collections";
+import { CollectionHandler, getHandler } from "@/collections/old";
 import { Awaitable } from "@/types";
 
 export interface VersionControlFileData {

@@ -2,12 +2,12 @@
 
 import { type ReactNode, lazy, createElement } from "react";
 import type { GetCollectionConfig } from "@/types";
-import type { MDXCollection } from "@/collections/mdx";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import { SimpleCollectionStore } from "@/collections/runtime/store";
 import type { VersionControlFileData } from "@/plugins/git";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
+import type { MDXCollection } from "../mdx";
 
 export interface MDXStoreBrowserData<Frontmatter, CustomData> {
   id: string;
