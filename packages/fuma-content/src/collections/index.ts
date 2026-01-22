@@ -1,5 +1,5 @@
 import { Core, EmitContext, EmitEntry, PluginOption, ResolvedConfig, ServerContext } from "@/core";
-import { asyncHook } from "@/utils/hook";
+import { asyncHook, hook } from "@/utils/hook";
 import { asyncPipe } from "@/utils/pipe";
 
 export interface CollectionHookContext {
@@ -14,13 +14,13 @@ export class Collection {
   /**
    * on config loaded/updated
    */
-  readonly onConfig = asyncHook<CollectionHookContext & { config: ResolvedConfig }>();
-  readonly onInit = asyncHook<CollectionHookContext>();
-  readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
+  readonly onConfig = hook<CollectionHookContext & { config: ResolvedConfig }>();
   /**
    * Configure watch/dev server
    */
-  readonly onServer = asyncHook<CollectionHookContext & { server: ServerContext }>();
+  readonly onServer = hook<CollectionHookContext & { server: ServerContext }>();
+  readonly onInit = asyncHook<CollectionHookContext>();
+  readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
   readonly plugins: PluginOption[] = [];
 
   transform(transformer: (collection: this) => void): this {

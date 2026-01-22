@@ -22,9 +22,8 @@ export class FileSystemCollection extends Collection {
     this.onInit.hook(({ core }) => {
       this.dir = path.resolve(core.getOptions().cwd, config.dir);
     });
-    this.onServer.hook(({ server: { watcher } }) => {
-      if (!watcher) return;
-      watcher.add(this.dir);
+    this.onServer.hook(({ server }) => {
+      server.watcher?.add(this.dir);
     });
   }
 

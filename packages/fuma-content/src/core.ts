@@ -62,7 +62,7 @@ export interface Plugin {
   /**
    * Configure watch/dev server
    */
-  configureServer?: (this: PluginContext, server: ServerContext) => Awaitable<void>;
+  configureServer?: (this: PluginContext, server: ServerContext) => void;
 
   vite?: {
     createPlugin?: (this: PluginContext) => Vite.PluginOption;
@@ -207,7 +207,7 @@ export class Core {
 
     await Promise.all(
       this.config.collections.values().map(async (collection) => {
-        await collection.onConfig.run({ collection, core: this, config: this.config });
+        collection.onConfig.run({ collection, core: this, config: this.config });
 
         for (const plugin of this.plugins) {
           await plugin.collection?.call(ctx, collection);
@@ -281,20 +281,17 @@ export class Core {
   }
   async initServer(server: ServerContext) {
     const ctx = this.getPluginContext();
-    const promises: Awaitable<void>[] = [];
 
     server.watcher?.add(this.options.configPath);
     for (const plugin of this.plugins) {
-      promises.push(plugin.configureServer?.call(ctx, server));
+      plugin.configureServer?.call(ctx, server);
     }
     for (const collection of this.getCollections()) {
-      promises.push(collection.onServer.run({ collection, core: this, server }));
+      collection.onServer.run({ collection, core: this, server });
     }
     for (const workspace of this.workspaces.values()) {
-      promises.push(workspace.initServer(server));
+      await workspace.initServer(server);
     }
-
-    await Promise.all(promises);
   }
 
   async clearOutputDirectory() {
