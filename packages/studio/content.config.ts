@@ -1,10 +1,9 @@
-import { defineMDX } from "fuma-content/collections/mdx";
+import { mdxCollection } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import git from "fuma-content/plugins/git";
-import { studio } from "./lib";
 import z from "zod";
 
-export const docs = defineMDX({
+export const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: z.object({
     title: z.string(),
@@ -17,5 +16,5 @@ export const docs = defineMDX({
 });
 
 export default defineConfig({
-  plugins: [git(), studio()],
+  plugins: [git()],
 });

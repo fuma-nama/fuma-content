@@ -1,20 +1,19 @@
-import { type Collection, type CollectionTypeInfo, createCollection } from "@/collections";
-import { type FileHandlerConfig, initFileCollection } from "@/collections/handlers/fs";
+import { type Collection } from "@/collections";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
-import type { CoreOptions, EmitCodeGeneratorContext, Plugin } from "@/core";
+import type { CoreOptions, EmitCodeGeneratorContext } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
-import path from "node:path";
 import type { VFile } from "vfile";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { Configuration } from "webpack";
-import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
-import { withLoader } from "@/plugins/with-loader";
+import { LoaderConfig, loaderHook } from "@/plugins/with-loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
 import { slash } from "@/utils/code-generator";
 import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
-import { type AsyncPipe, asyncPipe, type Pipe, pipe } from "@/utils/pipe";
+import { asyncPipe, pipe } from "@/utils/pipe";
+import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
+import { gitHook } from "@/plugins/git";
 
 interface CompilationContext {
   collection: Collection;
@@ -22,43 +21,9 @@ interface CompilationContext {
   source: string;
 }
 
-export interface MDXCollectionHandler {
-  readonly dynamic: boolean;
-  readonly lazy: boolean;
-
-  preprocess?: PreprocessOptions;
-  postprocess?: Partial<PostprocessOptions>;
-  getMDXOptions?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
-
-  /**
-   * Frontmatter schema (if defined)
-   */
-  frontmatterSchema?: StandardSchemaV1;
-
-  /**
-   * Transform & validate frontmatter
-   */
-  frontmatter: AsyncPipe<Record<string, unknown> | undefined, CompilationContext>;
-
-  /**
-   * Transform `vfile` on compilation stage
-   */
-  vfile: AsyncPipe<VFile, CompilationContext>;
-
-  /**
-   * Transform the initializer code (TypeScript) for collection store
-   */
-  storeInitializer: Pipe<
-    string,
-    EmitCodeGeneratorContext & {
-      environment: "browser" | "server" | "dynamic";
-    }
-  >;
-}
-
 export interface MDXCollectionConfig<
-  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
-> extends FileHandlerConfig {
+  FrontmatterSchema extends StandardSchemaV1 | undefined,
+> extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
   postprocess?: Partial<PostprocessOptions>;
   frontmatter?: FrontmatterSchema;
   options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
@@ -66,49 +31,71 @@ export interface MDXCollectionConfig<
   dynamic?: boolean;
 }
 
-export interface MDXCollection<Frontmatter> extends Collection {
-  _frontmatter?: Frontmatter;
-}
-
-const mdxTypeInfo: CollectionTypeInfo = {
-  id: "mdx",
-  plugins: [plugin()],
-};
-
 const RuntimePaths = {
   browser: "fuma-content/collections/mdx/runtime-browser",
   dynamic: "fuma-content/collections/mdx/runtime-dynamic",
   server: "fuma-content/collections/mdx/runtime",
 };
 
-export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
-  config: MDXCollectionConfig<FrontmatterSchema>,
-): MDXCollection<
-  FrontmatterSchema extends StandardSchemaV1
-    ? StandardSchemaV1.InferOutput<FrontmatterSchema>
-    : Record<string, unknown>
-> {
-  const { lazy = false, dynamic = false } = config;
-  return createCollection(mdxTypeInfo, (collection, init) => {
-    initFileCollection(collection, init, {
-      supportedFormats: ["mdx", "md"],
-      ...config,
-    });
-    const mdxHandler: MDXCollectionHandler = (collection.handlers.mdx = {
-      postprocess: config.postprocess,
-      getMDXOptions: config.options,
-      dynamic,
-      lazy: lazy,
-      vfile: asyncPipe(),
-      frontmatter: asyncPipe(),
-      storeInitializer: pipe(),
-    });
+interface InitializerCode {
+  fn: string;
+  typeParams: [config: string, name: string, attached: string];
+  params: string[];
+}
 
+function formatInitializer(code: InitializerCode) {
+  return `${code.fn}<${code.typeParams.join()}>(${code.params.join()})`;
+}
+
+export class MDXCollection<
+  FrontmatterSchema extends StandardSchemaV1 | undefined = StandardSchemaV1 | undefined,
+> extends FileSystemCollection {
+  readonly dynamic: boolean;
+  readonly lazy: boolean;
+  readonly preprocess?: PreprocessOptions;
+  readonly postprocess?: Partial<PostprocessOptions>;
+  readonly getMDXOptions?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
+  /**
+   * Frontmatter schema
+   */
+  frontmatterSchema?: FrontmatterSchema;
+  /**
+   * Transform & validate frontmatter
+   */
+  frontmatter = asyncPipe<Record<string, unknown> | undefined, CompilationContext>();
+  /**
+   * Transform `vfile` on compilation stage
+   */
+  vfile = asyncPipe<VFile, CompilationContext>();
+  /**
+   * Transform the generated initializer code (TypeScript) for collection store
+   */
+  storeInitializer = pipe<
+    InitializerCode,
+    EmitCodeGeneratorContext & {
+      environment: "browser" | "server" | "dynamic";
+    }
+  >();
+
+  $inferFrontmatter: FrontmatterSchema extends StandardSchemaV1
+    ? StandardSchemaV1.InferOutput<FrontmatterSchema>
+    : Record<string, unknown> = undefined as never;
+
+  constructor(config: MDXCollectionConfig<FrontmatterSchema>) {
+    super({
+      dir: config.dir,
+      files: config.files,
+      supportedFormats: ["md", "mdx"],
+    });
+    this.postprocess = config.postprocess;
+    this.getMDXOptions = config.options;
+    this.dynamic = config.dynamic ?? false;
+    this.lazy = config.lazy ?? false;
     if (config.frontmatter) {
       const frontmatter = config.frontmatter;
       // Store schema for use in studio/editors
-      mdxHandler.frontmatterSchema = frontmatter;
-      mdxHandler.frontmatter.pipe((data, { filePath }) => {
+      this.frontmatterSchema = frontmatter;
+      this.frontmatter.pipe((data, { filePath }) => {
         return validate(
           frontmatter,
           data,
@@ -118,154 +105,163 @@ export function defineMDX<FrontmatterSchema extends StandardSchemaV1 | undefined
       });
     }
 
-    if (mdxHandler.postprocess?.extractLinkReferences) {
-      mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
-        codegen.addNamedImport(["$extractedReferences"], RuntimePaths[environment]);
-        return `${initializer}.$data($extractedReferences())`;
+    if (this.postprocess?.extractLinkReferences) {
+      this.storeInitializer.pipe((code, { codegen, environment }) => {
+        codegen.addNamedImport(["WithExtractedReferences"], RuntimePaths[environment], true);
+        code.typeParams[2] += " & WithExtractedReferences";
+        return code;
       });
     }
 
-    collection.handlers["version-control"] = {
-      client({ client }) {
-        const mdxHandler = collection.handlers.mdx;
-        if (!mdxHandler) return;
+    this.onEmit.pipe((entries, { createCodeGenerator }) => {
+      return Promise.all([
+        ...entries,
+        createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStoreServer(ctx)),
+        createCodeGenerator(`${this.name}.browser.ts`, (ctx) =>
+          this.generateCollectionStoreBrowser(ctx),
+        ),
+        createCodeGenerator(`${this.name}.dynamic.ts`, (ctx) =>
+          this.generateCollectionStoreDynamic(ctx),
+        ),
+      ]);
+    });
+    this.onServer.hook(({ core, server }) => {
+      if (!server.watcher) return;
 
-        mdxHandler.storeInitializer.pipe((initializer, { codegen, environment }) => {
-          codegen.addNamedImport(["$versionControl"], RuntimePaths[environment]);
-          return `${initializer}.$data($versionControl())`;
+      server.watcher.on("all", async (event, file) => {
+        if (event === "change" && !this.dynamic) return;
+        if (!this.hasFile(file)) return;
+
+        await core.emit({
+          filterCollection: (item) => item === this,
+          filterWorkspace: () => false,
+          write: true,
         });
+      });
+    });
 
-        mdxHandler.vfile.pipe(async (file) => {
-          const vcData = await client.getFileData({ filePath: file.path });
-          file.data["mdx-export"] ??= [];
-          file.data["mdx-export"].push(
-            {
-              name: "lastModified",
-              value: vcData.lastModified,
-            },
-            {
-              name: "creationDate",
-              value: vcData.creationDate,
-            },
-          );
-          return file;
-        });
-      },
-    };
-  });
-}
+    const { loaders } = this.pluginHook(loaderHook);
+    loaders.push(mdxLoader());
 
-function plugin(): Plugin {
-  const mdxLoaderGlob = /\.mdx?(\?.+?)?$/;
+    this.pluginHook(gitHook).onClient.hook(({ client }) => {
+      this.storeInitializer.pipe((code, { codegen, environment }) => {
+        codegen.addNamedImport(["WithGit"], RuntimePaths[environment], true);
+        code.typeParams[2] += " & WithGit";
+        return code;
+      });
 
-  function generateDocCollectionFrontmatterGlob(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-    eager = false,
-  ) {
-    const handler = collection.handlers.fs;
-    if (!handler) return "";
-    return context.codegen.generateGlobImport(handler.patterns, {
+      this.vfile.pipe(async (file) => {
+        const vcData = await client.getFileData({ filePath: file.path });
+        file.data["mdx-export"] ??= [];
+        file.data["mdx-export"].push(
+          {
+            name: "lastModified",
+            value: vcData.lastModified,
+          },
+          {
+            name: "creationDate",
+            value: vcData.creationDate,
+          },
+        );
+        return file;
+      });
+    });
+  }
+
+  private generateDocCollectionFrontmatterGlob(context: EmitCodeGeneratorContext, eager = false) {
+    return context.codegen.generateGlobImport(this.patterns, {
       query: {
-        collection: collection.name,
+        collection: this.name,
         only: "frontmatter",
         workspace: context.workspace,
       },
       import: "frontmatter",
-      base: handler.dir,
+      base: this.dir,
       eager,
     });
   }
 
-  function generateDocCollectionGlob(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-    eager = false,
-  ) {
-    const handler = collection.handlers.fs;
-    if (!handler) return "";
-    return context.codegen.generateGlobImport(handler.patterns, {
+  private generateDocCollectionGlob(context: EmitCodeGeneratorContext, eager = false) {
+    return context.codegen.generateGlobImport(this.patterns, {
       query: {
-        collection: collection.name,
+        collection: this.name,
         workspace: context.workspace,
       },
-      base: handler.dir,
+      base: this.dir,
       eager,
     });
   }
 
-  async function generateCollectionStoreServer(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-  ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
-    if (!fsHandler || !mdxHandler) return;
+  private async generateCollectionStoreServer(context: EmitCodeGeneratorContext) {
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.server;
-    const base = slash(core._toRuntimePath(fsHandler.dir));
-    let initializer: string;
+    const base = slash(core._toRuntimePath(this.dir));
+    let code: InitializerCode;
     codegen.addNamespaceImport(
       "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
 
-    if (mdxHandler.lazy) {
+    if (this.lazy) {
       codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
       const [headGlob, bodyGlob] = await Promise.all([
-        generateDocCollectionFrontmatterGlob(context, collection, true),
-        generateDocCollectionGlob(context, collection),
+        this.generateDocCollectionFrontmatterGlob(context, true),
+        this.generateDocCollectionGlob(context),
       ]);
 
-      initializer = `mdxStoreLazy<typeof Config, "${collection.name}">("${collection.name}", "${base}", { head: ${headGlob}, body: ${bodyGlob} })`;
+      code = {
+        fn: "mdxStoreLazy",
+        typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+        params: [`"${this.name}"`, `"${base}"`, `{ head: ${headGlob}, body: ${bodyGlob} }`],
+      };
     } else {
       codegen.addNamedImport(["mdxStore"], runtimePath);
-      initializer = `mdxStore<typeof Config, "${collection.name}">("${collection.name}", "${base}", ${await generateDocCollectionGlob(context, collection, true)})`;
+      code = {
+        fn: "mdxStore",
+        typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+        params: [
+          `"${this.name}"`,
+          `"${base}"`,
+          await this.generateDocCollectionGlob(context, true),
+        ],
+      };
     }
 
-    initializer = mdxHandler.storeInitializer.run(initializer, {
+    code = this.storeInitializer.run(code, {
       ...context,
       environment: "server",
     });
-    codegen.push(`export const ${collection.name} = ${initializer};`);
+    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
   }
 
-  async function generateCollectionStoreBrowser(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-  ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
-    if (!fsHandler || !mdxHandler) return;
+  private async generateCollectionStoreBrowser(context: EmitCodeGeneratorContext) {
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.browser;
     codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
+    codegen.push(`export { useRenderer } from "${RuntimePaths.browser}";`);
     codegen.addNamespaceImport(
       "Config",
       codegen.formatImportPath(core.getOptions().configPath),
       true,
     );
 
-    let initializer = `mdxStoreBrowser<typeof Config, "${collection.name}">("${collection.name}", ${await generateDocCollectionGlob(context, collection)})`;
-
-    initializer = mdxHandler.storeInitializer.run(initializer, {
+    let code: InitializerCode = {
+      fn: `mdxStoreBrowser`,
+      typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+      params: [`"${this.name}"`, await this.generateDocCollectionGlob(context)],
+    };
+    code = this.storeInitializer.run(code, {
       ...context,
       environment: "browser",
     });
-    codegen.push(`export const ${collection.name} = ${initializer};`);
+    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
   }
 
-  async function generateCollectionStoreDynamic(
-    context: EmitCodeGeneratorContext,
-    collection: Collection,
-  ) {
-    const mdxHandler = collection.handlers.mdx;
-    const fsHandler = collection.handlers.fs;
-    if (!fsHandler || !mdxHandler || !mdxHandler.dynamic) return;
+  private async generateCollectionStoreDynamic(context: EmitCodeGeneratorContext) {
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.dynamic;
-    const base = slash(core._toRuntimePath(fsHandler.dir));
+    const base = slash(core._toRuntimePath(this.dir));
     codegen.addNamespaceImport("Config", codegen.formatImportPath(core.getOptions().configPath));
     codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
 
@@ -276,124 +272,85 @@ function plugin(): Plugin {
       outDir: core._toRuntimePath(coreOptions.outDir),
       cwd: core._toRuntimePath(coreOptions.cwd),
     };
-    let initializer = `mdxStoreDynamic<typeof Config, "${collection.name}">(Config, ${JSON.stringify(
-      serializableCoreOptions,
-    )}, "${collection.name}", "${base}", ${await generateDocCollectionFrontmatterGlob(context, collection, true)})`;
+    let code: InitializerCode = {
+      fn: "mdxStoreDynamic",
+      typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+      params: [
+        "Config",
+        JSON.stringify(serializableCoreOptions),
+        `"${this.name}"`,
+        `"${base}"`,
+        await this.generateDocCollectionFrontmatterGlob(context, true),
+      ],
+    };
 
-    initializer = mdxHandler.storeInitializer.run(initializer, {
+    code = this.storeInitializer.run(code, {
       ...context,
       environment: "dynamic",
     });
-    codegen.push(`export const ${collection.name} = ${initializer};`);
+    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
   }
+}
 
-  const base: Plugin = {
-    name: "mdx",
-    configureServer(server) {
-      if (!server.watcher) return;
+export function mdxCollection<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
+  config: MDXCollectionConfig<FrontmatterSchema>,
+) {
+  return new MDXCollection(config);
+}
 
-      server.watcher.on("all", async (event, file) => {
-        const updatedCollection = this.core.getCollections().find((collection) => {
-          const handlers = collection.handlers;
-          if (!handlers.mdx || !handlers.fs) return false;
-          if (event === "change" && !handlers.mdx.dynamic) return false;
-          return handlers.fs.hasFile(file);
-        });
+function mdxLoader(): LoaderConfig {
+  const test = /\.mdx?(\?.+?)?$/;
 
-        if (!updatedCollection) return;
-        await this.core.emit({
-          filterPlugin: (plugin) => plugin.name === base.name,
-          filterWorkspace: () => false,
-          write: true,
-        });
-      });
-    },
-    emit() {
-      return Promise.all([
-        this.createCodeGenerator("mdx.ts", async (ctx) => {
-          for (const collection of this.core.getCollections()) {
-            await generateCollectionStoreServer(ctx, collection);
-          }
-        }),
+  return {
+    id: "mdx",
+    test,
+    configureNext(nextConfig) {
+      const loaderPath = "fuma-content/collections/mdx/loader-webpack";
+      const loaderOptions = this.getLoaderOptions();
 
-        this.createCodeGenerator("mdx-browser.ts", async (ctx) => {
-          for (const collection of this.core.getCollections()) {
-            await generateCollectionStoreBrowser(ctx, collection);
-          }
-
-          ctx.codegen.push(`export { useRenderer } from "${RuntimePaths.browser}";`);
-        }),
-
-        this.createCodeGenerator("mdx-dynamic.ts", async (ctx) => {
-          for (const collection of this.core.getCollections()) {
-            await generateCollectionStoreDynamic(ctx, collection);
-          }
-        }),
-      ]);
-    },
-    next: {
-      config(nextConfig) {
-        const { configPath, outDir } = this.core.getOptions();
-        const loaderPath = "fuma-content/collections/mdx/loader-webpack";
-        const loaderOptions: WebpackLoaderOptions = {
-          configPath,
-          outDir,
-          absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
-          isDev: process.env.NODE_ENV === "development",
-        };
-
-        return {
-          ...nextConfig,
-          turbopack: {
-            ...nextConfig.turbopack,
-            rules: {
-              ...nextConfig.turbopack?.rules,
-              "*.{md,mdx}": {
-                loaders: [
-                  {
-                    loader: loaderPath,
-                    options: loaderOptions as unknown as TurbopackLoaderOptions,
-                  },
-                ],
-                as: "*.js",
-              },
-            },
-          },
-          pageExtensions: [
-            ...(nextConfig.pageExtensions ?? ["js", "jsx", "tsx", "ts"]),
-            "mdx",
-            "md",
-          ],
-          webpack(config: Configuration, options) {
-            config.module ||= {};
-            config.module.rules ||= [];
-            config.module.rules.push({
-              test: mdxLoaderGlob,
-              use: [
-                options.defaultLoaders.babel,
+      return {
+        ...nextConfig,
+        turbopack: {
+          ...nextConfig.turbopack,
+          rules: {
+            ...nextConfig.turbopack?.rules,
+            "*.{md,mdx}": {
+              loaders: [
                 {
                   loader: loaderPath,
-                  options: loaderOptions,
+                  options: loaderOptions as unknown as TurbopackLoaderOptions,
                 },
               ],
-            });
-
-            return nextConfig.webpack?.(config, options) ?? config;
+              as: "*.js",
+            },
           },
-        };
-      },
-    },
-  };
+        },
+        pageExtensions: [...(nextConfig.pageExtensions ?? ["js", "jsx", "tsx", "ts"]), "mdx", "md"],
+        webpack(config: Configuration, options) {
+          config.module ||= {};
+          config.module.rules ||= [];
+          config.module.rules.push({
+            test,
+            use: [
+              options.defaultLoaders.babel,
+              {
+                loader: loaderPath,
+                options: loaderOptions,
+              },
+            ],
+          });
 
-  return withLoader(base, {
-    test: mdxLoaderGlob,
+          return nextConfig.webpack?.(config, options) ?? config;
+        },
+      };
+    },
     async createLoader() {
       const { createMdxLoader } = await import("./mdx/loader");
       return createMdxLoader({
         getCore: () => this.core,
       });
     },
-  });
+  };
 }
 
 export type { ExtractedReference } from "@/collections/mdx/remark-postprocess";

@@ -1,9 +1,10 @@
 "use server";
 import fs from "node:fs/promises";
 import { requireCollection, requireDocument } from "@/lib/config";
-import type { MDXStudioDocument, StudioDocument } from "../types";
 import path from "node:path";
 import type { DocumentItem } from "@/lib/data/store";
+import { studioHook, type MDXStudioDocument, type StudioDocument } from "..";
+import { MDXCollection } from "fuma-content/collections/mdx";
 
 // TODO: check security when implementing auth system
 export async function saveMDXDocument(collectionId: string, documentId: string, value: string) {
@@ -22,10 +23,10 @@ export async function createMDXDocument(
   name: string,
   content: string,
 ): Promise<DocumentItem> {
-  const collection = await requireCollection(collectionId, ["studio", "mdx", "fs"]);
-  const fsHandler = collection.handlers.fs;
-  const filePath = path.join(fsHandler.dir, `${name}.mdx`);
-  const relativeFilePath = path.relative(fsHandler.dir, filePath);
+  const collection = await requireCollection(collectionId);
+  if (!(collection instanceof MDXCollection)) throw new Error("Invalid collection ID");
+  const filePath = path.join(collection.dir, `${name}.mdx`);
+  const relativeFilePath = path.relative(collection.dir, filePath);
 
   if (relativeFilePath.startsWith(`..${path.sep}`)) {
     throw new Error(`invalid collection name: ${name}`);
@@ -47,7 +48,7 @@ export async function createMDXDocument(
     id: relativeFilePath,
     name: relativeFilePath,
     permissions: {
-      delete: collection.handlers.studio.actions?.deleteDocument !== undefined,
+      delete: collection.pluginHook(studioHook).actions?.deleteDocument !== undefined,
     },
   };
 }

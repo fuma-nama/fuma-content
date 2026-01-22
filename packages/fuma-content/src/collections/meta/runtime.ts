@@ -11,12 +11,12 @@ export function metaStore<Config, Name extends string>(
 }> {
   type Metadata =
     GetCollectionConfig<Config, Name> extends MetaCollection<infer Data> ? Data : never;
-  const merged = input as Record<
+  const merged: Record<
     string,
     {
       data: Metadata;
     }
-  >;
+  > = {};
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {

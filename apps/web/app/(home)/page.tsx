@@ -10,13 +10,13 @@ import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { cn } from "@/lib/cn";
 
 // language=ts
-const config = `import { defineMDX } from "fuma-content/collections/mdx"
-import { defineMeta } from "fuma-content/collections/meta"
+const config = `import { mdxCollection } from "fuma-content/collections/mdx"
+import { metaCollection } from "fuma-content/collections/meta"
 import git from "fuma-content/plugins/git"
 import { defineConfig } from "fuma-content/config"
 import { z } from "zod"
 
-const docs = defineMDX({
+const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: z.object({
     title: z.string(),
@@ -25,7 +25,7 @@ const docs = defineMDX({
   lazy: true,
 })
 
-const authors = defineMeta({
+const authors = metaCollection({
   dir: "content/docs",
   files: ["authors.json"],
   schema: z.object({
@@ -42,8 +42,8 @@ export default defineConfig({
 })`;
 
 // language=tsx
-const serverCode = `import { docs } from "content/mdx"
-import { authors } from "content/meta"
+const serverCode = `import { docs } from "content/docs"
+import { authors } from "content/authors"
 
 for (const file of docs.list()) {
   const { frontmatter, lastModified } = file.compiled
@@ -69,7 +69,7 @@ function Page({ id }: { id: string }) {
 }`;
 
 // language=tsx
-const browserCode = `import { docs, useRenderer } from "content/mdx-browser";
+const browserCode = `import { docs, useRenderer } from "content/docs.browser";
 
 function Page({ id }: { id: string }) {
   const file = docs.get(id)

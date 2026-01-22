@@ -1,5 +1,6 @@
 "use server";
 
+import { studioHook } from "@lib/index";
 import { getCore, requireDocument } from "../config";
 import type { CollectionItem, DocumentItem } from "./store";
 
@@ -8,8 +9,7 @@ export async function getCollectionItems(): Promise<CollectionItem[]> {
   return core.getCollections(true).map<CollectionItem>((collection) => ({
     id: collection.name,
     name: collection.name,
-    badge: collection.typeInfo.id,
-    handlers: Object.fromEntries(Object.keys(collection.handlers).map((k) => [k, null])),
+    badge: collection.constructor.name,
   }));
 }
 
@@ -17,23 +17,18 @@ export async function getDocumentItems(): Promise<DocumentItem[]> {
   const core = await getCore();
   const items = await Promise.all(
     core.getCollections(true).map(async (collection) => {
-      const handler = collection.handlers.studio;
+      const hook = collection.pluginHook(studioHook);
+      const docs = await hook.getDocuments();
+      const supportDelete = hook.actions?.deleteDocument !== undefined;
 
-      if (handler) {
-        const docs = await handler.getDocuments();
-        const supportDelete = handler.actions?.deleteDocument !== undefined;
-
-        return docs.map<DocumentItem>((doc) => ({
-          name: doc.name,
-          id: doc.id,
-          collectionId: collection.name,
-          permissions: {
-            delete: supportDelete,
-          },
-        }));
-      }
-
-      return [];
+      return docs.map<DocumentItem>((doc) => ({
+        name: doc.name,
+        id: doc.id,
+        collectionId: collection.name,
+        permissions: {
+          delete: supportDelete,
+        },
+      }));
     }),
   );
 
@@ -42,7 +37,7 @@ export async function getDocumentItems(): Promise<DocumentItem[]> {
 
 export async function deleteDocumentAction(documentId: string, collectionId: string) {
   const { collection, document } = await requireDocument(collectionId, documentId);
-  const { deleteDocument } = collection.handlers.studio.actions ?? {};
+  const { deleteDocument } = collection.pluginHook(studioHook).actions ?? {};
   if (deleteDocument) {
     await deleteDocument({ collection, document });
   } else {

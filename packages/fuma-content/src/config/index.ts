@@ -1,5 +1,5 @@
+import { Collection } from "@/collections";
 import type { PluginOption } from "@/core";
-import type { Collection } from "@/collections";
 
 export interface GlobalConfig<
   Collections extends Record<string, Collection> = Record<string, Collection>,

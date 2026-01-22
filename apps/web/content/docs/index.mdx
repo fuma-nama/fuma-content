@@ -81,11 +81,11 @@ Create a config file, you can define collections and plugins:
 
 ```ts title="content.config.ts"
 import { defineConfig } from "fuma-content/config";
-import { defineMDX } from "fuma-content/collections/mdx";
+import { mdxCollection } from "fuma-content/collections/mdx";
 
 export default defineConfig({
   collections: {
-    docs: defineMDX({
+    docs: mdxCollection({
       dir: "content/docs",
       // you can define a Standard Schema for frontmatter
       // frontmatter: ...
@@ -114,7 +114,7 @@ Each collection generates its own file in the `.content` folder, it's recommende
 For built-in collections, you can access them like:
 
 ```tsx tab="MDX (Server)"
-import { docs } from "content/mdx";
+import { docs } from "content/docs";
 
 for (const file of docs.list()) {
   const id = file.id;
@@ -143,7 +143,7 @@ function Page({ id }: { id: string }) {
 ```
 
 ```tsx tab="MDX (Browser)"
-import { docs, useRenderer } from "content/mdx-browser";
+import { docs, useRenderer } from "content/docs.browser";
 
 function Page({ id }: { id: string }) {
   const file = docs.get(id);
@@ -159,7 +159,7 @@ function Page({ id }: { id: string }) {
 ```
 
 ```ts tab="Meta (Server)"
-import { authors } from "content/meta";
+import { authors } from "content/authors";
 
 // a list of objects parsed from all meta files
 console.log(authors.list());

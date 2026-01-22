@@ -2,26 +2,26 @@ import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import type { VersionControlFileData } from "@/plugins/git";
+import type { GitFileData } from "@/plugins/git";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
-export interface MDXStoreData<Frontmatter> {
+export interface MDXStoreData<Frontmatter, Attached = unknown> {
   id: string;
-  compiled: CompiledMDX<Frontmatter>;
+  compiled: CompiledMDX<Frontmatter> & Attached;
 }
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-    ? _Frontmatter
+  GetCollectionConfig<Config, Name> extends MDXCollection
+    ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 
-export function mdxStore<Config, Name extends string>(
+export function mdxStore<Config, Name extends string, Attached>(
   _name: Name,
   base: string,
   _input: Record<string, unknown>,
-): FileCollectionStore<MDXStoreData<GetFrontmatter<Config, Name>>> {
-  const input = _input as Record<string, CompiledMDX<GetFrontmatter<Config, Name>>>;
-  const merged = input as unknown as Record<string, MDXStoreData<GetFrontmatter<Config, Name>>>;
+): FileCollectionStore<MDXStoreData<GetFrontmatter<Config, Name>, Attached>> {
+  const input = _input as Record<string, CompiledMDX<GetFrontmatter<Config, Name>> & Attached>;
+  const merged: Record<string, MDXStoreData<GetFrontmatter<Config, Name>, Attached>> = {};
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
@@ -33,25 +33,25 @@ export function mdxStore<Config, Name extends string>(
   return new FileCollectionStore(base, merged);
 }
 
-export interface MDXStoreLazyData<Frontmatter> {
+export interface MDXStoreLazyData<Frontmatter, Attached> {
   id: string;
   frontmatter: Frontmatter;
-  load: () => Promise<CompiledMDX<Frontmatter>>;
+  load: () => Promise<CompiledMDX<Frontmatter> & Attached>;
 }
 
-export function mdxStoreLazy<Config, Name extends string>(
+export function mdxStoreLazy<Config, Name extends string, Attached>(
   _name: Name,
   base: string,
   _input: {
     head: Record<string, unknown>;
     body: Record<string, () => Promise<unknown>>;
   },
-): FileCollectionStore<MDXStoreLazyData<GetFrontmatter<Config, Name>>> {
+): FileCollectionStore<MDXStoreLazyData<GetFrontmatter<Config, Name>, Attached>> {
   const input = _input as {
     head: Record<string, GetFrontmatter<Config, Name>>;
-    body: Record<string, () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>>;
+    body: Record<string, () => Promise<CompiledMDX<GetFrontmatter<Config, Name>> & Attached>>;
   };
-  const merged: Record<string, MDXStoreLazyData<GetFrontmatter<Config, Name>>> = {};
+  const merged: Record<string, MDXStoreLazyData<GetFrontmatter<Config, Name>, Attached>> = {};
 
   for (const [key, value] of Object.entries(input.head)) {
     merged[key] = {
@@ -64,28 +64,11 @@ export function mdxStoreLazy<Config, Name extends string>(
   return new FileCollectionStore(base, merged);
 }
 
-export function $attachCompiled<Add>() {
-  return <T>(data: T) =>
-    data as T extends MDXStoreData<unknown>
-      ? T & {
-          compiled: Add;
-        }
-      : T extends MDXStoreLazyData<unknown>
-        ? T & {
-            load: () => Promise<Awaited<ReturnType<T["load"]>> & Add>;
-          }
-        : T;
+export interface WithExtractedReferences {
+  /**
+   * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
+   */
+  extractedReferences: ExtractedReference[];
 }
 
-export function $extractedReferences() {
-  return $attachCompiled<{
-    /**
-     * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-     */
-    extractedReferences: ExtractedReference[];
-  }>();
-}
-
-export function $versionControl() {
-  return $attachCompiled<VersionControlFileData>();
-}
+export type WithGit = GitFileData;

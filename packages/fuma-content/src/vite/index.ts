@@ -1,6 +1,7 @@
 import type { PluginOption } from "vite";
 import type { FSWatcher } from "chokidar";
 import { Core, type Plugin } from "@/core";
+import { loaderPlugin } from "@/plugins/with-loader";
 
 export interface PluginOptions {
   /**
@@ -9,29 +10,28 @@ export interface PluginOptions {
   configPath?: string;
 
   /**
-   * Update Vite config to fix module resolution of Fumadocs
-   *
-   * @defaultValue true
-   */
-  updateViteConfig?: boolean;
-
-  /**
    * Output directory of generated files
    *
    * @defaultValue '.content'
    */
   outDir?: string;
+
+  /**
+   * clean output directory on start
+   *
+   * @defaultValue true
+   */
+  clean?: boolean;
 }
 
 export default async function content(
   config: Record<string, unknown>,
-  pluginOptions: PluginOptions = {},
+  _pluginOpitons: PluginOptions = {},
 ): Promise<PluginOption[]> {
-  const options = applyDefaults(pluginOptions);
-  const core = new Core(options);
+  const pluginOpitons = applyDefaults(_pluginOpitons);
+  const core = createViteCore(pluginOpitons);
   await core.init({
     config,
-    plugins: [vitePlugin()],
   });
 
   const ctx = core.getPluginContext();
@@ -40,6 +40,7 @@ export default async function content(
     {
       name: "fuma-content",
       async buildStart() {
+        if (pluginOpitons.clean) await core.clearOutputDirectory();
         await core.emit({ write: true });
       },
       async configureServer(server) {
@@ -51,14 +52,12 @@ export default async function content(
   ];
 }
 
-export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
-  const { loadConfig } = await import("@/config/load-from-file");
-  const core = new Core(applyDefaults(pluginOptions));
-  await core.init({
-    config: loadConfig(core, true),
-    plugins: [vitePlugin()],
+function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
+  return new Core({
+    configPath,
+    outDir,
+    plugins: [vitePlugin(), loaderPlugin()],
   });
-  return core;
 }
 
 function vitePlugin(): Plugin {
@@ -73,10 +72,19 @@ function vitePlugin(): Plugin {
   };
 }
 
+export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
+  const { loadConfig } = await import("@/config/load-from-file");
+  const core = createViteCore(applyDefaults(pluginOptions));
+  await core.init({
+    config: loadConfig(core, true),
+  });
+  return core;
+}
+
 function applyDefaults(options: PluginOptions): Required<PluginOptions> {
   return {
-    updateViteConfig: options.updateViteConfig ?? true,
     configPath: options.configPath ?? Core.defaultOptions.configPath,
     outDir: options.outDir ?? Core.defaultOptions.outDir,
+    clean: options.clean ?? true,
   };
 }

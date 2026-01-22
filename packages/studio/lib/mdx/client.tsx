@@ -18,8 +18,8 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import type { ClientContext } from "../types";
 import { removeUndefined } from "@/lib/utils/remove-undefined";
+import { ClientContext } from "..";
 
 interface MDXDocUpdateEditorProps {
   collectionId: string;

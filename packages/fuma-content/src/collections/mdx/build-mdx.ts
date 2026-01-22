@@ -5,11 +5,11 @@ import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/re
 import type { Core } from "@/core";
 import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
-import type { Collection } from "@/collections";
 import { createCache } from "@/utils/async-cache";
 import type { CompilerOptions } from "@/plugins/with-loader";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
+import { MDXCollection } from "../mdx";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -73,21 +73,20 @@ export interface CompiledMDXData {
 
 export async function buildMDX(
   core: Core,
-  collection: Collection | undefined,
+  collection: MDXCollection | undefined,
   { filePath, frontmatter, source, _compiler, environment, isDevelopment }: BuildMDXOptions,
 ): Promise<VFile> {
-  const handler = collection?.handlers.mdx;
   const processorCache = createCache(core.cache).$value<MDXProcessor>();
 
   function getProcessor(format: "md" | "mdx") {
     const key = `build-mdx:${collection?.name ?? "global"}:${format}`;
 
     return processorCache.cached(key, async () => {
-      const mdxOptions = await handler?.getMDXOptions?.(environment);
-      const preprocessPlugin = [remarkPreprocess, handler?.preprocess] satisfies Pluggable;
+      const mdxOptions = await collection?.getMDXOptions?.(environment);
+      const preprocessPlugin = [remarkPreprocess, collection?.preprocess] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
-        ...handler?.postprocess,
+        ...collection?.postprocess,
       };
       const remarkIncludeOptions: RemarkIncludeOptions = {
         preprocess: [preprocessPlugin],
@@ -119,8 +118,8 @@ export async function buildMDX(
     },
   });
 
-  if (collection && handler) {
-    vfile = await handler.vfile.run(vfile, {
+  if (collection && collection) {
+    vfile = await collection.vfile.run(vfile, {
       collection,
       filePath,
       source,

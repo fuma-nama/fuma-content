@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { FSWatcher } from "chokidar";
-import type { Collection } from "@/collections";
+import { Collection } from "@/collections";
 import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
@@ -46,22 +46,23 @@ export interface Plugin {
    */
   name: string;
 
+  /** when `true`, only keep the last plugin with same `name`. */
+  dedupe?: boolean;
+
   /**
    * on config loaded/updated
    */
   config?: (this: PluginContext, config: ResolvedConfig) => Awaitable<void | ResolvedConfig>;
 
+  /**
+   * called after collection initialization
+   */
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
   /**
-   * Generate files (e.g. types, index file, or JSON schemas)
+   * Configure watch/dev server
    */
-  emit?: (this: EmitContext) => Awaitable<EmitEntry[]>;
-
-  /**
-   * Configure Fumadocs dev server
-   */
-  configureServer?: (this: PluginContext, server: ServerContext) => Awaitable<void>;
+  configureServer?: (this: PluginContext, server: ServerContext) => void;
 
   vite?: {
     createPlugin?: (this: PluginContext) => Vite.PluginOption;
@@ -108,13 +109,14 @@ export interface ResolvedCoreOptions {
     name: string;
     dir: string;
   };
+  plugins?: PluginOption;
 }
 
 export interface EmitOptions {
   /**
-   * filter the plugins to run emit
+   * filter the collections to run emit
    */
-  filterPlugin?: (plugin: Plugin) => boolean;
+  filterCollection?: (collection: Collection) => boolean;
 
   /**
    * filter the workspaces to run emit
@@ -133,12 +135,21 @@ export interface EmitOutput {
 }
 
 async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
-  const plugins: Plugin[] = [];
+  async function load(pluginOptions: PluginOption[]): Promise<Plugin[]> {
+    const plugins: Plugin[] = [];
 
-  for (const option of await Promise.all(pluginOptions)) {
-    if (!option) continue;
-    if (Array.isArray(option)) plugins.push(...(await getPlugins(option)));
-    else plugins.push(option);
+    for (const option of await Promise.all(pluginOptions)) {
+      if (!option) continue;
+      if (Array.isArray(option)) plugins.push(...(await load(option)));
+      else plugins.push(option);
+    }
+    return plugins;
+  }
+
+  let plugins: Plugin[] = [];
+  for (const plugin of await load(pluginOptions)) {
+    if (plugin.dedupe) plugins = plugins.filter((other) => other.name !== plugin.name);
+    plugins.push(plugin);
   }
 
   return plugins;
@@ -173,27 +184,19 @@ export class Core {
 
   async init({
     config: newConfig,
-    plugins: customPlugins,
   }: {
     /**
      * either the default export or all exports of config file.
      */
     config: Awaitable<Record<string, unknown>>;
-    plugins?: PluginOption;
   }) {
-    this.config = this.buildConfig(await newConfig);
+    this.config = await this.initConfig(await newConfig);
     this.cache.clear();
     this.workspaces.clear();
-    const loadedCollectionTypeIds = new Set<string>();
     this.plugins = await getPlugins([
-      customPlugins,
+      this.options.plugins,
       this.config.plugins,
-      ...this.config.collections.values().map(({ typeInfo }) => {
-        if (loadedCollectionTypeIds.has(typeInfo.id)) return false;
-
-        loadedCollectionTypeIds.add(typeInfo.id);
-        return typeInfo.plugins;
-      }),
+      ...this.config.collections.values().map((collection) => collection.plugins),
     ]);
 
     const ctx = this.getPluginContext();
@@ -201,6 +204,16 @@ export class Core {
       const out = await plugin.config?.call(ctx, this.config);
       if (out) this.config = out;
     }
+
+    await Promise.all(
+      this.config.collections.values().map(async (collection) => {
+        collection.onConfig.run({ collection, core: this, config: this.config });
+
+        for (const plugin of this.plugins) {
+          await plugin.collection?.call(ctx, collection);
+        }
+      }),
+    );
 
     // only support workspaces with max depth 1
     if (!this.options.workspace && this.config.workspaces) {
@@ -221,14 +234,6 @@ export class Core {
         }),
       );
     }
-
-    await Promise.all(
-      this.config.collections.values().map(async (collection) => {
-        for (const plugin of this.plugins) {
-          await plugin.collection?.call(ctx, collection);
-        }
-      }),
-    );
   }
 
   getWorkspaces() {
@@ -276,22 +281,27 @@ export class Core {
   }
   async initServer(server: ServerContext) {
     const ctx = this.getPluginContext();
-    const promises: Awaitable<void>[] = [];
 
+    server.watcher?.add(this.options.configPath);
     for (const plugin of this.plugins) {
-      promises.push(plugin.configureServer?.call(ctx, server));
+      plugin.configureServer?.call(ctx, server);
+    }
+    for (const collection of this.getCollections()) {
+      collection.onServer.run({ collection, core: this, server });
     }
     for (const workspace of this.workspaces.values()) {
-      promises.push(workspace.initServer(server));
+      await workspace.initServer(server);
     }
+  }
 
-    await Promise.all(promises);
+  async clearOutputDirectory() {
+    await fs.rm(this.options.outDir, { recursive: true, force: true });
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
     const { workspace, outDir } = this.options;
     const { target, jsExtension } = this.config.emit ?? {};
-    const { filterPlugin, filterWorkspace, write = false } = emitOptions;
+    const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const globCache = new Map<string, Promise<string[]>>();
     const ctx: EmitContext = {
@@ -321,14 +331,14 @@ export class Core {
       workspaces: {},
     };
 
-    for (const li of await Promise.all(
-      this.plugins.map((plugin) => {
-        if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit) return null;
-        return plugin.emit.call(ctx);
+    for (const entries of await Promise.all(
+      this.getCollections().map((collection) => {
+        if (filterCollection && !filterCollection(collection)) return null;
+        return collection.onEmit.run([], ctx);
       }),
     )) {
-      if (!li) continue;
-      for (const item of li) {
+      if (!entries) continue;
+      for (const item of entries) {
         if (added.has(item.path)) continue;
         out.entries.push(item);
         added.add(item.path);
@@ -346,8 +356,8 @@ export class Core {
 
       console.log(
         workspace
-          ? `[MDX: ${workspace.name}] generated files in ${performance.now() - start}ms`
-          : `[MDX] generated files in ${performance.now() - start}ms`,
+          ? `[fuma-content: ${workspace.name}] generated files in ${performance.now() - start}ms`
+          : `[fuma-content] generated files in ${performance.now() - start}ms`,
       );
     }
 
@@ -368,29 +378,30 @@ export class Core {
     return path.relative(process.cwd(), absolutePath);
   }
 
-  private buildConfig(config: Record<string, unknown>): ResolvedConfig {
+  private async initConfig(config: Record<string, unknown>): Promise<ResolvedConfig> {
     const collections = new Map<string, Collection>();
     let globalConfig: GlobalConfig;
 
     if ("default" in config) {
       globalConfig = config.default as GlobalConfig;
       for (const [k, v] of Object.entries(config)) {
-        if (k === "default") continue;
-
-        globalConfig.collections ??= {};
-        globalConfig.collections[k] = v as Collection;
+        if (v instanceof Collection) {
+          globalConfig.collections ??= {};
+          globalConfig.collections[k] = v;
+        }
       }
     } else {
       globalConfig = config as GlobalConfig;
     }
 
-    if (globalConfig.collections) {
-      for (const [name, collection] of Object.entries(globalConfig.collections)) {
-        collection.init?.({ name, core: this });
+    globalConfig.collections ??= {};
+    await Promise.all(
+      Object.entries(globalConfig.collections).map(async ([name, collection]) => {
+        collection.name = name;
         collections.set(name, collection);
-      }
-    }
-
+        await collection.onInit.run({ collection, core: this });
+      }),
+    );
     return {
       ...globalConfig,
       collections,

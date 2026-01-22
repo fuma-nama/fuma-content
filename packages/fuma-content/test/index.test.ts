@@ -2,12 +2,12 @@ import { fileURLToPath } from "node:url";
 import * as path from "node:path";
 import { expect, test } from "vitest";
 import { z } from "zod";
-import { defineMDX } from "@/collections/mdx";
+import { mdxCollection } from "@/collections/mdx";
 import { defineConfig, type GlobalConfig } from "@/config";
-import { defineMeta } from "@/collections/meta";
 import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
 import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { metaCollection } from "@/collections/meta";
 
 test("format errors", async () => {
   const schema = z.object({
@@ -49,10 +49,10 @@ const cases: {
     name: "sync",
     config: defineConfig({
       collections: {
-        docs: defineMDX({
+        docs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
         }),
-        blogs: defineMDX({
+        blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
             extractLinkReferences: true,
@@ -65,7 +65,7 @@ const cases: {
     name: "sync-meta",
     config: defineConfig({
       collections: {
-        docs: defineMeta({
+        docs: metaCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
         }),
       },
@@ -75,11 +75,11 @@ const cases: {
     name: "async",
     config: defineConfig({
       collections: {
-        docs: defineMDX({
+        docs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           lazy: true,
         }),
-        blogs: defineMDX({
+        blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
             extractLinkReferences: true,
@@ -93,11 +93,11 @@ const cases: {
     name: "dynamic",
     config: defineConfig({
       collections: {
-        docs: defineMDX({
+        docs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           dynamic: true,
         }),
-        blogs: defineMDX({
+        blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
             extractLinkReferences: true,
@@ -111,7 +111,7 @@ const cases: {
     name: "workspace",
     config: defineConfig({
       collections: {
-        docs: defineMDX({
+        docs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
         }),
       },
@@ -121,7 +121,7 @@ const cases: {
           dir: path.join(baseDir, "./fixtures/generate-index-2"),
           config: defineConfig({
             collections: {
-              docs: defineMDX({
+              docs: mdxCollection({
                 dir: ".",
                 lazy: true,
               }),

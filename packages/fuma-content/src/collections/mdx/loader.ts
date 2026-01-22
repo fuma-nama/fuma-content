@@ -6,6 +6,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import type { Loader } from "@/plugins/with-loader";
 import type { DynamicCore } from "@/dynamic";
+import { MDXCollection } from "../mdx";
 
 const querySchema = z
   .object({
@@ -59,11 +60,11 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
         };
       }
 
-      const collection = collectionName ? core.getCollection(collectionName) : undefined;
-      const handler = collection?.handlers.mdx;
+      let collection = collectionName ? core.getCollection(collectionName) : undefined;
+      if (!(collection instanceof MDXCollection)) collection = undefined;
 
-      if (collection && handler?.frontmatter) {
-        matter.data = await handler.frontmatter.run(matter.data as Record<string, unknown>, {
+      if (collection?.frontmatter) {
+        matter.data = await collection.frontmatter.run(matter.data as Record<string, unknown>, {
           collection,
           filePath,
           source: value,

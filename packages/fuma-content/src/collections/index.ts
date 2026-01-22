@@ -1,60 +1,60 @@
-import type { JSONSchemaHandler } from "@/plugins/json-schema";
-import type { FIleCollectionHandler } from "@/collections/handlers/fs";
-import type { MDXCollectionHandler } from "@/collections/mdx";
-import type { MetaCollectionHandler } from "@/collections/meta";
-import type { VersionControlHandler } from "@/plugins/git";
-import type { Core, PluginOption } from "@/core";
+import { Core, EmitContext, EmitEntry, PluginOption, ResolvedConfig, ServerContext } from "@/core";
+import { asyncHook, hook } from "@/utils/hook";
+import { asyncPipe } from "@/utils/pipe";
 
-export interface InitOptions {
-  name: string;
+export interface CollectionHookContext {
   core: Core;
+  collection: Collection;
 }
 
-export interface Collection {
-  name: string;
-  init?: (options: InitOptions) => void;
-
-  readonly handlers: CollectionHandlers;
+export class Collection {
+  private readonly pluginHooks = new Map<symbol, unknown>();
+  name = null as unknown as string;
 
   /**
-   * information for the collection type, can be shared for all collections of same type.
+   * on config loaded/updated
    */
-  readonly typeInfo: CollectionTypeInfo;
-}
-
-export interface CollectionTypeInfo {
+  readonly onConfig = hook<CollectionHookContext & { config: ResolvedConfig }>();
   /**
-   * ID for collection type.
-   *
-   * @example `my-package:my-collection-type`
+   * Configure watch/dev server
    */
-  readonly id: string;
+  readonly onServer = hook<CollectionHookContext & { server: ServerContext }>();
+  readonly onInit = asyncHook<CollectionHookContext>();
+  readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
+  readonly plugins: PluginOption[] = [];
 
-  /**
-   * plugins to register, registered once for each collection type.
-   */
-  readonly plugins?: PluginOption;
+  transform(transformer: (collection: this) => void): this {
+    transformer(this);
+    return this;
+  }
+
+  pluginHook<T, Options>(hook: CollectionHook<T, Options>, options: Options): T;
+  pluginHook<T>(hook: CollectionHook<T>): T;
+
+  pluginHook<T, O>(hook: CollectionHook<T, O>, options?: O): T {
+    let created = this.pluginHooks.get(hook.id) as T | undefined;
+    if (created) return created;
+
+    created = hook.create(this, options as O);
+    this.pluginHooks.set(hook.id, created);
+    return created;
+  }
+
+  getPluginHook<T>(hook: CollectionHook<T>): T | undefined {
+    return this.pluginHooks.get(hook.id) as T | undefined;
+  }
 }
 
-export interface CollectionHandlers {
-  fs?: FIleCollectionHandler;
-  mdx?: MDXCollectionHandler;
-  meta?: MetaCollectionHandler;
-  "json-schema"?: JSONSchemaHandler;
-  "version-control"?: VersionControlHandler;
+export interface CollectionHook<T = unknown, Options = undefined> {
+  id: symbol;
+  create: (collection: Collection, options: Options) => T;
 }
 
-export function createCollection(
-  info: CollectionTypeInfo,
-  init: (collection: Collection, options: InitOptions) => void,
-): Collection {
+export function defineCollectionHook<T, Options = undefined>(
+  init: (collection: Collection, options: Options) => T,
+): CollectionHook<T, Options> {
   return {
-    name: "",
-    handlers: {},
-    init(options) {
-      this.name = options.name;
-      init(this, options);
-    },
-    typeInfo: info,
+    id: Symbol(),
+    create: init,
   };
 }
