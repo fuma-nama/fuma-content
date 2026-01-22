@@ -1,5 +1,5 @@
 import path from "node:path";
-import { SimpleCollectionStore } from "@/collections/runtime/store";
+import { MapCollectionStore } from "@/collections/runtime/store";
 
 export interface FileInfo {
   /**
@@ -13,24 +13,23 @@ export interface FileInfo {
   fullPath: string;
 }
 
-function fileInfo(base: string, globKey: string): FileInfo {
+function formatGlobKey(globKey: string) {
   if (globKey.startsWith("./")) {
-    globKey = globKey.slice(2);
+    return globKey.slice(2);
   }
 
-  return {
-    path: globKey,
-    fullPath: path.join(base, globKey),
-  };
+  return globKey;
 }
 
-export class FileCollectionStore<V> extends SimpleCollectionStore<FileInfo & V> {
+export class FileCollectionStore<V> extends MapCollectionStore<string, FileInfo & V> {
   constructor(base: string, glob: Record<string, V>) {
     const data = new Map<string, FileInfo & V>();
     for (const [key, value] of Object.entries(glob)) {
+      const filePath = formatGlobKey(key);
       data.set(key, {
         ...value,
-        ...fileInfo(base, key),
+        path: filePath,
+        fullPath: path.join(base, filePath),
       });
     }
     super(data);
@@ -40,7 +39,7 @@ export class FileCollectionStore<V> extends SimpleCollectionStore<FileInfo & V> 
     return super.transform(fn);
   }
 
-  $data<T>(_cast: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
-    return super.$data(_cast);
+  castData<T>(_cast: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
+    return super.castData(_cast);
   }
 }

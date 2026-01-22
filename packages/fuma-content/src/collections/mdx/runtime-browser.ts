@@ -1,19 +1,15 @@
 "use client";
 
 import { type ReactNode, lazy, createElement } from "react";
-import type { GetCollectionConfig } from "@/types";
-import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import { SimpleCollectionStore } from "@/collections/runtime/store";
-import type { GitFileData } from "@/plugins/git";
+import type { Awaitable, GetCollectionConfig } from "@/types";
+import { MapCollectionStore } from "@/collections/runtime/store";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 import type { MDXCollection } from "../mdx";
 
-export interface MDXStoreBrowserData<Frontmatter, CustomData> {
+export interface MDXStoreBrowserData<Frontmatter, Attached = unknown> {
   id: string;
-  preload: () =>
-    | (CompiledMDX<Frontmatter> & CustomData)
-    | Promise<CompiledMDX<Frontmatter> & CustomData>;
+  preload: () => Awaitable<CompiledMDX<Frontmatter> & Attached>;
   _renderer: StoreRendererData;
 }
 
@@ -33,18 +29,21 @@ interface StoreData {
 }
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-    ? _Frontmatter
+  GetCollectionConfig<Config, Name> extends MDXCollection
+    ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 
 export const _internal_data = new Map<string, StoreData>();
 
-export function mdxStoreBrowser<Config, Name extends string>(
+export function mdxStoreBrowser<Config, Name extends string, Attached>(
   name: Name,
   _input: Record<string, () => Promise<unknown>>,
-): SimpleCollectionStore<MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>> {
-  const input = _input as Record<string, () => Promise<CompiledMDX<GetFrontmatter<Config, Name>>>>;
-  const merged = new Map<string, MDXStoreBrowserData<GetFrontmatter<Config, Name>, unknown>>();
+): MapCollectionStore<string, MDXStoreBrowserData<GetFrontmatter<Config, Name>, Attached>> {
+  const input = _input as Record<
+    string,
+    () => Promise<CompiledMDX<GetFrontmatter<Config, Name>> & Attached>
+  >;
+  const merged = new Map<string, MDXStoreBrowserData<GetFrontmatter<Config, Name>, Attached>>();
   function getStoreData(): StoreData {
     let store = _internal_data.get(name);
     if (store) return store;
@@ -66,22 +65,22 @@ export function mdxStoreBrowser<Config, Name extends string>(
       id: key,
       preload() {
         return getStoreData()
-          .preloaded.$value<CompiledMDX<GetFrontmatter<Config, Name>>>()
+          .preloaded.$value<CompiledMDX<GetFrontmatter<Config, Name>> & Attached>()
           .cached(key, value);
       },
       _renderer,
     });
   }
 
-  return new SimpleCollectionStore(merged);
+  return new MapCollectionStore(merged);
 }
 
 /**
  * Renders content with `React.lazy`.
  */
-export function useRenderer<Frontmatter, CustomData>(
-  entry: MDXStoreBrowserData<Frontmatter, CustomData> | undefined,
-  renderFn: (data: CompiledMDX<Frontmatter> & CustomData) => ReactNode,
+export function useRenderer<Frontmatter, Attached>(
+  entry: MDXStoreBrowserData<Frontmatter, Attached> | undefined,
+  renderFn: (data: CompiledMDX<Frontmatter> & Attached) => ReactNode,
 ): ReactNode {
   if (!entry) return null;
   const {
@@ -100,7 +99,7 @@ export function useRenderer<Frontmatter, CustomData>(
       forceOnDemand: false,
       fn() {
         const v = entry.preload();
-        if (!(v instanceof Promise) && !this.forceOnDemand) {
+        if (!("then" in v) && !this.forceOnDemand) {
           return renderFn(v);
         }
 
@@ -115,22 +114,4 @@ export function useRenderer<Frontmatter, CustomData>(
   return renderer.fn();
 }
 
-export function $attachCompiled<Add>() {
-  return <T>(data: T) =>
-    data as T extends MDXStoreBrowserData<infer Frontmatter, infer CustomData>
-      ? MDXStoreBrowserData<Frontmatter, CustomData & Add>
-      : T;
-}
-
-export function $extractedReferences() {
-  return $attachCompiled<{
-    /**
-     * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-     */
-    extractedReferences: ExtractedReference[];
-  }>();
-}
-
-export function $versionControl() {
-  return $attachCompiled<GitFileData>();
-}
+export type { WithExtractedReferences, WithGit } from "./runtime";

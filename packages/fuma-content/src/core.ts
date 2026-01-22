@@ -284,6 +284,7 @@ export class Core {
     const ctx = this.getPluginContext();
     const promises: Awaitable<void>[] = [];
 
+    server.watcher?.add(this.options.configPath);
     for (const plugin of this.plugins) {
       promises.push(plugin.configureServer?.call(ctx, server));
     }
@@ -295,6 +296,10 @@ export class Core {
     }
 
     await Promise.all(promises);
+  }
+
+  async clearOutputDirectory() {
+    await fs.rm(this.options.outDir, { recursive: true, force: true });
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {

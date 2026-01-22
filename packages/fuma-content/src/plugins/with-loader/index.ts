@@ -2,6 +2,8 @@ import { defineCollectionHook } from "@/collections";
 import type { Plugin, PluginContext } from "@/core";
 import { createCache } from "@/utils/async-cache";
 import { NextConfig } from "next";
+import { WebpackLoaderOptions } from "./webpack";
+import path from "node:path";
 
 type Awaitable<T> = T | Promise<T>;
 
@@ -51,6 +53,10 @@ export interface LoaderOutput {
   moduleType?: "js" | "json";
 }
 
+interface NextLoaderContext extends PluginContext {
+  getLoaderOptions: () => WebpackLoaderOptions;
+}
+
 export interface LoaderConfig {
   /** unique ID for loader, used to deduplicate loaders */
   id?: string;
@@ -63,7 +69,7 @@ export interface LoaderConfig {
   test?: RegExp;
 
   createLoader: (this: PluginContext, environment: LoaderEnvironment) => Promise<Loader>;
-  configureNext?: (this: PluginContext, next: NextConfig) => NextConfig;
+  configureNext?: (this: NextLoaderContext, next: NextConfig) => NextConfig;
 }
 
 interface ResolvedLoader {
@@ -110,6 +116,18 @@ export function loaderPlugin(): Plugin {
     name: "fuma-content:loader",
     next: {
       config(config) {
+        const ctx: NextLoaderContext = {
+          ...this,
+          getLoaderOptions: () => {
+            const { configPath, outDir } = this.core.getOptions();
+            return {
+              configPath,
+              outDir,
+              absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
+              isDev: process.env.NODE_ENV === "development",
+            };
+          },
+        };
         for (const collection of this.core.getCollections()) {
           const hook = collection.getPluginHook(loaderHook);
           if (!hook) continue;
@@ -117,7 +135,7 @@ export function loaderPlugin(): Plugin {
           for (const loader of hook.loaders) {
             if (!loader.configureNext) continue;
 
-            config = loader.configureNext.call(this, config);
+            config = loader.configureNext.call(ctx, config);
           }
         }
 

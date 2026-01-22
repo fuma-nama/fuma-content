@@ -1,6 +1,8 @@
 import { type InferPageType, loader, type MetaData, type Source } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
-import { docs } from "content/mdx";
+import { docs } from "content/docs";
+import type { TOCItemType } from "fumadocs-core/toc";
+import type { StructuredData } from "fumadocs-core/mdx-plugins";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(mySource(), {
@@ -8,10 +10,15 @@ export const source = loader(mySource(), {
   plugins: [lucideIconsPlugin()],
 });
 
+interface CompiledProperties {
+  toc?: TOCItemType[];
+  structuredData?: StructuredData;
+}
+
 function mySource(): Source<{
   metaData: MetaData;
   pageData: (typeof docs)["$inferData"]["compiled"]["frontmatter"] & {
-    compiled: (typeof docs)["$inferData"]["compiled"];
+    compiled: (typeof docs)["$inferData"]["compiled"] & CompiledProperties;
   };
 }> {
   return {

@@ -1,10 +1,8 @@
 import type { EmitCodeGeneratorContext } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import path from "node:path";
 import type { Configuration } from "webpack";
 import { LoaderConfig, loaderHook } from "@/plugins/with-loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
-import type { WebpackLoaderOptions } from "@/plugins/with-loader/webpack";
 import { asyncPipe } from "@/utils/pipe";
 import { slash } from "@/utils/code-generator";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
@@ -58,7 +56,7 @@ export class MetaCollection<
         createCodeGenerator("meta.ts", (ctx) => this.generateCollectionStore(ctx)),
       ]);
     });
-    this.pluginHook(loaderHook).loaders.push(jsonLoader());
+    this.pluginHook(loaderHook).loaders.push(metaLoader());
   }
 
   private async generateCollectionStore(context: EmitCodeGeneratorContext) {
@@ -79,8 +77,9 @@ export class MetaCollection<
       base: this.dir,
       eager: true,
     });
-    const initializer = `metaStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${glob})`;
-    codegen.push(`export const ${this.name} = ${initializer};`);
+    codegen.push(
+      `export const ${this.name} = metaStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${glob});`,
+    );
   }
 }
 
@@ -90,21 +89,15 @@ export function metaCollection<Schema extends StandardSchemaV1 | undefined = und
   return new MetaCollection(config);
 }
 
-function jsonLoader(): LoaderConfig {
+function metaLoader(): LoaderConfig {
   const metaLoaderGlob = /\.(json|yaml)(\?.+?)?$/;
 
   return {
-    id: "json",
+    id: "json+yaml",
     test: metaLoaderGlob,
     configureNext(nextConfig) {
-      const { configPath, outDir } = this.core.getOptions();
       const loaderPath = "fuma-content/collections/meta/loader-webpack";
-      const loaderOptions: WebpackLoaderOptions = {
-        configPath,
-        outDir,
-        absoluteCompiledConfigPath: path.resolve(this.core.getCompiledConfigPath()),
-        isDev: process.env.NODE_ENV === "development",
-      };
+      const loaderOptions = this.getLoaderOptions();
 
       return {
         ...nextConfig,

@@ -63,20 +63,20 @@ export class CodeGenerator {
     this.globCache = createCache(globCache);
   }
 
-  addNamespaceImport(namespace: string, specifier: string, types = false) {
+  addNamespaceImport(namespace: string, specifier: string, typeOnly = false) {
     const info = this.importInfos.get(specifier) ?? importInfo();
     this.importInfos.set(specifier, info);
-    if (!types) info.isUsed.add(namespace);
+    if (!typeOnly) info.isUsed.add(namespace);
     info.namespaces.add(namespace);
   }
 
-  addNamedImport(names: string[], specifier: string, types = false) {
+  addNamedImport(names: string[], specifier: string, typeOnly = false) {
     const info = this.importInfos.get(specifier) ?? importInfo();
     this.importInfos.set(specifier, info);
     for (const name of names) {
       const [memberName, importName = memberName] = name.split(/\s+as\s+/, 2);
       info.named.set(importName, memberName);
-      if (!types) info.isUsed.add(importName);
+      if (!typeOnly) info.isUsed.add(importName);
     }
   }
 

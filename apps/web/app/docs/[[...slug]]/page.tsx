@@ -10,10 +10,10 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
-  const { default: MDX } = page.data.compiled;
+  const { default: MDX, toc } = page.data.compiled;
 
   return (
-    <DocsPage>
+    <DocsPage toc={toc}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>

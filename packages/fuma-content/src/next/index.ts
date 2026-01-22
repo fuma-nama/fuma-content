@@ -3,6 +3,7 @@ import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
 import type { FSWatcher } from "chokidar";
+import fs from "node:fs/promises";
 
 export interface NextOptions {
   /**
@@ -16,18 +17,27 @@ export interface NextOptions {
    * @defaultValue '.content'
    */
   outDir?: string;
+
+  /**
+   * clean output directory
+   *
+   * @defaultValue true
+   */
+  clean?: boolean;
 }
 
-export async function createContent(nextOptions: NextOptions = {}) {
-  const core = createNextCore(applyDefaults(nextOptions));
+export async function createContent(rawOptions: NextOptions = {}) {
+  const nextOptions = applyDefaults(rawOptions);
+  const core = createNextCore(nextOptions);
+  if (nextOptions.clean) {
+    await core.clearOutputDirectory();
+  }
   await core.init({
     config: loadConfig(core, true),
   });
 
   if (process.env._FUMA_CONTENT !== "1") {
     process.env._FUMA_CONTENT = "1";
-
-    await core.emit({ write: true });
     await init(process.env.NODE_ENV === "development", core);
   }
 
@@ -42,6 +52,8 @@ export async function createContent(nextOptions: NextOptions = {}) {
 }
 
 async function init(dev: boolean, core: Core): Promise<void> {
+  await core.emit({ write: true });
+
   if (!dev) return;
   const { FSWatcher } = await import("chokidar");
   const { configPath, outDir } = core.getOptions();
@@ -58,7 +70,6 @@ async function init(dev: boolean, core: Core): Promise<void> {
       persistent: true,
       ignored: [outDir],
     });
-    watcher.add(configPath);
 
     watcher.once("ready", () => {
       console.log("[fuma-content] started dev server");
@@ -102,6 +113,7 @@ function applyDefaults(options: NextOptions): Required<NextOptions> {
   return {
     outDir: options.outDir ?? Core.defaultOptions.outDir,
     configPath: options.configPath ?? Core.defaultOptions.configPath,
+    clean: options.clean ?? true,
   };
 }
 

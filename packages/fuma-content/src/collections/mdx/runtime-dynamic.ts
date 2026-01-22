@@ -11,29 +11,27 @@ import type { GetCollectionConfig } from "@/types";
 import { MDXCollection } from "@/collections/mdx";
 import path from "node:path";
 import { createCache } from "@/utils/async-cache";
-import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import type { GitFileData } from "@/plugins/git";
 
-export interface MDXStoreDynamicData<Frontmatter> {
+export interface MDXStoreDynamicData<Frontmatter, Attached = unknown> {
   id: string;
   frontmatter: Frontmatter;
-  compile: () => Promise<CompiledMDX<Frontmatter>>;
+  compile: () => Promise<CompiledMDX<Frontmatter> & Attached>;
 }
 
 let corePromise: Promise<Core>;
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection<infer _Frontmatter>
-    ? _Frontmatter
+  GetCollectionConfig<Config, Name> extends MDXCollection
+    ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 
-export async function mdxStoreDynamic<Config, Name extends string>(
+export async function mdxStoreDynamic<Config, Name extends string, Attached>(
   config: Config,
   coreOptions: CoreOptions,
   name: Name,
   base: string,
   _frontmatter: Record<string, unknown>,
-): Promise<FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>>>> {
+): Promise<FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>, Attached>>> {
   corePromise ??= (async () => {
     const core = new Core(coreOptions);
     await core.init({
@@ -47,8 +45,8 @@ export async function mdxStoreDynamic<Config, Name extends string>(
   if (!collection || !(collection instanceof MDXCollection))
     throw new Error("invalid collection name");
 
-  const merged: Record<string, MDXStoreDynamicData<GetFrontmatter<Config, Name>>> = {};
-  const cache = createCache<CompiledMDX<GetFrontmatter<Config, Name>>>();
+  const merged: Record<string, MDXStoreDynamicData<GetFrontmatter<Config, Name>, Attached>> = {};
+  const cache = createCache<CompiledMDX<GetFrontmatter<Config, Name>> & Attached>();
 
   for (const [k, v] of Object.entries(frontmatter)) {
     merged[k] = {
@@ -70,7 +68,7 @@ export async function mdxStoreDynamic<Config, Name extends string>(
 
           return (await executeMdx(String(compiled.value), {
             baseUrl: pathToFileURL(filePath),
-          })) as CompiledMDX<GetFrontmatter<Config, Name>>;
+          })) as CompiledMDX<GetFrontmatter<Config, Name>> & Attached;
         });
       },
     };
@@ -107,24 +105,4 @@ async function executeMdx(compiled: string, options: Options = {}) {
   };
 }
 
-export function $attachCompiled<Add>() {
-  return <T>(data: T) =>
-    data as T extends MDXStoreDynamicData<unknown>
-      ? T & {
-          compile: () => Promise<Awaited<ReturnType<T["compile"]>> & Add>;
-        }
-      : T;
-}
-
-export function $extractedReferences() {
-  return $attachCompiled<{
-    /**
-     * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-     */
-    extractedReferences: ExtractedReference[];
-  }>();
-}
-
-export function $versionControl() {
-  return $attachCompiled<GitFileData>();
-}
+export type { WithExtractedReferences, WithGit } from "./runtime";
