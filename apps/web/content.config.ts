@@ -1,11 +1,11 @@
-import { defineMDX } from "fuma-content/collections/mdx";
+import { mdxCollection } from "fuma-content/collections/mdx";
 import { defineConfig } from "fuma-content/config";
 import { pageSchema } from "fumadocs-core/source/schema";
 import git from "fuma-content/plugins/git";
 import { mdxPreset } from "fumadocs-core/content/mdx/preset-bundler";
-import { studio } from "@fuma-content/studio";
+import { loaderPlugin } from "fuma-content/plugins/with-loader";
 
-export const docs = defineMDX({
+export const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: pageSchema,
   postprocess: {
@@ -24,7 +24,5 @@ export const docs = defineMDX({
 });
 
 export default defineConfig({
-  plugins: [git(), studio()],
+  plugins: [git(), loaderPlugin()],
 });
-
-collection().input().handlers().output();

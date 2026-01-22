@@ -15,6 +15,7 @@ import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
 import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
+import { gitHook } from "@/plugins/git";
 
 interface CompilationContext {
   collection: Collection;
@@ -132,6 +133,29 @@ export class MDXCollection<
 
     const { loaders } = this.pluginHook(loaderHook);
     loaders.push(mdxLoader());
+
+    this.pluginHook(gitHook).onClient.hook(({ client }) => {
+      this.storeInitializer.pipe((initializer, { codegen, environment }) => {
+        codegen.addNamedImport(["$versionControl"], RuntimePaths[environment]);
+        return `${initializer}.$data($versionControl())`;
+      });
+
+      this.vfile.pipe(async (file) => {
+        const vcData = await client.getFileData({ filePath: file.path });
+        file.data["mdx-export"] ??= [];
+        file.data["mdx-export"].push(
+          {
+            name: "lastModified",
+            value: vcData.lastModified,
+          },
+          {
+            name: "creationDate",
+            value: vcData.creationDate,
+          },
+        );
+        return file;
+      });
+    });
   }
 
   private generateDocCollectionFrontmatterGlob(context: EmitCodeGeneratorContext, eager = false) {
