@@ -3,7 +3,6 @@ import { defineConfig } from "fuma-content/config";
 import { pageSchema } from "fumadocs-core/source/schema";
 import git from "fuma-content/plugins/git";
 import { mdxPreset } from "fumadocs-core/content/mdx/preset-bundler";
-import { loaderPlugin } from "fuma-content/plugins/with-loader";
 
 export const docs = mdxCollection({
   dir: "content/docs",
@@ -24,5 +23,5 @@ export const docs = mdxCollection({
 });
 
 export default defineConfig({
-  plugins: [git(), loaderPlugin()],
+  plugins: [git()],
 });

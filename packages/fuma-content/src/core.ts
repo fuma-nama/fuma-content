@@ -109,6 +109,7 @@ export interface ResolvedCoreOptions {
     name: string;
     dir: string;
   };
+  plugins?: PluginOption;
 }
 
 export interface EmitOptions {
@@ -183,19 +184,17 @@ export class Core {
 
   async init({
     config: newConfig,
-    plugins: customPlugins,
   }: {
     /**
      * either the default export or all exports of config file.
      */
     config: Awaitable<Record<string, unknown>>;
-    plugins?: PluginOption;
   }) {
     this.config = await this.initConfig(await newConfig);
     this.cache.clear();
     this.workspaces.clear();
     this.plugins = await getPlugins([
-      customPlugins,
+      this.options.plugins,
       this.config.plugins,
       ...this.config.collections.values().map((collection) => collection.plugins),
     ]);

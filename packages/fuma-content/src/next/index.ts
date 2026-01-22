@@ -3,7 +3,7 @@ import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
 import { Core } from "@/core";
 import type { FSWatcher } from "chokidar";
-import fs from "node:fs/promises";
+import { loaderPlugin } from "@/plugins/with-loader";
 
 export interface NextOptions {
   /**
@@ -19,7 +19,7 @@ export interface NextOptions {
   outDir?: string;
 
   /**
-   * clean output directory
+   * clean output directory on start
    *
    * @defaultValue true
    */
@@ -27,20 +27,22 @@ export interface NextOptions {
 }
 
 export async function createContent(rawOptions: NextOptions = {}) {
+  const isFirstStart = process.env._FUMA_CONTENT !== "1";
+  process.env._FUMA_CONTENT = "1";
+
   const nextOptions = applyDefaults(rawOptions);
   const core = createNextCore(nextOptions);
-  if (nextOptions.clean) {
+  if (nextOptions.clean && isFirstStart) {
     await core.clearOutputDirectory();
   }
+
   await core.init({
     config: loadConfig(core, true),
   });
 
-  if (process.env._FUMA_CONTENT !== "1") {
-    process.env._FUMA_CONTENT = "1";
+  if (isFirstStart) {
     await init(process.env.NODE_ENV === "development", core);
   }
-
   return (nextConfig: NextConfig = {}): NextConfig => {
     const ctx = core.getPluginContext();
     for (const plugin of core.getPlugins(true)) {
@@ -121,5 +123,6 @@ function createNextCore(options: Required<NextOptions>): Core {
   return new Core({
     outDir: options.outDir,
     configPath: options.configPath,
+    plugins: [loaderPlugin()],
   });
 }
