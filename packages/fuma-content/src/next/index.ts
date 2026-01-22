@@ -24,8 +24,8 @@ export async function createContent(nextOptions: NextOptions = {}) {
     config: loadConfig(core, true),
   });
 
-  if (process.env._FUMADOCS_MDX !== "1") {
-    process.env._FUMADOCS_MDX = "1";
+  if (process.env._FUMA_CONTENT !== "1") {
+    process.env._FUMA_CONTENT = "1";
 
     await core.emit({ write: true });
     await init(process.env.NODE_ENV === "development", core);
@@ -61,12 +61,12 @@ async function init(dev: boolean, core: Core): Promise<void> {
     watcher.add(configPath);
 
     watcher.once("ready", () => {
-      console.log("[MDX] started dev server");
+      console.log("[fuma-content] started dev server");
     });
 
     watcher.on("all", (_event, file) => {
       if (path.resolve(file) === absoluteConfigPath) {
-        console.log("[MDX] restarting dev server");
+        console.log("[fuma-content] restarting dev server");
         watcher?.removeAllListeners();
         void (async () => {
           await core.init({
@@ -83,7 +83,7 @@ async function init(dev: boolean, core: Core): Promise<void> {
 
   process.on("exit", () => {
     if (!watcher || watcher.closed) return;
-    console.log("[MDX] closing dev server");
+    console.log("[fuma-content] closing dev server");
     void watcher.close();
   });
 

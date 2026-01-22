@@ -18,7 +18,7 @@ export class Collection {
   readonly onInit = asyncHook<CollectionHookContext>();
   readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
   /**
-   * Configure Fumadocs dev server
+   * Configure watch/dev server
    */
   readonly onServer = asyncHook<CollectionHookContext & { server: ServerContext }>();
   readonly plugins: PluginOption[] = [];

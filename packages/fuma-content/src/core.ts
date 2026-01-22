@@ -60,7 +60,7 @@ export interface Plugin {
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
   /**
-   * Configure Fumadocs dev server
+   * Configure watch/dev server
    */
   configureServer?: (this: PluginContext, server: ServerContext) => Awaitable<void>;
 
@@ -355,8 +355,8 @@ export class Core {
 
       console.log(
         workspace
-          ? `[MDX: ${workspace.name}] generated files in ${performance.now() - start}ms`
-          : `[MDX] generated files in ${performance.now() - start}ms`,
+          ? `[fuma-content: ${workspace.name}] generated files in ${performance.now() - start}ms`
+          : `[fuma-content] generated files in ${performance.now() - start}ms`,
       );
     }
 

@@ -9,13 +9,6 @@ export interface PluginOptions {
   configPath?: string;
 
   /**
-   * Update Vite config to fix module resolution of Fumadocs
-   *
-   * @defaultValue true
-   */
-  updateViteConfig?: boolean;
-
-  /**
    * Output directory of generated files
    *
    * @defaultValue '.content'
@@ -75,7 +68,6 @@ function vitePlugin(): Plugin {
 
 function applyDefaults(options: PluginOptions): Required<PluginOptions> {
   return {
-    updateViteConfig: options.updateViteConfig ?? true,
     configPath: options.configPath ?? Core.defaultOptions.configPath,
     outDir: options.outDir ?? Core.defaultOptions.outDir,
   };
