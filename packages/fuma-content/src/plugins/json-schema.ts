@@ -1,5 +1,5 @@
 import { defineCollectionHook } from "@/collections";
-import type { Plugin } from "@/core";
+import { FileSystemCollection } from "@/collections/fs";
 import { Awaitable } from "@/types";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -11,55 +11,37 @@ export interface JSONSchemaOptions {
    * @defaultValue false
    */
   insert?: boolean;
-}
 
-export interface JSONSchemaHook {
-  schemaPath?: string;
+  /**
+   * create JSON schema
+   */
   create?: () => Awaitable<object | undefined>;
 }
 
-export const jsonSchemaHook = defineCollectionHook<JSONSchemaHook>((collection) => {
-  const hook: JSONSchemaHook = {};
-  function getSchemaPath(name: string) {
-    return `json-schema/${name}.json`;
-  }
-
-  collection.onEmit.pipe(async (entries) => {
-    const jsonSchema = await hook.create?.();
-    if (!jsonSchema) return entries;
-    entries.push({
-      path: hook.schemaPath ?? getSchemaPath(collection.name),
-      content: JSON.stringify(jsonSchema, null, 2),
-    });
-    return entries;
-  });
-  return hook;
-});
+export interface JSONSchemaHook {
+  getSchemaPath: () => string;
+  create?: () => Awaitable<object | undefined>;
+}
 
 /**
- * Generate JSON schemas locally for collection schemas
- *
- * Requires the `json-schema` handler to be implemented.
+ * Generate JSON schemas locally for collection schemas.
  */
-export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): Plugin {
-  function getSchemaPath(name: string) {
-    return `json-schema/${name}.json`;
-  }
+export const jsonSchemaHook = defineCollectionHook<JSONSchemaHook, JSONSchemaOptions>(
+  (collection, { insert = false, create }) => {
+    const hook: JSONSchemaHook = {
+      create,
+      getSchemaPath() {
+        return `json-schema/${collection.name}.json`;
+      },
+    };
 
-  return {
-    name: "json-schema",
-    configureServer(server) {
-      const { outDir } = this.core.getOptions();
-      if (!server.watcher || !insert) return;
+    collection.onServer.hook(({ core, server }) => {
+      const { outDir } = core.getOptions();
+      if (!server.watcher || !insert || !(collection instanceof FileSystemCollection)) return;
 
       server.watcher.on("add", async (file) => {
-        const match = this.core.getCollections().find((collection) => {
-          const handler = getHandler<FileCollectionHandler>(collection, "storage");
-          if (!handler) return false;
-          return handler.hasFile(file);
-        });
+        if (!collection.hasFile(file) || !file.endsWith(".json")) return;
 
-        if (!match) return;
         let obj: object;
         try {
           const content = (await fs.readFile(file)).toString();
@@ -69,10 +51,7 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
         }
 
         if ("$schema" in obj) return;
-        const schemaPath = path.join(
-          outDir,
-          getSchemaPath(parent ? `${parent.name}.meta` : match.name),
-        );
+        const schemaPath = path.join(outDir, hook.getSchemaPath());
         const updated = {
           $schema: path.relative(path.dirname(file), schemaPath),
           ...obj,
@@ -80,7 +59,16 @@ export default function jsonSchema({ insert = false }: JSONSchemaOptions = {}): 
 
         await fs.writeFile(file, JSON.stringify(updated, null, 2));
       });
-    },
-    async emit() {},
-  };
-}
+    });
+    collection.onEmit.pipe(async (entries) => {
+      const jsonSchema = await hook.create?.();
+      if (!jsonSchema) return entries;
+      entries.push({
+        path: hook.getSchemaPath(),
+        content: JSON.stringify(jsonSchema, null, 2),
+      });
+      return entries;
+    });
+    return hook;
+  },
+);

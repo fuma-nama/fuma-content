@@ -1,5 +1,6 @@
 import { Core, EmitContext, EmitEntry, PluginOption, ResolvedConfig, ServerContext } from "@/core";
-import { asyncHookPipe, asyncPipe } from "@/utils/pipe";
+import { asyncHook } from "@/utils/hook";
+import { asyncPipe } from "@/utils/pipe";
 
 export interface CollectionHookContext {
   core: Core;
@@ -13,25 +14,28 @@ export class Collection {
   /**
    * on config loaded/updated
    */
-  readonly onConfig = asyncPipe<ResolvedConfig, CollectionHookContext>();
-  readonly onInit = asyncHookPipe<CollectionHookContext>();
+  readonly onConfig = asyncHook<CollectionHookContext & { config: ResolvedConfig }>();
+  readonly onInit = asyncHook<CollectionHookContext>();
   readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
-  readonly plugins: PluginOption[] = [];
   /**
    * Configure Fumadocs dev server
    */
-  readonly onServer = asyncHookPipe<CollectionHookContext & { server: ServerContext }>();
+  readonly onServer = asyncHook<CollectionHookContext & { server: ServerContext }>();
+  readonly plugins: PluginOption[] = [];
 
   transform(transformer: (collection: this) => void): this {
     transformer(this);
     return this;
   }
 
-  pluginHook<T>(hook: CollectionHook<T>, init?: T): T {
+  pluginHook<T, Options>(hook: CollectionHook<T, Options>, options: Options): T;
+  pluginHook<T>(hook: CollectionHook<T>): T;
+
+  pluginHook<T, O>(hook: CollectionHook<T, O>, options?: O): T {
     let created = this.pluginHooks.get(hook.id) as T | undefined;
     if (created) return created;
 
-    created = init ?? hook.create(this);
+    created = hook.create(this, options as O);
     this.pluginHooks.set(hook.id, created);
     return created;
   }
@@ -41,12 +45,14 @@ export class Collection {
   }
 }
 
-export interface CollectionHook<T = unknown> {
+export interface CollectionHook<T = unknown, Options = undefined> {
   id: symbol;
-  create: (collection: Collection) => T;
+  create: (collection: Collection, options: Options) => T;
 }
 
-export function defineCollectionHook<T>(init: (collection: Collection) => T): CollectionHook<T> {
+export function defineCollectionHook<T, Options = undefined>(
+  init: (collection: Collection, options: Options) => T,
+): CollectionHook<T, Options> {
   return {
     id: Symbol(),
     create: init,

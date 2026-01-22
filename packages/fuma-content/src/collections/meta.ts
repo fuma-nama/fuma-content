@@ -14,9 +14,10 @@ export interface MetaTransformationContext {
   source: string;
 }
 
-export interface MetaCollectionConfig<
-  Schema extends StandardSchemaV1 | undefined = undefined,
-> extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
+export interface MetaCollectionConfig<Schema extends StandardSchemaV1 | undefined> extends Omit<
+  FileSystemCollectionConfig,
+  "supportedFormats"
+> {
   schema?: Schema;
 }
 
@@ -31,14 +32,14 @@ export class MetaCollection<
   $inferInput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : unknown;
   $inferOutput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : unknown;
 
-  constructor(config: MetaCollectionConfig) {
+  constructor(config: MetaCollectionConfig<Schema>) {
     super({
       dir: config.dir,
       files: config.files,
       supportedFormats: ["json", "yaml"],
     });
     this.schema = config.schema;
-    this.onServer.pipe(({ core, server }) => {
+    this.onServer.hook(({ core, server }) => {
       if (!server.watcher) return;
 
       server.watcher.on("all", async (event, file) => {
@@ -81,6 +82,12 @@ export class MetaCollection<
     const initializer = `metaStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${glob})`;
     codegen.push(`export const ${this.name} = ${initializer};`);
   }
+}
+
+export function metaCollection<Schema extends StandardSchemaV1 | undefined = undefined>(
+  config: MetaCollectionConfig<Schema>,
+) {
+  return new MetaCollection(config);
 }
 
 function jsonLoader(): LoaderConfig {

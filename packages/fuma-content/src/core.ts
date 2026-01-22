@@ -205,9 +205,16 @@ export class Core {
       const out = await plugin.config?.call(ctx, this.config);
       if (out) this.config = out;
     }
-    for (const collection of this.config.collections.values()) {
-      this.config = await collection.onConfig.run(this.config, { collection, core: this });
-    }
+
+    await Promise.all(
+      this.config.collections.values().map(async (collection) => {
+        await collection.onConfig.run({ collection, core: this, config: this.config });
+
+        for (const plugin of this.plugins) {
+          await plugin.collection?.call(ctx, collection);
+        }
+      }),
+    );
 
     // only support workspaces with max depth 1
     if (!this.options.workspace && this.config.workspaces) {
@@ -228,14 +235,6 @@ export class Core {
         }),
       );
     }
-
-    await Promise.all(
-      this.config.collections.values().map(async (collection) => {
-        for (const plugin of this.plugins) {
-          await plugin.collection?.call(ctx, collection);
-        }
-      }),
-    );
   }
 
   getWorkspaces() {
@@ -394,14 +393,14 @@ export class Core {
       globalConfig = config as GlobalConfig;
     }
 
-    if (globalConfig.collections) {
-      for (const [name, collection] of Object.entries(globalConfig.collections)) {
+    globalConfig.collections ??= {};
+    await Promise.all(
+      Object.entries(globalConfig.collections).map(async ([name, collection]) => {
         collection.name = name;
-        await collection.onInit.run({ collection, core: this });
         collections.set(name, collection);
-      }
-    }
-
+        await collection.onInit.run({ collection, core: this });
+      }),
+    );
     return {
       ...globalConfig,
       collections,

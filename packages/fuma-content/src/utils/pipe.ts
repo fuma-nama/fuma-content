@@ -61,29 +61,3 @@ export function asyncPipe<Data, Context>(
     },
   };
 }
-
-export interface AsyncHookPipe<Context = undefined> {
-  /**
-   * add a hook
-   *
-   * @returns the same pipe instance
-   */
-  pipe: (fn: (context: Context) => Awaitable<void>) => AsyncHookPipe<Context>;
-  run: (context: Context) => Awaitable<void>;
-  clone: () => AsyncHookPipe<Context>;
-}
-
-export function asyncHookPipe<Context>(pipe = asyncPipe<void, Context>()): AsyncHookPipe<Context> {
-  return {
-    run(ctx) {
-      return pipe.run(undefined, ctx);
-    },
-    pipe(fn) {
-      pipe.pipe((_, ctx) => fn(ctx));
-      return this;
-    },
-    clone() {
-      return asyncHookPipe(pipe.clone());
-    },
-  };
-}

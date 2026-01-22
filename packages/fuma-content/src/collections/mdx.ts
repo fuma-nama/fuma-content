@@ -23,7 +23,7 @@ interface CompilationContext {
 }
 
 export interface MDXCollectionConfig<
-  FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
+  FrontmatterSchema extends StandardSchemaV1 | undefined,
 > extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
   postprocess?: Partial<PostprocessOptions>;
   frontmatter?: FrontmatterSchema;
@@ -72,7 +72,7 @@ export class MDXCollection<
     ? StandardSchemaV1.InferOutput<FrontmatterSchema>
     : Record<string, unknown>;
 
-  constructor(config: MDXCollectionConfig) {
+  constructor(config: MDXCollectionConfig<FrontmatterSchema>) {
     super({
       dir: config.dir,
       files: config.files,
@@ -115,7 +115,7 @@ export class MDXCollection<
         ),
       ]);
     });
-    this.onServer.pipe(({ core, server }) => {
+    this.onServer.hook(({ core, server }) => {
       if (!server.watcher) return;
 
       server.watcher.on("all", async (event, file) => {
@@ -233,6 +233,12 @@ export class MDXCollection<
     });
     codegen.push(`export const ${this.name} = ${initializer};`);
   }
+}
+
+export function mdxCollection<FrontmatterSchema extends StandardSchemaV1 | undefined = undefined>(
+  config: MDXCollectionConfig<FrontmatterSchema>,
+) {
+  return new MDXCollection(config);
 }
 
 function mdxLoader(): LoaderConfig {

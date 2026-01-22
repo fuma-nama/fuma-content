@@ -12,7 +12,7 @@ import { MDXCollection } from "@/collections/mdx";
 import path from "node:path";
 import { createCache } from "@/utils/async-cache";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import type { VersionControlFileData } from "@/plugins/git";
+import type { GitFileData } from "@/plugins/git";
 
 export interface MDXStoreDynamicData<Frontmatter> {
   id: string;
@@ -126,5 +126,5 @@ export function $extractedReferences() {
 }
 
 export function $versionControl() {
-  return $attachCompiled<VersionControlFileData>();
+  return $attachCompiled<GitFileData>();
 }

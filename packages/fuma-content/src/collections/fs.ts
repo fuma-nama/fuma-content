@@ -19,10 +19,10 @@ export class FileSystemCollection extends Collection {
       supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`,
     ];
 
-    this.onInit.pipe(({ core }) => {
+    this.onInit.hook(({ core }) => {
       this.dir = path.resolve(core.getOptions().cwd, config.dir);
     });
-    this.onServer.pipe(({ server: { watcher } }) => {
+    this.onServer.hook(({ server: { watcher } }) => {
       if (!watcher) return;
       watcher.add(this.dir);
     });

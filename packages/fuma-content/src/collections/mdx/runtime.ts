@@ -2,7 +2,7 @@ import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-import type { VersionControlFileData } from "@/plugins/git";
+import type { GitFileData } from "@/plugins/git";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
 export interface MDXStoreData<Frontmatter> {
@@ -87,5 +87,5 @@ export function $extractedReferences() {
 }
 
 export function $versionControl() {
-  return $attachCompiled<VersionControlFileData>();
+  return $attachCompiled<GitFileData>();
 }

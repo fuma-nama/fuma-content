@@ -4,7 +4,7 @@ import { type ReactNode, lazy, createElement } from "react";
 import type { GetCollectionConfig } from "@/types";
 import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
 import { SimpleCollectionStore } from "@/collections/runtime/store";
-import type { VersionControlFileData } from "@/plugins/git";
+import type { GitFileData } from "@/plugins/git";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 import type { MDXCollection } from "../mdx";
@@ -132,5 +132,5 @@ export function $extractedReferences() {
 }
 
 export function $versionControl() {
-  return $attachCompiled<VersionControlFileData>();
+  return $attachCompiled<GitFileData>();
 }
