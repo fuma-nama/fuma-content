@@ -7,7 +7,7 @@ import { defineConfig, type GlobalConfig } from "@/config";
 import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
 import { fumaMatter } from "@/collections/mdx/fuma-matter";
-import { metaCollection } from "@/collections/meta";
+import { dataCollection } from "@/collections/data";
 
 test("format errors", async () => {
   const schema = z.object({
@@ -65,7 +65,7 @@ const cases: {
     name: "sync-meta",
     config: defineConfig({
       collections: {
-        docs: metaCollection({
+        docs: dataCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
         }),
       },

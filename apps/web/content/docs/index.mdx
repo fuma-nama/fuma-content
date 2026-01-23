@@ -14,7 +14,7 @@ Fuma Content process content via **Collections** and **Plugins**.
 - **Collections** implement a list of handlers, each handler contains options for specific functionality, such as MDX compilation.
 - **Plugins** declare & read options from collection handlers, then integrate into bundler or file generation layer to process content.
 
-**Built-in Collections:** MDX, Meta (supporting JSON and YAML files).
+**Built-in Collections:** MDX, Data (supporting JSON and YAML files).
 
 Fuma Content is a foundational layer, we plan to build more on top such as WYSIWYG editor plugin, or CMS plugin.
 
@@ -158,9 +158,9 @@ function Page({ id }: { id: string }) {
 }
 ```
 
-```ts tab="Meta (Server)"
+```ts tab="Data (Server)"
 import { authors } from "content/authors";
 
-// a list of objects parsed from all meta files
+// a list of objects parsed from all data files
 console.log(authors.list());
 ```

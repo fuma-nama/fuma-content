@@ -10,7 +10,7 @@ export default defineConfig({
 
     "./src/collections/*.ts",
     "./src/collections/{handlers,runtime,storage}/*.ts",
-    "./src/collections/{mdx,meta}/{loader-webpack,runtime,runtime-browser,runtime-dynamic}.ts",
+    "./src/collections/**/{loader-webpack,runtime,runtime-*}.ts",
 
     "./src/plugins/*.ts",
     "./src/plugins/loader/{index,webpack}.ts",

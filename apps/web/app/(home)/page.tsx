@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 
 // language=ts
 const config = `import { mdxCollection } from "fuma-content/collections/mdx"
-import { metaCollection } from "fuma-content/collections/meta"
+import { dataCollection } from "fuma-content/collections/data"
 import git from "fuma-content/plugins/git"
 import { defineConfig } from "fuma-content/config"
 import { z } from "zod"
@@ -25,7 +25,7 @@ const docs = mdxCollection({
   lazy: true,
 })
 
-const authors = metaCollection({
+const authors = dataCollection({
   dir: "content/docs",
   files: ["authors.json"],
   schema: z.object({

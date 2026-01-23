@@ -1,26 +1,25 @@
 import type { GetCollectionConfig } from "@/types";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
-import type { MetaCollection } from "@/collections/meta";
+import type { DataCollection } from "@/collections/data";
 
-export function metaStore<Config, Name extends string>(
+export function dataStore<Config, Name extends string>(
   _name: Name,
   base: string,
   input: Record<string, unknown>,
 ): FileCollectionStore<{
-  data: GetCollectionConfig<Config, Name> extends MetaCollection<infer Data> ? Data : never;
+  data: GetCollectionConfig<Config, Name> extends DataCollection<infer Data> ? Data : never;
 }> {
-  type Metadata =
-    GetCollectionConfig<Config, Name> extends MetaCollection<infer Data> ? Data : never;
+  type Data = GetCollectionConfig<Config, Name> extends DataCollection<infer Data> ? Data : never;
   const merged: Record<
     string,
     {
-      data: Metadata;
+      data: Data;
     }
   > = {};
 
   for (const [key, value] of Object.entries(input)) {
     merged[key] = {
-      data: value as Metadata,
+      data: value as Data,
     };
   }
 
