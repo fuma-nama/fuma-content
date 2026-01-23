@@ -1,7 +1,7 @@
 import type { SourceMap } from "rollup";
 import type { PluginOption } from "vite";
 import { parse } from "node:querystring";
-import type { Loader } from "@/plugins/with-loader";
+import type { Loader } from "@/plugins/loader";
 
 export function toVite(name: string, test: RegExp | undefined, loader: Loader): PluginOption {
   return {

@@ -2,7 +2,7 @@ import { Core } from "@/core";
 import type { LoadFnOutput, LoadHook, LoadHookContext } from "node:module";
 import { createCache } from "@/utils/async-cache";
 import { createDynamicCore } from "@/dynamic";
-import { loaderPlugin } from "@/plugins/with-loader";
+import { loaderPlugin } from "@/plugins/loader";
 
 const configLoader = createDynamicCore({
   core: new Core({

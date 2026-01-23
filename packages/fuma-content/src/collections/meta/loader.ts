@@ -1,4 +1,4 @@
-import type { Loader, LoaderInput } from "@/plugins/with-loader";
+import type { Loader, LoaderInput } from "@/plugins/loader";
 import { load } from "js-yaml";
 import { z } from "zod";
 import { validate } from "@/utils/validation";

@@ -5,7 +5,7 @@ import type { ProcessorOptions } from "@mdx-js/mdx";
 import type { VFile } from "vfile";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { Configuration } from "webpack";
-import { LoaderConfig, loaderHook } from "@/plugins/with-loader";
+import { LoaderConfig, loaderHook } from "@/plugins/loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
 import { slash } from "@/utils/code-generator";

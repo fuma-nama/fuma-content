@@ -4,7 +4,7 @@ import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import type { Loader } from "@/plugins/with-loader";
+import type { Loader } from "@/plugins/loader";
 import type { DynamicCore } from "@/dynamic";
 import { MDXCollection } from "../mdx";
 

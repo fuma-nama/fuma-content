@@ -1,7 +1,7 @@
 import type { BunPlugin } from "bun";
 import { pathToFileURL } from "node:url";
 import { type CoreOptions, Core } from "@/core";
-import { loaderPlugin } from "@/plugins/with-loader";
+import { loaderPlugin } from "@/plugins/loader";
 
 export type ContentPluginOptions = Omit<Partial<CoreOptions>, "plugins">;
 

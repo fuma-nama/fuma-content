@@ -134,25 +134,25 @@ export interface EmitOutput {
   workspaces: Record<string, EmitEntry[]>;
 }
 
-async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
-  async function load(pluginOptions: PluginOption[]): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
-
-    for (const option of await Promise.all(pluginOptions)) {
-      if (!option) continue;
-      if (Array.isArray(option)) plugins.push(...(await load(option)));
-      else plugins.push(option);
-    }
-    return plugins;
+async function getPlugins(pluginOptions: PluginOption[], dedupe = true): Promise<Plugin[]> {
+  const plugins: Plugin[] = [];
+  for (const option of await Promise.all(pluginOptions)) {
+    if (!option) continue;
+    if (Array.isArray(option)) plugins.push(...(await getPlugins(option, false)));
+    else plugins.push(option);
   }
 
-  let plugins: Plugin[] = [];
-  for (const plugin of await load(pluginOptions)) {
-    if (plugin.dedupe) plugins = plugins.filter((other) => other.name !== plugin.name);
-    plugins.push(plugin);
-  }
+  if (!dedupe) return plugins;
 
-  return plugins;
+  const excludedName = new Set<string>();
+  const deduped: Plugin[] = [];
+  for (let i = plugins.length - 1; i >= 0; i--) {
+    const plugin = plugins[i];
+    if (excludedName.has(plugin.name)) continue;
+    deduped.unshift(plugin);
+    if (plugin.dedupe) excludedName.add(plugin.name);
+  }
+  return deduped;
 }
 
 export class Core {
@@ -331,13 +331,12 @@ export class Core {
       workspaces: {},
     };
 
-    for (const entries of await Promise.all(
-      this.getCollections().map((collection) => {
-        if (filterCollection && !filterCollection(collection)) return null;
-        return collection.onEmit.run([], ctx);
-      }),
-    )) {
-      if (!entries) continue;
+    const generated: Awaitable<EmitEntry[]>[] = [];
+    for (const collection of this.getCollections()) {
+      if (filterCollection && !filterCollection(collection)) continue;
+      generated.push(collection.onEmit.run([], ctx));
+    }
+    for (const entries of await Promise.all(generated)) {
       for (const item of entries) {
         if (added.has(item.path)) continue;
         out.entries.push(item);
@@ -361,12 +360,10 @@ export class Core {
       );
     }
 
-    await Promise.all(
-      this.workspaces.entries().map(async ([name, workspace]) => {
-        if (filterWorkspace && !filterWorkspace(name)) return;
-        out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
-      }),
-    );
+    for (const [name, workspace] of this.workspaces.entries()) {
+      if (filterWorkspace && !filterWorkspace(name)) continue;
+      out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
+    }
 
     return out;
   }

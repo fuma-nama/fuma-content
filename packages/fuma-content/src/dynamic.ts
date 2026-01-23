@@ -37,19 +37,20 @@ export function createDynamicCore({
     return stats.mtime.getTime().toString();
   }
 
+  async function init() {
+    const { loadConfig } = await import("./config/load-from-file");
+    await core.init({
+      config: loadConfig(core, buildConfig),
+    });
+  }
+
   return {
     async getCore() {
       const hash = await getConfigHash();
       if (!prev || hash !== prev.hash) {
         prev = {
           hash,
-          init: (async () => {
-            const { loadConfig } = await import("./config/load-from-file");
-
-            await core.init({
-              config: loadConfig(core, buildConfig),
-            });
-          })(),
+          init: init(),
         };
       }
 

@@ -1,7 +1,7 @@
 import type { PluginOption } from "vite";
 import type { FSWatcher } from "chokidar";
 import { Core, type Plugin } from "@/core";
-import { loaderPlugin } from "@/plugins/with-loader";
+import { loaderPlugin } from "@/plugins/loader";
 
 export interface PluginOptions {
   /**

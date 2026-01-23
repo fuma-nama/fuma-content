@@ -6,7 +6,7 @@ import type { Core } from "@/core";
 import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
 import { createCache } from "@/utils/async-cache";
-import type { CompilerOptions } from "@/plugins/with-loader";
+import type { CompilerOptions } from "@/plugins/loader";
 import type { FC } from "react";
 import type { MDXProps } from "mdx/types";
 import { MDXCollection } from "../mdx";

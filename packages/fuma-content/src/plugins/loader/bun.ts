@@ -1,6 +1,6 @@
 import { parse } from "node:querystring";
 import { readFileSync } from "node:fs";
-import type { LoaderInput, Loader, LoaderOutput } from "@/plugins/with-loader";
+import type { LoaderInput, Loader, LoaderOutput } from "@/plugins/loader";
 
 export function toBun(test: RegExp = /.+/, loader: Loader) {
   function toResult(output: LoaderOutput | null): Bun.OnLoadResult {

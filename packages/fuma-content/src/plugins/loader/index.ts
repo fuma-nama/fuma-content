@@ -2,7 +2,7 @@ import { defineCollectionHook } from "@/collections";
 import type { Plugin, PluginContext } from "@/core";
 import { createCache } from "@/utils/async-cache";
 import { NextConfig } from "next";
-import { WebpackLoaderOptions } from "./webpack";
+import { WebpackLoaderOptions } from "./webpack.js";
 import path from "node:path";
 
 type Awaitable<T> = T | Promise<T>;

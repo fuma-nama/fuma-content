@@ -1,7 +1,7 @@
 import type { EmitCodeGeneratorContext } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { Configuration } from "webpack";
-import { LoaderConfig, loaderHook } from "@/plugins/with-loader";
+import { LoaderConfig, loaderHook } from "@/plugins/loader";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import { asyncPipe } from "@/utils/pipe";
 import { slash } from "@/utils/code-generator";
