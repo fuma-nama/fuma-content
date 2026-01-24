@@ -1,6 +1,7 @@
 import picomatch from "picomatch";
 import path from "node:path";
 import { Collection } from ".";
+import { createCache } from "@/utils/async-cache";
 
 export class FileSystemCollection extends Collection {
   private matcher: picomatch.Matcher | undefined;
@@ -8,29 +9,29 @@ export class FileSystemCollection extends Collection {
    * content directory (absolute)
    */
   dir = null as unknown as string;
-  readonly patterns: string[];
-  private readonly supportedFormats: string[] | undefined;
+  private readonly config: FileSystemCollectionConfig;
+  private readonly filesCache = createCache<string[]>();
 
   constructor(config: FileSystemCollectionConfig) {
     super();
-    const { supportedFormats } = config;
-    this.supportedFormats = supportedFormats;
-    this.patterns = config.files ?? [
-      supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`,
-    ];
-
+    this.config = config;
     this.onInit.hook(({ core }) => {
       this.dir = path.resolve(core.getOptions().cwd, config.dir);
     });
     this.onServer.hook(({ server }) => {
       server.watcher?.add(this.dir);
+      server.watcher?.on("all", (event, file) => {
+        if (event === "change" || !this.hasFile(file)) return;
+        this.filesCache.invalidate("");
+      });
     });
   }
 
   isFileSupported(filePath: string) {
-    if (!this.supportedFormats) return true;
+    const { supportedFormats } = this.config;
+    if (!supportedFormats) return true;
 
-    return this.supportedFormats.some((format) => filePath.endsWith(`.${format}`));
+    return supportedFormats.some((format) => filePath.endsWith(`.${format}`));
   }
 
   /**
@@ -38,7 +39,10 @@ export class FileSystemCollection extends Collection {
    */
   async getFiles() {
     const { glob } = await import("tinyglobby");
-    return (await glob(this.patterns, { cwd: this.dir })).filter((v) => this.isFileSupported(v));
+    return this.filesCache.cached("", async () => {
+      const out = await glob(this.getPatterns(), { cwd: this.dir });
+      return out.filter((v) => this.isFileSupported(v));
+    });
   }
 
   hasFile(filePath: string) {
@@ -47,7 +51,13 @@ export class FileSystemCollection extends Collection {
     const relativePath = path.relative(this.dir, filePath);
     if (relativePath.startsWith(`..${path.sep}`)) return false;
 
-    return (this.matcher ??= picomatch(this.patterns))(relativePath);
+    return (this.matcher ??= picomatch(this.getPatterns()))(relativePath);
+  }
+
+  /** get glob patterns to match files in collection, this doesn't take `supportedFormats` into account. */
+  getPatterns() {
+    const { files, supportedFormats } = this.config;
+    return files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
   }
 }
 

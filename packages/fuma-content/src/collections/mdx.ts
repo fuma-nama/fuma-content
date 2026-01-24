@@ -14,6 +14,8 @@ import type { Awaitable } from "@/types";
 import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 import { gitHook } from "@/plugins/git";
+import path from "node:path";
+import { URLSearchParams } from "node:url";
 
 interface CompilationContext {
   collection: Collection;
@@ -168,28 +170,55 @@ export class MDXCollection<
     });
   }
 
-  private generateDocCollectionFrontmatterGlob(context: EmitCodeGeneratorContext, eager = false) {
-    return context.codegen.generateGlobImport(this.patterns, {
-      query: {
-        collection: this.name,
-        only: "frontmatter",
-        workspace: context.workspace,
-      },
-      import: "frontmatter",
-      base: this.dir,
-      eager,
+  private async generateDocCollectionFrontmatterGlob(
+    { workspace, codegen }: EmitCodeGeneratorContext,
+    eager = false,
+  ) {
+    let s = `{`;
+    const files = await this.getFiles();
+    const query = new URLSearchParams({
+      collection: this.name,
+      only: "frontmatter",
     });
+    if (workspace) query.set("workspace", workspace);
+    for (const file of files) {
+      const fullPath = path.join(this.dir, file);
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      if (eager) {
+        const name = codegen.generateImportName();
+        codegen.addNamedImport([`frontmatter as ${name}`], specifier);
+        s += `"${slash(file)}": ${name},`;
+      } else {
+        s += `"${slash(file)}": () => ${codegen.formatDynamicImport(specifier, "frontmatter")},`;
+      }
+    }
+    s += "}";
+    return s;
   }
 
-  private generateDocCollectionGlob(context: EmitCodeGeneratorContext, eager = false) {
-    return context.codegen.generateGlobImport(this.patterns, {
-      query: {
-        collection: this.name,
-        workspace: context.workspace,
-      },
-      base: this.dir,
-      eager,
+  private async generateDocCollectionGlob(
+    { codegen, workspace }: EmitCodeGeneratorContext,
+    eager = false,
+  ) {
+    let s = `{`;
+    const files = await this.getFiles();
+    const query = new URLSearchParams({
+      collection: this.name,
     });
+    if (workspace) query.set("workspace", workspace);
+    for (const file of files) {
+      const fullPath = path.join(this.dir, file);
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      if (eager) {
+        const name = codegen.generateImportName();
+        codegen.addNamespaceImport(name, specifier);
+        s += `"${slash(file)}": ${name},`;
+      } else {
+        s += `"${slash(file)}": () => ${codegen.formatDynamicImport(specifier)},`;
+      }
+    }
+    s += "}";
+    return s;
   }
 
   private async generateCollectionStoreServer(context: EmitCodeGeneratorContext) {

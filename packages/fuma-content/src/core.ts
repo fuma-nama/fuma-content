@@ -303,7 +303,6 @@ export class Core {
     const { target, jsExtension } = this.config.emit ?? {};
     const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
-    const globCache = new Map<string, Promise<string[]>>();
     const ctx: EmitContext = {
       ...this.getPluginContext(),
       createCodeGenerator: async (path, content) => {
@@ -311,7 +310,6 @@ export class Core {
           target,
           outDir,
           jsExtension,
-          globCache,
         });
         await content({
           core: this,

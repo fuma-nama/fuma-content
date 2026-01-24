@@ -1,13 +1,4 @@
 import path from "node:path";
-import { glob } from "tinyglobby";
-import { type AsyncCache, createCache } from "@/utils/async-cache";
-
-export interface GlobImportOptions {
-  base: string;
-  query?: Record<string, string | undefined>;
-  import?: string;
-  eager?: boolean;
-}
 
 export interface CodeGeneratorOptions {
   target: "default" | "vite";
@@ -16,7 +7,6 @@ export interface CodeGeneratorOptions {
    * add .js extenstion to imports
    */
   jsExtension: boolean;
-  globCache: Map<string, Promise<string[]>>;
 }
 
 interface ImportInfo {
@@ -42,7 +32,6 @@ function importInfo(): ImportInfo {
  */
 export class CodeGenerator {
   private readonly lines: string[] = [];
-  private readonly globCache: AsyncCache<string[]>;
   // specifier -> imported members/info
   private readonly importInfos = new Map<string, ImportInfo>();
   private eagerImportId = 0;
@@ -51,16 +40,13 @@ export class CodeGenerator {
   constructor({
     target = "default",
     jsExtension = false,
-    globCache = new Map(),
     outDir = "",
   }: Partial<CodeGeneratorOptions>) {
     this.options = {
       target,
       jsExtension,
-      globCache,
       outDir,
     };
-    this.globCache = createCache(globCache);
   }
 
   addNamespaceImport(namespace: string, specifier: string, typeOnly = false) {
@@ -92,74 +78,15 @@ export class CodeGenerator {
     }
   }
 
-  async generateGlobImport(
-    patterns: string | string[],
-    options: GlobImportOptions,
-  ): Promise<string> {
-    if (this.options.target === "vite") {
-      return this.generateViteGlobImport(patterns, options);
-    }
-
-    return this.generateNodeGlobImport(patterns, options);
+  /** generate a random import name that is unique in file. */
+  generateImportName(): string {
+    return `__${this.eagerImportId++}`;
   }
 
-  private generateViteGlobImport(
-    patterns: string | string[],
-    { base, ...rest }: GlobImportOptions,
-  ): string {
-    patterns = (typeof patterns === "string" ? [patterns] : patterns).map(normalizeViteGlobPath);
-
-    return `import.meta.glob(${JSON.stringify(patterns)}, ${JSON.stringify(
-      {
-        base: normalizeViteGlobPath(path.relative(this.options.outDir, base)),
-        ...rest,
-      },
-      null,
-      2,
-    )})`;
-  }
-
-  private async generateNodeGlobImport(
-    patterns: string | string[],
-    { base, eager = false, query = {}, import: importName }: GlobImportOptions,
-  ): Promise<string> {
-    const files = await this.globCache.cached(JSON.stringify({ patterns, base }), () =>
-      glob(patterns, {
-        cwd: base,
-      }),
-    );
-
-    let code: string = "{";
-    for (const item of files) {
-      const fullPath = path.join(base, item);
-      const searchParams = new URLSearchParams();
-
-      for (const [k, v] of Object.entries(query)) {
-        if (v !== undefined) searchParams.set(k, v);
-      }
-
-      const importPath = `${this.formatImportPath(fullPath)}?${searchParams.toString()}`;
-      if (eager) {
-        const name = `__fd_glob_${this.eagerImportId++}`;
-        this.lines.unshift(
-          importName
-            ? `import { ${importName} as ${name} } from ${JSON.stringify(importPath)}`
-            : `import * as ${name} from ${JSON.stringify(importPath)}`,
-        );
-
-        code += `${JSON.stringify(item)}: ${name}, `;
-      } else {
-        let line = `${JSON.stringify(item)}: () => import(${JSON.stringify(importPath)})`;
-        if (importName) {
-          line += `.then(mod => mod.${importName})`;
-        }
-
-        code += `${line}, `;
-      }
-    }
-
-    code += "}";
-    return code;
+  formatDynamicImport(specifier: string, mod?: string): string {
+    let s = `import("${specifier}")`;
+    if (mod) s += `.then(mod => mod.${mod})`;
+    return s;
   }
 
   formatImportPath(file: string) {
@@ -208,17 +135,6 @@ export class CodeGenerator {
     final.push(...this.lines);
     return final.join("\n");
   }
-}
-
-/**
- * convert into POSIX & relative file paths, such that Vite can accept it.
- */
-function normalizeViteGlobPath(file: string) {
-  file = slash(file);
-  if (file.startsWith("./")) return file;
-  if (file.startsWith("/")) return `.${file}`;
-
-  return `./${file}`;
 }
 
 export function slash(path: string): string {

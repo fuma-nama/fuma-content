@@ -6,6 +6,8 @@ import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import { asyncPipe } from "@/utils/pipe";
 import { slash } from "@/utils/code-generator";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
+import path from "node:path";
+import { URLSearchParams } from "node:url";
 
 export interface DataTransformationContext {
   path: string;
@@ -60,7 +62,7 @@ export class DataCollection<
   }
 
   private async generateCollectionStore(context: EmitCodeGeneratorContext) {
-    const { codegen, core } = context;
+    const { codegen, core, workspace } = context;
     codegen.addNamedImport(["dataStore"], "fuma-content/collections/data/runtime");
     codegen.addNamespaceImport(
       "Config",
@@ -68,17 +70,21 @@ export class DataCollection<
       true,
     );
     const base = slash(core._toRuntimePath(this.dir));
-    const glob = await codegen.generateGlobImport(this.patterns, {
-      query: {
-        collection: this.name,
-        workspace: context.workspace,
-      },
-      import: "default",
-      base: this.dir,
-      eager: true,
+    let records = "{";
+    const query = new URLSearchParams({
+      collection: this.name,
     });
+    if (workspace) query.set("workspace", workspace);
+    for (const file of await this.getFiles()) {
+      const fullPath = path.join(this.dir, file);
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      const name = codegen.generateImportName();
+      codegen.addNamedImport([`default as ${name}`], specifier);
+      records += `"${slash(file)}": ${name},`;
+    }
+    records += "}";
     codegen.push(
-      `export const ${this.name} = dataStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${glob});`,
+      `export const ${this.name} = dataStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${records});`,
     );
   }
 }
