@@ -5,24 +5,19 @@ description: Introduction to the abstraction layer of Fuma Content.
 
 ## Overview
 
-![diagram](./concepts.diagram.png)
-
 ### Collection
 
-A collection acts as the storage layer of a specific type of content.
+Collection is the object to process, it exposes **hooks** to connect with bundlers & framework and provide functionalities.
 
-For instance, a collection of MDX files in file system, or documents in remote database.
+Collection types can inherit from each other, for example, in a **MDX Collection**:
 
-### Collection handler
-
-Collection implements handler for each feature, you can imagine it as **traits** or **characteristics** of a collection.
-
-Handler contains options, publicly exposed to plugins for further processing.
+- `vfile` hook to customise MDX file compilation.
+- inherited from File Collection:
+  - `onServer` hook to configure hot reload.
+  - `getFiles()`, `hasFile()` for file system APIs.
 
 ### Plugin
 
-A plugin configures the necessary settings to handle different collections, they have access to low-level APIs like bundler configurations.
+Plugins can attach custom configurations to collections, and hook into different events.
 
-For instance, a plugin that reads the `pdf` handler of a PDF file collection, then configure a loader on bundler to support compiling PDF files.
-
-This is analogous to **cellular differentiation**, your body reads the type of cell to perform different operations.
+They have more control over collections, such as access to low-level APIs, bundler configurations, acting as the middle layer between collections and low-level APIs.

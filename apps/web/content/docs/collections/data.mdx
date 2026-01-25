@@ -1,0 +1,42 @@
+---
+title: Data Collection
+description: Compile JSON/YAML into JavaScript files.
+---
+
+## Usage
+
+```ts title="content.config.ts"
+import { defineConfig } from "fuma-content/config";
+import { dataCollection } from "fuma-content/collections/data";
+import { z } from "zod";
+
+const meta = dataCollection({
+  dir: "data",
+
+  // optional: define schema (Standard Schema compatible)
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+
+export default defineConfig({
+  collections: { meta },
+});
+```
+
+It will load data files of type: `json`, `yaml`.
+
+By default, it generates:
+
+- `<name>.ts`: collection store for all data objects.
+
+```ts tab="Server"
+import { meta } from "content/meta";
+
+// a list of objects parsed from data files
+console.log(meta.list());
+
+// get from file path (forward slash, relative to content directory)
+meta.get("index.json");
+meta.get("dir/index.json");
+```

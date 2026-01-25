@@ -7,9 +7,14 @@ export function dataStore<Config, Name extends string>(
   base: string,
   input: Record<string, unknown>,
 ): FileCollectionStore<{
-  data: GetCollectionConfig<Config, Name> extends DataCollection<infer Data> ? Data : never;
+  data: GetCollectionConfig<Config, Name> extends DataCollection
+    ? GetCollectionConfig<Config, Name>["$inferOutput"]
+    : never;
 }> {
-  type Data = GetCollectionConfig<Config, Name> extends DataCollection<infer Data> ? Data : never;
+  type Data =
+    GetCollectionConfig<Config, Name> extends DataCollection
+      ? GetCollectionConfig<Config, Name>["$inferOutput"]
+      : never;
   const merged: Record<
     string,
     {

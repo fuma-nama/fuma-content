@@ -4,6 +4,7 @@ import { docs } from "content/docs";
 import { meta } from "content/meta";
 import type { TOCItemType } from "fumadocs-core/toc";
 import type { StructuredData } from "fumadocs-core/mdx-plugins";
+import { Item, visit } from "fumadocs-core/page-tree";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(mySource(), {
@@ -66,4 +67,15 @@ export async function getLLMText(page: InferPageType<typeof source>) {
   return `# ${page.data.title}
 
 ${processed}`;
+}
+
+export function getNodesUnderDirectory(dir: string) {
+  const nodes: Item[] = [];
+  visit(source.getPageTree(), (node) => {
+    if ("type" in node && node.type === "page" && node.$ref?.file.startsWith(`${dir}/`)) {
+      nodes.push(node);
+    }
+  });
+
+  return nodes;
 }

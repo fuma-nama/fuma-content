@@ -1,0 +1,81 @@
+---
+title: MDX Collection
+description: Compile Markdown/MDX into JavaScript files.
+---
+
+## Usage
+
+```ts title="content.config.ts"
+import { defineConfig } from "fuma-content/config";
+import { mdxCollection } from "fuma-content/collections/mdx";
+import { z } from "zod";
+
+const docs = mdxCollection({
+  dir: "content",
+
+  // optional: define frontmatter schema (Standard Schema compatible)
+  frontmatter: z.object({
+    title: z.string(),
+  }),
+
+  // optional: MDX options
+  options: () => ({
+    remarkPlugins: [],
+  }),
+});
+
+export default defineConfig({
+  collections: { docs },
+});
+```
+
+It generates:
+
+- `<name>.ts`: server-side access to compiled properties.
+- `<name>.browser.ts`: client-side access, with framework integrations for React.js.
+
+```tsx tab="Server"
+import { docs } from "content/docs";
+
+for (const file of docs.list()) {
+  const id = file.id;
+  // compiled properties & typed frontmatter
+  const { frontmatter, ...rest } = file.compiled;
+}
+
+function Page({ id }: { id: string }) {
+  const file = docs.get(id);
+  if (!file) return;
+
+  // default refers to the content body renderer
+  // you can render it directly in React Server Component
+  const { default: MDX } = file.compiled;
+
+  return (
+    <div className="prose">
+      <MDX
+        // MDX Components
+        components={{
+          h1: (props) => <h1 {...props} className="text-4xl" />,
+        }}
+      />
+    </div>
+  );
+}
+```
+
+```tsx tab="Browser"
+import { docs, useRenderer } from "content/docs.browser";
+
+function Page({ id }: { id: string }) {
+  const file = docs.get(id);
+  if (!file) return;
+
+  const children = useRenderer(file, (compiled) => {
+    const { default: MDX } = compiled;
+    return <MDX />;
+  });
+
+  return <div className="prose">{children}</div>;
+}
+```

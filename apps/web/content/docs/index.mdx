@@ -1,22 +1,11 @@
 ---
-title: Introduction
+title: Quick Start
 description: The primitive for content processing.
 ---
 
 ## What is This?
 
 Fuma Content introduces primitives for content processing, with a carefully designed abstraction to make it highly extensible and flexible.
-
-### The Idea
-
-Fuma Content process content via **Collections** and **Plugins**.
-
-- **Collections** implement a list of handlers, each handler contains options for specific functionality, such as MDX compilation.
-- **Plugins** declare & read options from collection handlers, then integrate into bundler or file generation layer to process content.
-
-**Built-in Collections:** MDX, Data (supporting JSON and YAML files).
-
-Fuma Content is a foundational layer, we plan to build more on top such as WYSIWYG editor plugin, or CMS plugin.
 
 ### Requirements
 
@@ -77,7 +66,7 @@ import { register } from "node:module";
 register("fumadocs-mdx/node/loader", import.meta.url);
 ```
 
-Create a config file, you can define collections and plugins:
+Create a config file to define collections:
 
 ```ts title="content.config.ts"
 import { defineConfig } from "fuma-content/config";
@@ -111,56 +100,14 @@ Each collection generates its own file in the `.content` folder, it's recommende
 }
 ```
 
-For built-in collections, you can access them like:
+See below for all collections:
 
-```tsx tab="MDX (Server)"
-import { docs } from "content/docs";
+import { getNodesUnderDirectory } from "@/lib/source";
 
-for (const file of docs.list()) {
-  const id = file.id;
-  // compiled properties & typed frontmatter
-  const { frontmatter, ...rest } = file.compiled;
-}
-
-function Page({ id }: { id: string }) {
-  const file = docs.get(id);
-  if (!file) return;
-
-  // default refers to the content body renderer
-  const { default: MDX } = file.compiled;
-
-  return (
-    <div className="prose">
-      <MDX
-        // MDX Components
-        components={{
-          h1: (props) => <h1 {...props} className="text-4xl" />,
-        }}
-      />
-    </div>
-  );
-}
-```
-
-```tsx tab="MDX (Browser)"
-import { docs, useRenderer } from "content/docs.browser";
-
-function Page({ id }: { id: string }) {
-  const file = docs.get(id);
-  if (!file) return;
-
-  const children = useRenderer(file, (compiled) => {
-    const { default: MDX } = compiled;
-    return <MDX />;
-  });
-
-  return <div className="prose">{children}</div>;
-}
-```
-
-```ts tab="Data (Server)"
-import { authors } from "content/authors";
-
-// a list of objects parsed from all data files
-console.log(authors.list());
-```
+<Cards>
+  {getNodesUnderDirectory("collections").map((peer) => (
+    <Card key={peer.url} title={peer.name} href={peer.url}>
+      {peer.description}
+    </Card>
+  ))}
+</Cards>
