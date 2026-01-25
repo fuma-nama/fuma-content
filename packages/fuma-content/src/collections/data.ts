@@ -14,11 +14,23 @@ export interface DataTransformationContext {
   source: string;
 }
 
+interface LoadersConfig {
+  json?: boolean;
+  yaml?: boolean;
+  custom?: Record<string, LoaderConfig>;
+}
+
 export interface DataCollectionConfig<Schema extends StandardSchemaV1 | undefined> extends Omit<
   FileSystemCollectionConfig,
   "supportedFormats"
 > {
   schema?: Schema;
+  /**
+   * Configurations for loaders to parse data files.
+   *
+   * By default, JSON and YAML are enabled.
+   * */
+  loaders?: LoadersConfig;
 }
 
 export class DataCollection<
@@ -29,16 +41,20 @@ export class DataCollection<
    * Transform data
    */
   readonly onLoad = asyncPipe<unknown, DataTransformationContext>();
-  $inferInput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : unknown;
-  $inferOutput?: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : unknown;
+  $inferInput: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<Schema> : unknown =
+    undefined as never;
+  $inferOutput: Schema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<Schema> : unknown =
+    undefined as never;
 
-  constructor(config: DataCollectionConfig<Schema>) {
-    super({
-      dir: config.dir,
-      files: config.files,
-      supportedFormats: ["json", "yaml"],
-    });
-    this.schema = config.schema;
+  constructor({ dir, files, loaders: _loadersConfig = {}, schema }: DataCollectionConfig<Schema>) {
+    const loadersConfig: Record<string, LoaderConfig> = {
+      ..._loadersConfig.custom,
+    };
+    if (_loadersConfig.json) loadersConfig.json = jsonLoader();
+    if (_loadersConfig.yaml) loadersConfig.yaml = yamlLoader();
+
+    super({ dir, files, supportedFormats: Object.keys(loadersConfig) });
+    this.schema = schema;
     this.onServer.hook(({ core, server }) => {
       if (!server.watcher) return;
 
@@ -52,13 +68,14 @@ export class DataCollection<
         });
       });
     });
-    this.onEmit.pipe((entries, { createCodeGenerator }) => {
-      return Promise.all([
-        ...entries,
-        createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStore(ctx)),
-      ]);
+    this.onEmit.pipe(async (entries, { createCodeGenerator }) => {
+      entries.push(
+        await createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStore(ctx)),
+      );
+      return entries;
     });
-    this.pluginHook(loaderHook).loaders.push(jsonLoader(), yamlLoader());
+
+    this.pluginHook(loaderHook).loaders.push(...Object.values(loadersConfig));
   }
 
   private async generateCollectionStore(context: EmitCodeGeneratorContext) {
@@ -95,7 +112,7 @@ export function dataCollection<Schema extends StandardSchemaV1 | undefined = und
   return new DataCollection(config);
 }
 
-function yamlLoader(): LoaderConfig {
+export function yamlLoader(): LoaderConfig {
   const test = /\.yaml(\?.+?)?$/;
 
   return {
@@ -149,7 +166,7 @@ function yamlLoader(): LoaderConfig {
   };
 }
 
-function jsonLoader(): LoaderConfig {
+export function jsonLoader(): LoaderConfig {
   const test = /\.json(\?.+?)?$/;
 
   return {

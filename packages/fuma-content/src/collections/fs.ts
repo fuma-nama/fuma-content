@@ -35,7 +35,9 @@ export class FileSystemCollection extends Collection {
   }
 
   /**
-   * get all included files, relative to `dir`
+   * get all included files, relative to `dir`.
+   *
+   * the result is cached.
    */
   async getFiles() {
     const { glob } = await import("tinyglobby");
@@ -58,6 +60,10 @@ export class FileSystemCollection extends Collection {
   getPatterns() {
     const { files, supportedFormats } = this.config;
     return files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
+  }
+
+  invalidateCache() {
+    this.filesCache.invalidate("");
   }
 }
 
