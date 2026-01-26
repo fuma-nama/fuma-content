@@ -49,8 +49,8 @@ export class DataCollection<
     const loadersConfig: Record<string, LoaderConfig> = {
       ..._loadersConfig.custom,
     };
-    if (_loadersConfig.json) loadersConfig.json = jsonLoader();
-    if (_loadersConfig.yaml) loadersConfig.yaml = yamlLoader();
+    if (_loadersConfig.json !== false) loadersConfig.json = jsonLoader();
+    if (_loadersConfig.yaml !== false) loadersConfig.yaml = yamlLoader();
 
     super({ dir, files, supportedFormats: Object.keys(loadersConfig) });
     this.schema = schema;
