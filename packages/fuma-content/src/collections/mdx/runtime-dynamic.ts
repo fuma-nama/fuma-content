@@ -3,9 +3,7 @@ import { pathToFileURL } from "node:url";
 import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import fs from "node:fs/promises";
 import { type CoreOptions, Core } from "@/core";
-import type { MDXComponents } from "mdx/types";
-import type { FC } from "react";
-import jsxRuntimeDefault from "react/jsx-runtime";
+import type { MDXContent } from "mdx/types";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
 import type { GetCollectionConfig } from "@/types";
 import { MDXCollection } from "@/collections/mdx";
@@ -31,6 +29,7 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
   name: Name,
   base: string,
   _frontmatter: Record<string, unknown>,
+  jsxRuntime: unknown,
 ): Promise<FileCollectionStore<MDXStoreDynamicData<GetFrontmatter<Config, Name>, Attached>>> {
   corePromise ??= (async () => {
     const core = new Core(coreOptions);
@@ -68,6 +67,7 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
 
           return (await executeMdx(String(compiled.value), {
             baseUrl: pathToFileURL(filePath),
+            jsxRuntime,
           })) as CompiledMDX<GetFrontmatter<Config, Name>> & Attached;
         });
       },
@@ -77,7 +77,7 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
   return new FileCollectionStore(base, merged);
 }
 
-export type MdxContent = FC<{ components?: MDXComponents }>;
+export type MdxContent = MDXContent;
 
 interface Options {
   scope?: Record<string, unknown>;
@@ -93,7 +93,7 @@ async function executeMdx(compiled: string, options: Options = {}) {
   const fullScope = {
     opts: {
       ...(scopeOpts as object),
-      ...(options.jsxRuntime ?? jsxRuntimeDefault),
+      ...(options.jsxRuntime as object),
       baseUrl: options.baseUrl,
     },
     ...scope,

@@ -69,7 +69,8 @@ function Page({ id }: { id: string }) {
 }`;
 
 // language=tsx
-const browserCode = `import { docs, useRenderer } from "content/docs.browser";
+const browserCode = `import { docs } from "content/docs.browser";
+import { useRenderer } from "fuma-content/collections/mdx/react";
 
 function Page({ id }: { id: string }) {
   const file = docs.get(id)

@@ -1,6 +1,5 @@
 "use client";
 
-import { type ReactNode, lazy, createElement } from "react";
 import type { Awaitable, GetCollectionConfig } from "@/types";
 import { MapCollectionStore } from "@/collections/runtime/store";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
@@ -10,18 +9,11 @@ import type { MDXCollection } from "../mdx";
 export interface MDXStoreBrowserData<Frontmatter, Attached = unknown> {
   id: string;
   preload: () => Awaitable<CompiledMDX<Frontmatter> & Attached>;
-  _renderer: StoreRendererData;
+  _store: StoreContext;
 }
 
-interface StoreRendererData {
+interface StoreContext {
   storeId: string;
-  renderers: Map<
-    string,
-    {
-      fn: () => ReactNode;
-      forceOnDemand: boolean;
-    }
-  >;
 }
 
 interface StoreData {
@@ -55,9 +47,8 @@ export function mdxStoreBrowser<Config, Name extends string, Attached>(
     return store;
   }
 
-  const _renderer: StoreRendererData = {
+  const context: StoreContext = {
     storeId: name,
-    renderers: new Map(),
   };
 
   for (const [key, value] of Object.entries(input)) {
@@ -68,50 +59,11 @@ export function mdxStoreBrowser<Config, Name extends string, Attached>(
           .preloaded.$value<CompiledMDX<GetFrontmatter<Config, Name>> & Attached>()
           .cached(key, value);
       },
-      _renderer,
+      _store: context,
     });
   }
 
   return new MapCollectionStore(merged);
-}
-
-/**
- * Renders content with `React.lazy`.
- */
-export function useRenderer<Frontmatter, Attached>(
-  entry: MDXStoreBrowserData<Frontmatter, Attached> | undefined,
-  renderFn: (data: CompiledMDX<Frontmatter> & Attached) => ReactNode,
-): ReactNode {
-  if (!entry) return null;
-  const {
-    id,
-    _renderer: { renderers },
-  } = entry;
-  let renderer = renderers.get(id);
-
-  if (!renderer) {
-    const OnDemand = lazy(async () => {
-      const loaded = await entry.preload();
-      return { default: () => renderFn(loaded) };
-    });
-
-    renderer = {
-      forceOnDemand: false,
-      fn() {
-        const v = entry.preload();
-        if (!("then" in v) && !this.forceOnDemand) {
-          return renderFn(v);
-        }
-
-        // ensure it won't unmount React lazy during re-renders
-        this.forceOnDemand = true;
-        return createElement(OnDemand);
-      },
-    };
-    renderers.set(id, renderer);
-  }
-
-  return renderer.fn();
 }
 
 export type { WithExtractedReferences, WithGit } from "./runtime";

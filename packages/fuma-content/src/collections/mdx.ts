@@ -1,4 +1,4 @@
-import { type Collection } from "@/collections";
+import type { Collection } from "@/collections";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { CoreOptions, EmitCodeGeneratorContext } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
@@ -115,9 +115,8 @@ export class MDXCollection<
       });
     }
 
-    this.onEmit.pipe((entries, { createCodeGenerator }) => {
-      return Promise.all([
-        ...entries,
+    this.onEmit.pipe(async (entries, { createCodeGenerator }) => {
+      const add = await Promise.all([
         createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStoreServer(ctx)),
         createCodeGenerator(`${this.name}.browser.ts`, (ctx) =>
           this.generateCollectionStoreBrowser(ctx),
@@ -126,6 +125,8 @@ export class MDXCollection<
           this.generateCollectionStoreDynamic(ctx),
         ),
       ]);
+      entries.push(...add);
+      return entries;
     });
     this.onServer.hook(({ core, server }) => {
       if (!server.watcher) return;
@@ -268,7 +269,6 @@ export class MDXCollection<
     const { core, codegen } = context;
     const runtimePath = RuntimePaths.browser;
     codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
-    codegen.push(`export { useRenderer } from "${RuntimePaths.browser}";`);
     codegen.addNamespaceImport(
       "Config",
       codegen.formatImportPath(core.getOptions().configPath),
@@ -289,18 +289,25 @@ export class MDXCollection<
 
   private async generateCollectionStoreDynamic(context: EmitCodeGeneratorContext) {
     const { core, codegen } = context;
+    const coreOptions = core.getOptions();
     const runtimePath = RuntimePaths.dynamic;
     const base = slash(core._toRuntimePath(this.dir));
-    codegen.addNamespaceImport("Config", codegen.formatImportPath(core.getOptions().configPath));
+    codegen.addNamespaceImport("Config", codegen.formatImportPath(coreOptions.configPath));
     codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
 
-    const coreOptions = core.getOptions();
     const serializableCoreOptions: CoreOptions = {
-      ...coreOptions,
       configPath: core._toRuntimePath(coreOptions.configPath),
       outDir: core._toRuntimePath(coreOptions.outDir),
       cwd: core._toRuntimePath(coreOptions.cwd),
     };
+
+    const jsxImportSource = (await this.getMDXOptions?.("runtime"))?.jsxImportSource ?? "react";
+    if (!jsxImportSource)
+      throw new Error(
+        `[Fuma Content] "jsxImportSource" is required for dynamic MDX collection "${this.name}".`,
+      );
+    codegen.addNamespaceImport("_jsx_runtime", `${jsxImportSource}/jsx-runtime`);
+
     let code: InitializerCode = {
       fn: "mdxStoreDynamic",
       typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
@@ -310,6 +317,7 @@ export class MDXCollection<
         `"${this.name}"`,
         `"${base}"`,
         await this.generateDocCollectionFrontmatterGlob(context, true),
+        "_jsx_runtime",
       ],
     };
 
@@ -383,4 +391,4 @@ function mdxLoader(): LoaderConfig {
 }
 
 export type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
-export type { CompiledMDXData, CompiledMDX } from "@/collections/mdx/build-mdx";
+export type { CompiledMDX } from "@/collections/mdx/build-mdx";

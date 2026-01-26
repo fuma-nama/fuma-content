@@ -7,7 +7,7 @@ import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layo
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { baseOptions } from "@/lib/layout.shared";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
-import { useRenderer } from "fuma-content/collections/mdx/runtime-browser";
+import { useRenderer } from "fuma-content/collections/mdx/react";
 
 export const Route = createFileRoute("/docs/$")({
   component: Page,

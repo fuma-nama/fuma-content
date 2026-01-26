@@ -12,8 +12,6 @@
   "repository": "github:fuma-nama/fuma-content",
   "bin": "./dist/bin.js",
   "files": [
-    "loader-mdx.cjs",
-    "loader-meta.cjs",
     "dist/*"
   ],
   "type": "module",
@@ -43,6 +41,10 @@
     "./collections": {
       "types": "./dist/collections/index.d.ts",
       "import": "./dist/collections/index.js"
+    },
+    "./collections/mdx/react": {
+      "types": "./dist/collections/mdx/react.d.ts",
+      "import": "./dist/collections/mdx/react.js"
     },
     "./collections/*": {
       "types": "./dist/collections/*.d.ts",
@@ -78,6 +80,7 @@
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
     "@standard-schema/spec": "^1.1.0",
+    "@types/mdx": "^2.0.13",
     "chokidar": "^5.0.0",
     "esbuild": "^0.27.2",
     "estree-util-value-to-estree": "^3.5.0",
@@ -98,7 +101,6 @@
     "@types/bun": "^1.3.6",
     "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
-    "@types/mdx": "^2.0.13",
     "@types/node": "^25.0.9",
     "@types/picomatch": "^4.0.2",
     "@types/react": "^19.2.8",

@@ -7,8 +7,7 @@ import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
 import type { Pluggable } from "unified";
 import { createCache } from "@/utils/async-cache";
 import type { CompilerOptions } from "@/plugins/loader";
-import type { FC } from "react";
-import type { MDXProps } from "mdx/types";
+import type { MDXContent } from "mdx/types";
 import { MDXCollection } from "../mdx";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
@@ -53,13 +52,12 @@ declare module "vfile" {
   interface DataMap extends FumaContentDataMap {}
 }
 
-export type CompiledMDX<Frontmatter = Record<string, unknown>> = {
+export interface CompiledMDX<Frontmatter = Record<string, unknown>> extends Record<
+  string,
+  unknown
+> {
   frontmatter: Frontmatter;
-} & CompiledMDXData &
-  Record<string, unknown>;
-
-export interface CompiledMDXData {
-  default: FC<MDXProps>;
+  default: MDXContent;
 
   /**
    * Enable from `postprocess` option.

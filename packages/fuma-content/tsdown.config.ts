@@ -9,8 +9,10 @@ export default defineConfig({
     "./src/node/loader.ts",
 
     "./src/collections/*.ts",
-    "./src/collections/runtime/*.ts",
     "./src/collections/**/{loader-webpack,runtime,runtime-*}.ts",
+
+    "./src/collections/runtime/*.ts",
+    "./src/collections/mdx/react.ts",
 
     "./src/plugins/*.ts",
     "./src/plugins/loader/{index,webpack}.ts",
