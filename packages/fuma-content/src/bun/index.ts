@@ -5,7 +5,7 @@ import { loaderPlugin } from "@/plugins/loader";
 
 export type BunOptions = Omit<CoreOptions, "plugins" | "workspace">;
 
-export async function createContent(options: BunOptions): Promise<BunCore> {
+export async function createContent(options: BunOptions = {}): Promise<BunCore> {
   const core = new BunCore({
     ...options,
     plugins: [loaderPlugin()],

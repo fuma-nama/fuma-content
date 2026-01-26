@@ -1,6 +1,13 @@
 import { pathToFileURL } from "node:url";
 import type { Core } from "@/core";
 
+/**
+ * - `true`: compile the config before loading.
+ * - `false`: import the config directly (without compiling it).
+ * - `skip`: assume the config is already compiled.
+ */
+export type CompileMode = boolean | "skip";
+
 async function compileConfig(core: Core) {
   const { build } = await import("esbuild");
   const { configPath, outDir } = core.getOptions();
@@ -27,13 +34,17 @@ async function compileConfig(core: Core) {
 
 /**
  * Load config
- *
- * @param build - By default, it assumes the config file has been compiled. Set this `true` to compile the config first.
  */
-export async function loadConfig(core: Core, build = false): Promise<Record<string, unknown>> {
-  if (build) await compileConfig(core);
+export async function loadConfig(
+  core: Core,
+  compileMode: CompileMode,
+): Promise<Record<string, unknown>> {
+  if (compileMode === true) await compileConfig(core);
 
-  const url = pathToFileURL(core.getCompiledConfigPath());
+  const url =
+    compileMode === false
+      ? pathToFileURL(core.getOptions().configPath)
+      : pathToFileURL(core.getCompiledConfigPath());
   // always return a new config
   url.searchParams.set("hash", Date.now().toString());
 

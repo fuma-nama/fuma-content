@@ -24,7 +24,7 @@ function initDynamicCore({ configPath, isDev, outDir }: WebpackLoaderOptions) {
 
   res = createDynamicCore({
     core: new Core({ configPath, outDir }),
-    buildConfig: false,
+    compileMode: "skip",
     mode: isDev ? "dev" : "production",
   });
   cachedCores.set(key, res);

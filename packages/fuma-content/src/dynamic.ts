@@ -1,5 +1,6 @@
 import type { Core } from "@/core";
 import fs from "node:fs/promises";
+import type { CompileMode } from "./config/load-from-file";
 
 export interface DynamicCore {
   getCore(): Core | Promise<Core>;
@@ -7,14 +8,14 @@ export interface DynamicCore {
 
 export function createDynamicCore({
   core,
-  buildConfig,
+  compileMode = true,
   mode,
 }: {
   /**
    * core (not initialized)
    */
   core: Core;
-  buildConfig: boolean;
+  compileMode?: CompileMode;
   /**
    * In dev mode, the config file is dynamically re-loaded when it's updated.
    */
@@ -40,7 +41,7 @@ export function createDynamicCore({
   async function init() {
     const { loadConfig } = await import("./config/load-from-file");
     await core.init({
-      config: loadConfig(core, buildConfig),
+      config: loadConfig(core, compileMode),
     });
   }
 

@@ -14,7 +14,6 @@ export const initialize: InitializeHook<LoaderOptions> = (options) => {
       ...options,
       plugins: [loaderPlugin()],
     }),
-    buildConfig: true,
     mode: "production",
   });
 };
