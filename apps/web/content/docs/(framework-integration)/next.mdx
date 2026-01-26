@@ -1,0 +1,35 @@
+---
+title: Next.js
+description: Setup Fuma Content on Next.js
+---
+
+## Installation
+
+```npm
+npm i fuma-content
+```
+
+Update your Next.js config:
+
+```ts title="next.config.mjs"
+import { createContent } from "fuma-content/next";
+
+/** @type {import('next').NextConfig} */
+const config = {
+  reactStrictMode: true,
+};
+
+const withContent = await createContent();
+
+export default withContent(config);
+```
+
+Create a config file to define collections:
+
+<include meta='title="content.config.ts (Example)"'>.shared.config.ts</include>
+
+<include>.shared.tsconfig.mdx</include>
+
+Fuma Content is now configured, start the dev server (`next dev`) to see the generated types.
+
+<include>.shared.learn-more.mdx</include>

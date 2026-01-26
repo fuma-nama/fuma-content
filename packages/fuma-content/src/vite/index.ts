@@ -1,47 +1,34 @@
 import type { PluginOption } from "vite";
-import { buildConfig } from "@/config/build";
 import type { FSWatcher } from "chokidar";
-import { Core } from "@/core";
+import { Core, CoreOptions, type Plugin } from "@/core";
+import { loaderPlugin } from "@/plugins/loader";
 
-export interface PluginOptions {
+export interface PluginOptions extends Pick<CoreOptions, "configPath" | "cwd" | "outDir"> {
   /**
-   * @defaultValue content.config.ts
-   */
-  configPath?: string;
-
-  /**
-   * Update Vite config to fix module resolution of Fumadocs
+   * clean output directory on start
    *
    * @defaultValue true
    */
-  updateViteConfig?: boolean;
-
-  /**
-   * Output directory of generated files
-   *
-   * @defaultValue '.content'
-   */
-  outDir?: string;
+  clean?: boolean;
 }
 
 export default async function content(
   config: Record<string, unknown>,
-  pluginOptions: PluginOptions = {},
+  pluginOpitons: PluginOptions = {},
 ): Promise<PluginOption[]> {
-  const options = applyDefaults(pluginOptions);
-  const core = createViteCore(options);
+  const { clean = true } = pluginOpitons;
+  const core = createViteCore(pluginOpitons);
   await core.init({
-    config: buildConfig(config),
+    config,
   });
 
   const ctx = core.getPluginContext();
   return [
-    ...core
-      .getPlugins(true)
-      .map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
+    ...core.getPlugins(true).map((plugin) => plugin.vite?.createPlugin?.call(ctx)),
     {
       name: "fuma-content",
       async buildStart() {
+        if (clean) await core.clearOutputDirectory();
         await core.emit({ write: true });
       },
       async configureServer(server) {
@@ -53,30 +40,32 @@ export default async function content(
   ];
 }
 
+function createViteCore({ configPath, outDir, cwd }: PluginOptions) {
+  return new Core({
+    cwd,
+    configPath,
+    outDir,
+    plugins: [vitePlugin(), loaderPlugin()],
+  });
+}
+
+function vitePlugin(): Plugin {
+  return {
+    name: "vite",
+    config(config) {
+      config.emit ??= {
+        target: "vite",
+        jsExtension: false,
+      };
+    },
+  };
+}
+
 export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
   const { loadConfig } = await import("@/config/load-from-file");
-  const core = createViteCore(applyDefaults(pluginOptions));
+  const core = createViteCore(pluginOptions);
   await core.init({
     config: loadConfig(core, true),
   });
   return core;
-}
-
-function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
-  return new Core({
-    configPath,
-    outDir,
-    emit: {
-      target: "vite",
-      jsExtension: false,
-    },
-  });
-}
-
-function applyDefaults(options: PluginOptions): Required<PluginOptions> {
-  return {
-    updateViteConfig: options.updateViteConfig ?? true,
-    configPath: options.configPath ?? Core.defaultOptions.configPath,
-    outDir: options.outDir ?? Core.defaultOptions.outDir,
-  };
 }

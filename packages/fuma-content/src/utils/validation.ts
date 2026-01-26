@@ -1,13 +1,11 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from "@standard-schema/spec";
 
 export class ValidationError extends Error {
   title: string;
   issues: readonly StandardSchemaV1.Issue[];
 
   constructor(message: string, issues: readonly StandardSchemaV1.Issue[]) {
-    super(
-      `${message}:\n${issues.map((issue) => `  ${issue.path}: ${issue.message}`).join("\n")}`,
-    );
+    super(`${message}:\n${issues.map((issue) => `  ${issue.path}: ${issue.message}`).join("\n")}`);
 
     this.title = message;
     this.issues = issues;
@@ -21,7 +19,7 @@ export class ValidationError extends Error {
     const picocolors = picocolorsModule.default ?? picocolorsModule;
 
     return [
-      picocolors.bold(`[MDX] ${this.title}:`),
+      picocolors.bold(`[Fuma Content] ${this.title}:`),
       ...this.issues.map((issue) =>
         picocolors.redBright(
           `- ${picocolors.bold(issue.path?.join(".") ?? "*")}: ${issue.message}`,
@@ -42,9 +40,7 @@ export async function validate<Schema extends StandardSchemaV1, Context>(
   }
 
   if ("~standard" in schema) {
-    const result = await (schema as StandardSchemaV1)["~standard"].validate(
-      data,
-    );
+    const result = await (schema as StandardSchemaV1)["~standard"].validate(data);
 
     if (result.issues) {
       throw new ValidationError(errorMessage, result.issues);
@@ -54,4 +50,17 @@ export async function validate<Schema extends StandardSchemaV1, Context>(
   }
 
   return data;
+}
+
+/**
+ * get JSON Schema from a Standard Schema
+ */
+export function getJSONSchema(schema: StandardSchemaV1) {
+  return (schema as unknown as Partial<StandardJSONSchemaV1>)["~standard"]?.jsonSchema.input({
+    target: "draft-2020-12",
+    libraryOptions: {
+      // for Zod
+      unrepresentable: "any",
+    },
+  });
 }

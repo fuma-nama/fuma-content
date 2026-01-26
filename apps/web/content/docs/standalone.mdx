@@ -1,0 +1,44 @@
+---
+title: Standalone
+description: Create a standalone instance of Fuma Content
+---
+
+## Overview
+
+Sometimes it is useful to share information with Fuma Content for other purposes, such as custom file generation.
+
+You can create a standlone instance of Fuma Content:
+
+```ts
+import { Core } from "fuma-content";
+import { createDynamicCore } from "fuma-content/dynamic";
+
+const core = createDynamicCore({
+  core: new Core({
+    // custom options
+  }),
+  mode: "production",
+
+  // by default, it builds the content.config.ts file
+  // if your environment supports importing TypeScript files, you can set:
+  // compileMode: false
+});
+
+const instance = await core.getCore();
+```
+
+There is some common patterns you can explore:
+
+```ts
+import { FileCollection } from "fuma-content/collections/fs";
+
+const collection = instance.getCollection("docs");
+
+// get collection files (file collection only)
+if (collection && collection instanceof FileCollection) {
+  console.log(await collection.getFiles());
+}
+
+// generate collection files
+await core.emit();
+```

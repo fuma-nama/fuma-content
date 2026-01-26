@@ -1,16 +1,10 @@
-import {
-  type PluggableList,
-  type Processor,
-  type Transformer,
-  unified,
-} from "unified";
+import { type PluggableList, type Processor, type Transformer, unified } from "unified";
 import { visit } from "unist-util-visit";
 import type { Code, Node, Root, RootContent } from "mdast";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { fumaMatter } from "@/utils/fuma-matter";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
-
 import { VFile } from "vfile";
 import type { Directives } from "mdast-util-directive";
 import { remarkMarkAndUnravel } from "@/collections/mdx/remark-unravel";
@@ -109,6 +103,87 @@ function extractSection(root: Root, section: string): Root | undefined {
     };
 }
 
+// region marker regexes
+const REGION_MARKERS = [
+  {
+    start: /^\s*\/\/\s*#?region\b\s*(.*?)\s*$/,
+    end: /^\s*\/\/\s*#?endregion\b\s*(.*?)\s*$/,
+  },
+  {
+    start: /^\s*<!--\s*#?region\b\s*(.*?)\s*-->/,
+    end: /^\s*<!--\s*#?endregion\b\s*(.*?)\s*-->/,
+  },
+  {
+    start: /^\s*\/\*\s*#region\b\s*(.*?)\s*\*\//,
+    end: /^\s*\/\*\s*#endregion\b\s*(.*?)\s*\*\//,
+  },
+  {
+    start: /^\s*#[rR]egion\b\s*(.*?)\s*$/,
+    end: /^\s*#[eE]nd ?[rR]egion\b\s*(.*?)\s*$/,
+  },
+  {
+    start: /^\s*#\s*#?region\b\s*(.*?)\s*$/,
+    end: /^\s*#\s*#?endregion\b\s*(.*?)\s*$/,
+  },
+  {
+    start: /^\s*(?:--|::|@?REM)\s*#region\b\s*(.*?)\s*$/,
+    end: /^\s*(?:--|::|@?REM)\s*#endregion\b\s*(.*?)\s*$/,
+  },
+  {
+    start: /^\s*#pragma\s+region\b\s*(.*?)\s*$/,
+    end: /^\s*#pragma\s+endregion\b\s*(.*?)\s*$/,
+  },
+  {
+    start: /^\s*\(\*\s*#region\b\s*(.*?)\s*\*\)/,
+    end: /^\s*\(\*\s*#endregion\b\s*(.*?)\s*\*\)/,
+  },
+];
+
+function dedent(lines: string[]): string {
+  const minIndent = lines.reduce((min, line) => {
+    const match = line.match(/^(\s*)\S/);
+    return match ? Math.min(min, match[1].length) : min;
+  }, Infinity);
+
+  return minIndent === Infinity
+    ? lines.join("\n")
+    : lines.map((l) => l.slice(minIndent)).join("\n");
+}
+
+function extractCodeRegion(content: string, regionName: string): string {
+  const lines = content.split("\n");
+
+  for (let i = 0; i < lines.length; i++) {
+    for (const re of REGION_MARKERS) {
+      let match = re.start.exec(lines[i]);
+      if (match?.[1] !== regionName) continue;
+
+      let depth = 1;
+      const extractedLines: string[] = [];
+      for (let j = i + 1; j < lines.length; j++) {
+        match = re.start.exec(lines[j]);
+        if (match) {
+          depth++;
+          continue;
+        }
+
+        match = re.end.exec(lines[j]);
+        if (match) {
+          if (match[1] === regionName) depth = 0;
+          else if (match[1] === "") depth--;
+          else continue;
+
+          if (depth > 0) continue;
+          return dedent(extractedLines);
+        } else {
+          extractedLines.push(lines[j]);
+        }
+      }
+    }
+  }
+  throw new Error(`Region "${regionName}" not found`);
+}
+
 export interface RemarkIncludeOptions {
   /**
    * remark plugins to preprocess the MDAST tree before scanning headings/sections.
@@ -151,7 +226,7 @@ export function remarkInclude(
         type: "code",
         lang,
         meta: params.meta,
-        value: content,
+        value: heading ? extractCodeRegion(content, heading) : content,
         data: {},
       } satisfies Code;
     }
@@ -167,10 +242,7 @@ export function remarkInclude(
       },
     });
 
-    let mdast = await preprocessor.run(
-      parser.parse(targetFile) as Root,
-      targetFile,
-    );
+    let mdast = await preprocessor.run(parser.parse(targetFile) as Root, targetFile);
 
     if (heading) {
       const extracted = extractSection(mdast, heading);
@@ -205,10 +277,7 @@ export function remarkInclude(
 
       queue.push(
         embedContent(targetPath, section, attributes, file).then((replace) => {
-          Object.assign(
-            parent && parent.type === "paragraph" ? parent : node,
-            replace,
-          );
+          Object.assign(parent && parent.type === "paragraph" ? parent : node, replace);
         }),
       );
 

@@ -2,13 +2,12 @@ import { fileURLToPath } from "node:url";
 import * as path from "node:path";
 import { expect, test } from "vitest";
 import { z } from "zod";
+import { mdxCollection } from "@/collections/mdx";
+import { defineConfig, type GlobalConfig } from "@/config";
 import { ValidationError } from "@/utils/validation";
-import { defineCollections, defineConfig } from "@/config";
-import { fumaMatter } from "@/utils/fuma-matter";
-import { buildConfig } from "@/config/build";
-import { createCore } from "@/core";
-import entryFile from "@/plugins/entry-file";
-import lastModified from "@/plugins/last-modified";
+import { Core } from "@/core";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { dataCollection } from "@/collections/data";
 
 test("format errors", async () => {
   const schema = z.object({
@@ -44,115 +43,105 @@ test("format errors", async () => {
 const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const cases: {
   name: string;
-  config: Record<string, unknown>;
+  config: GlobalConfig;
 }[] = [
   {
     name: "sync",
-    config: {
-      docs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-      }),
-      blogs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-        postprocess: {
-          extractLinkReferences: true,
-        },
-      }),
-      default: defineConfig({
-        plugins: [
-          lastModified({
-            versionControl: async () => new Date("2025-11-18"),
-          }),
-        ],
-      }),
-    },
+    config: defineConfig({
+      collections: {
+        docs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+        }),
+        blogs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+          postprocess: {
+            extractLinkReferences: true,
+          },
+        }),
+      },
+    }),
   },
   {
     name: "sync-meta",
-    config: {
-      docs: defineCollections({
-        type: "meta",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-      }),
-    },
+    config: defineConfig({
+      collections: {
+        docs: dataCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+        }),
+      },
+    }),
   },
   {
     name: "async",
-    config: {
-      docs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-        async: true,
-      }),
-      blogs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-        postprocess: {
-          extractLinkReferences: true,
-        },
-        async: true,
-      }),
-    },
+    config: defineConfig({
+      collections: {
+        docs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+          lazy: true,
+        }),
+        blogs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+          postprocess: {
+            extractLinkReferences: true,
+          },
+          lazy: true,
+        }),
+      },
+    }),
   },
   {
     name: "dynamic",
-    config: {
-      docs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-        dynamic: true,
-      }),
-      blogs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-        postprocess: {
-          extractLinkReferences: true,
-        },
-        dynamic: true,
-      }),
-    },
+    config: defineConfig({
+      collections: {
+        docs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+          dynamic: true,
+        }),
+        blogs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+          postprocess: {
+            extractLinkReferences: true,
+          },
+          dynamic: true,
+        }),
+      },
+    }),
   },
   {
     name: "workspace",
-    config: {
-      docs: defineCollections({
-        type: "doc",
-        dir: path.join(baseDir, "./fixtures/generate-index"),
-      }),
-      default: defineConfig({
-        workspaces: {
-          test: {
-            dir: path.join(baseDir, "./fixtures/generate-index-2"),
-            config: {
-              docs: defineCollections({
-                type: "doc",
+    config: defineConfig({
+      collections: {
+        docs: mdxCollection({
+          dir: path.join(baseDir, "./fixtures/generate-index"),
+        }),
+      },
+
+      workspaces: {
+        test: {
+          dir: path.join(baseDir, "./fixtures/generate-index-2"),
+          config: defineConfig({
+            collections: {
+              docs: mdxCollection({
                 dir: ".",
-                async: true,
+                lazy: true,
               }),
             },
-          },
+          }),
         },
-      }),
-    },
+      },
+    }),
   },
 ];
 
 for (const { name, config } of cases) {
   test(`generate JS index file: ${name}`, async () => {
-    const core = createCore({
-      configPath: path.relative(
-        process.cwd(),
-        path.join(baseDir, "./fixtures/config.ts"),
-      ),
-      environment: "test",
+    const core = new Core({
+      configPath: path.relative(process.cwd(), path.join(baseDir, "./fixtures/config.ts")),
       outDir: path.relative(process.cwd(), path.join(baseDir, "./fixtures")),
-      plugins: [entryFile()],
     });
 
     await core.init({
-      config: buildConfig(config),
+      config: config as Record<string, unknown>,
     });
 
     const { entries, workspaces } = await core.emit();
@@ -163,23 +152,16 @@ for (const { name, config } of cases) {
       }
     }
     const markdown = entries
-      .map(
-        (entry) => `\`\`\`ts title="${entry.path}"\n${entry.content}\n\`\`\``,
-      )
+      .map((entry) => `\`\`\`ts title="${entry.path}"\n${entry.content}\n\`\`\``)
       .join("\n\n");
 
-    await expect(markdown).toMatchFileSnapshot(
-      `./fixtures/index-${name}.output.md`,
-    );
+    await expect(markdown).toMatchFileSnapshot(`./fixtures/index-${name}.output.md`);
   });
 }
 
 test("parse frontmatter", () => {
-  expect(
-    fumaMatter(
-      "---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool.",
-    ),
-  ).toMatchInlineSnapshot(`
+  expect(fumaMatter("---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool."))
+    .toMatchInlineSnapshot(`
     {
       "content": "wow looks cool.",
       "data": {
@@ -213,8 +195,7 @@ test("parse frontmatter", () => {
     }
   `);
 
-  expect(fumaMatter("--- \ntitle: hello world\r\n---\r\nwow looks cool."))
-    .toMatchInlineSnapshot(`
+  expect(fumaMatter("--- \ntitle: hello world\r\n---\r\nwow looks cool.")).toMatchInlineSnapshot(`
     {
       "content": "--- 
     title: hello world

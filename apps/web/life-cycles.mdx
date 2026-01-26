@@ -1,0 +1,11 @@
+---
+title: Life Cycles
+---
+
+## Collections
+
+When triggering event on multiple collections, event hooks are called unorderedly. Fuma Content will call the hooks with `Promise.all()` and do not preserve order.
+
+## Plugins
+
+When triggering event on multiple plugins, event hooks are called according to its order in `plugins` array. Order is strictly preserved.

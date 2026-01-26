@@ -1,0 +1,38 @@
+---
+title: Vite
+description: Setup Fuma Content on Vite
+---
+
+## Installation
+
+```npm
+npm i fuma-content
+```
+
+Update your Vite config:
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import content from "fuma-content/vite";
+
+export default defineConfig({
+  plugins: [
+    content(await import("./content.config")),
+    // recommended
+    tsConfigPaths({
+      projects: ["./tsconfig.json"],
+    }),
+  ],
+});
+```
+
+Create a config file to define collections:
+
+<include meta='title="content.config.ts (Example)"'>.shared.config.ts</include>
+
+<include>.shared.tsconfig.mdx</include>
+
+Fuma Content is now configured, start the dev server (`vite dev`) to see the generated types.
+
+<include>.shared.learn-more.mdx</include>

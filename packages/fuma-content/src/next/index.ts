@@ -1,36 +1,36 @@
 import type { NextConfig } from "next";
-import * as path from "node:path";
+import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
-import { Core } from "@/core";
+import { Core, CoreOptions } from "@/core";
 import type { FSWatcher } from "chokidar";
+import { loaderPlugin } from "@/plugins/loader";
 
-export interface NextOptions {
+export interface NextOptions extends Pick<CoreOptions, "cwd" | "configPath" | "outDir"> {
   /**
-   * Path to source configuration file
-   */
-  configPath?: string;
-
-  /**
-   * Directory for output files
+   * clean output directory on start
    *
-   * @defaultValue '.content'
+   * @defaultValue true
    */
-  outDir?: string;
+  clean?: boolean;
 }
 
-export async function createContent(nextOptions: NextOptions = {}) {
-  const core = createNextCore(applyDefaults(nextOptions));
+export async function createContent(options: NextOptions = {}) {
+  const { clean = true } = options;
+  const isFirstStart = process.env._FUMA_CONTENT !== "1";
+  process.env._FUMA_CONTENT = "1";
+
+  const core = createNextCore(options);
+  if (clean && isFirstStart) {
+    await core.clearOutputDirectory();
+  }
+
   await core.init({
     config: loadConfig(core, true),
   });
 
-  if (process.env._FUMADOCS_MDX !== "1") {
-    process.env._FUMADOCS_MDX = "1";
-
-    await core.emit({ write: true });
+  if (isFirstStart) {
     await init(process.env.NODE_ENV === "development", core);
   }
-
   return (nextConfig: NextConfig = {}): NextConfig => {
     const ctx = core.getPluginContext();
     for (const plugin of core.getPlugins(true)) {
@@ -42,6 +42,8 @@ export async function createContent(nextOptions: NextOptions = {}) {
 }
 
 async function init(dev: boolean, core: Core): Promise<void> {
+  await core.emit({ write: true });
+
   if (!dev) return;
   const { FSWatcher } = await import("chokidar");
   const { configPath, outDir } = core.getOptions();
@@ -58,21 +60,14 @@ async function init(dev: boolean, core: Core): Promise<void> {
       persistent: true,
       ignored: [outDir],
     });
-    watcher.add(configPath);
-    for (const collection of core.getCollections(true)) {
-      const handler = collection.handlers.fs;
-      if (handler) {
-        watcher.add(handler.dir);
-      }
-    }
 
     watcher.once("ready", () => {
-      console.log("[MDX] started dev server");
+      console.log("[fuma-content] started dev server");
     });
 
     watcher.on("all", (_event, file) => {
       if (path.resolve(file) === absoluteConfigPath) {
-        console.log("[MDX] restarting dev server");
+        console.log("[fuma-content] restarting dev server");
         watcher?.removeAllListeners();
         void (async () => {
           await core.init({
@@ -89,7 +84,7 @@ async function init(dev: boolean, core: Core): Promise<void> {
 
   process.on("exit", () => {
     if (!watcher || watcher.closed) return;
-    console.log("[MDX] closing dev server");
+    console.log("[fuma-content] closing dev server");
     void watcher.close();
   });
 
@@ -97,23 +92,18 @@ async function init(dev: boolean, core: Core): Promise<void> {
 }
 
 export async function createStandaloneCore(options: NextOptions) {
-  const core = createNextCore(applyDefaults(options));
+  const core = createNextCore(options);
   await core.init({
     config: loadConfig(core, true),
   });
   return core;
 }
 
-function applyDefaults(options: NextOptions): Required<NextOptions> {
-  return {
-    outDir: options.outDir ?? Core.defaultOptions.outDir,
-    configPath: options.configPath ?? Core.defaultOptions.configPath,
-  };
-}
-
-function createNextCore(options: Required<NextOptions>): Core {
+function createNextCore({ configPath, cwd, outDir }: NextOptions): Core {
   return new Core({
-    outDir: options.outDir,
-    configPath: options.configPath,
+    configPath,
+    cwd,
+    outDir,
+    plugins: [loaderPlugin()],
   });
 }

@@ -1,33 +1,30 @@
-type Awaitable<T> = T | PromiseLike<T>;
+import type { Awaitable } from "@/types";
 
 export interface CollectionStore<Id, Data> {
   /**
-   * type-only operation to change data type, doesn't do any runtime transformation.
+   * type-only operation to cast data type, doesn't do any runtime transformation.
    */
-  $data: <T>(_cast: (input: Data) => T) => CollectionStore<Id, T>;
+  castData: <T>(_cast: (input: Data) => T) => CollectionStore<Id, T>;
 
   get: (id: Id) => Awaitable<Data | undefined>;
   list: () => Awaitable<Data[]>;
 
   /**
-   * For typescript to infer data types, can be anything
+   * For typescript to infer data types, don't access the value of this property.
    */
   $inferData: Data;
 }
 
-export class SimpleCollectionStore<Data> implements CollectionStore<
-  string,
-  Data
-> {
-  private readonly dataMap: Map<string, Data>;
+export class MapCollectionStore<Id, Data> implements CollectionStore<Id, Data> {
+  private readonly dataMap: Map<Id, Data>;
   private readonly dataList: Data[];
 
-  constructor(input: Map<string, Data>) {
+  constructor(input: Map<Id, Data>) {
     this.dataMap = input;
     this.dataList = Array.from(input.values());
   }
 
-  get(id: string): Data | undefined {
+  get(id: Id): Data | undefined {
     return this.dataMap.get(id);
   }
 
@@ -35,16 +32,16 @@ export class SimpleCollectionStore<Data> implements CollectionStore<
     return this.dataList;
   }
 
-  $data<T>(_cast: (input: Data) => T): SimpleCollectionStore<T> {
-    return this as unknown as SimpleCollectionStore<T>;
+  castData<T>(_cast: (input: Data) => T): MapCollectionStore<Id, T> {
+    return this as unknown as MapCollectionStore<Id, T>;
   }
 
   /**
    * in-place transformation on all data
    */
-  transform<T>(fn: (input: Data) => T): SimpleCollectionStore<T> {
+  transform<T>(fn: (input: Data) => T): MapCollectionStore<Id, T> {
     this.dataList.length = 0;
-    const dataMap = this.dataMap as unknown as Map<string, T>;
+    const dataMap = this.dataMap as unknown as Map<Id, T>;
     const dataList = this.dataList as unknown as T[];
 
     for (const [k, v] of this.dataMap) {
@@ -53,7 +50,7 @@ export class SimpleCollectionStore<Data> implements CollectionStore<
       dataList.push(updated);
     }
 
-    return this as unknown as SimpleCollectionStore<T>;
+    return this as unknown as MapCollectionStore<Id, T>;
   }
 
   get $inferData(): Data {

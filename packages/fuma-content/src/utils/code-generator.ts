@@ -1,13 +1,5 @@
 import path from "node:path";
-import { glob } from "tinyglobby";
-import { type AsyncCache, createCache } from "@/utils/async-cache";
-
-export interface GlobImportOptions {
-  base: string;
-  query?: Record<string, string | undefined>;
-  import?: string;
-  eager?: boolean;
-}
+import { URLSearchParams } from "node:url";
 
 export interface CodeGeneratorOptions {
   target: "default" | "vite";
@@ -16,7 +8,6 @@ export interface CodeGeneratorOptions {
    * add .js extenstion to imports
    */
   jsExtension: boolean;
-  globCache: Map<string, Promise<string[]>>;
 }
 
 interface ImportInfo {
@@ -42,7 +33,6 @@ function importInfo(): ImportInfo {
  */
 export class CodeGenerator {
   private readonly lines: string[] = [];
-  private readonly globCache: AsyncCache<string[]>;
   // specifier -> imported members/info
   private readonly importInfos = new Map<string, ImportInfo>();
   private eagerImportId = 0;
@@ -51,32 +41,29 @@ export class CodeGenerator {
   constructor({
     target = "default",
     jsExtension = false,
-    globCache = new Map(),
     outDir = "",
   }: Partial<CodeGeneratorOptions>) {
     this.options = {
       target,
       jsExtension,
-      globCache,
       outDir,
     };
-    this.globCache = createCache(globCache);
   }
 
-  addNamespaceImport(namespace: string, specifier: string, types = false) {
+  addNamespaceImport(namespace: string, specifier: string, typeOnly = false) {
     const info = this.importInfos.get(specifier) ?? importInfo();
     this.importInfos.set(specifier, info);
-    if (!types) info.isUsed.add(namespace);
+    if (!typeOnly) info.isUsed.add(namespace);
     info.namespaces.add(namespace);
   }
 
-  addNamedImport(names: string[], specifier: string, types = false) {
+  addNamedImport(names: string[], specifier: string, typeOnly = false) {
     const info = this.importInfos.get(specifier) ?? importInfo();
     this.importInfos.set(specifier, info);
     for (const name of names) {
       const [memberName, importName = memberName] = name.split(/\s+as\s+/, 2);
       info.named.set(importName, memberName);
-      if (!types) info.isUsed.add(importName);
+      if (!typeOnly) info.isUsed.add(importName);
     }
   }
 
@@ -92,85 +79,31 @@ export class CodeGenerator {
     }
   }
 
-  async generateGlobImport(
-    patterns: string | string[],
-    options: GlobImportOptions,
-  ): Promise<string> {
-    if (this.options.target === "vite") {
-      return this.generateViteGlobImport(patterns, options);
-    }
-
-    return this.generateNodeGlobImport(patterns, options);
+  /** generate a random import name that is unique in file. */
+  generateImportName(): string {
+    return `__${this.eagerImportId++}`;
   }
 
-  private generateViteGlobImport(
-    patterns: string | string[],
-    { base, ...rest }: GlobImportOptions,
-  ): string {
-    patterns = (typeof patterns === "string" ? [patterns] : patterns).map(
-      normalizeViteGlobPath,
-    );
-
-    return `import.meta.glob(${JSON.stringify(patterns)}, ${JSON.stringify(
-      {
-        base: normalizeViteGlobPath(path.relative(this.options.outDir, base)),
-        ...rest,
-      },
-      null,
-      2,
-    )})`;
+  formatDynamicImport(specifier: string, mod?: string): string {
+    let s = `import("${specifier}")`;
+    if (mod) s += `.then(mod => mod.${mod})`;
+    return s;
   }
 
-  private async generateNodeGlobImport(
-    patterns: string | string[],
-    { base, eager = false, query = {}, import: importName }: GlobImportOptions,
-  ): Promise<string> {
-    const files = await this.globCache.cached(
-      JSON.stringify({ patterns, base }),
-      () =>
-        glob(patterns, {
-          cwd: base,
-        }),
-    );
-
-    let code: string = "{";
-    for (const item of files) {
-      const fullPath = path.join(base, item);
-      const searchParams = new URLSearchParams();
-
-      for (const [k, v] of Object.entries(query)) {
-        if (v !== undefined) searchParams.set(k, v);
-      }
-
-      const importPath = `${this.formatImportPath(fullPath)}?${searchParams.toString()}`;
-      if (eager) {
-        const name = `__fd_glob_${this.eagerImportId++}`;
-        this.lines.unshift(
-          importName
-            ? `import { ${importName} as ${name} } from ${JSON.stringify(importPath)}`
-            : `import * as ${name} from ${JSON.stringify(importPath)}`,
-        );
-
-        code += `${JSON.stringify(item)}: ${name}, `;
-      } else {
-        let line = `${JSON.stringify(item)}: () => import(${JSON.stringify(importPath)})`;
-        if (importName) {
-          line += `.then(mod => mod.${importName})`;
-        }
-
-        code += `${line}, `;
-      }
+  formatQuery(query: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    for (const k in query) {
+      const value = query[k];
+      if (typeof value === "string") params.set(k, value);
     }
-
-    code += "}";
-    return code;
+    return params.toString();
   }
 
   formatImportPath(file: string) {
     const ext = path.extname(file);
     let filename: string;
 
-    if (ext === ".ts") {
+    if (ext === ".ts" || ext === ".tsx") {
       filename = file.substring(0, file.length - ext.length);
       if (this.options.jsExtension) filename += ".js";
     } else {
@@ -178,7 +111,7 @@ export class CodeGenerator {
     }
 
     const importPath = slash(path.relative(this.options.outDir, filename));
-    return importPath.startsWith(".") ? importPath : `./${importPath}`;
+    return importPath.startsWith("../") ? importPath : `./${importPath}`;
   }
 
   toString() {
@@ -199,35 +132,19 @@ export class CodeGenerator {
 
       const namedImports: string[] = [];
       for (const [importName, memberName] of named) {
-        const item =
-          importName === memberName
-            ? importName
-            : `${memberName} as ${importName}`;
+        const item = importName === memberName ? importName : `${memberName} as ${importName}`;
 
         namedImports.push(isUsed.has(importName) ? item : `type ${item}`);
       }
 
       if (namedImports.length > 0) {
-        final.push(
-          `import { ${namedImports.join(", ")} } from "${specifier}";`,
-        );
+        final.push(`import { ${namedImports.join(", ")} } from "${specifier}";`);
       }
     }
 
     final.push(...this.lines);
     return final.join("\n");
   }
-}
-
-/**
- * convert into POSIX & relative file paths, such that Vite can accept it.
- */
-function normalizeViteGlobPath(file: string) {
-  file = slash(file);
-  if (file.startsWith("./")) return file;
-  if (file.startsWith("/")) return `.${file}`;
-
-  return `./${file}`;
 }
 
 export function slash(path: string): string {

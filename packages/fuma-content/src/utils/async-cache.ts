@@ -7,9 +7,7 @@ export interface AsyncCache<V> {
 /**
  * cache for async resources, finished promises will be resolved into original value, otherwise wrapped with a promise.
  */
-export function createCache<V>(
-  store = new Map<string, V | Promise<V>>(),
-): AsyncCache<V> {
+export function createCache<V>(store = new Map<string, V | Promise<V>>()): AsyncCache<V> {
   return {
     cached(key, fn) {
       let cached = store.get(key);

@@ -1,0 +1,12 @@
+Each collection generates its files in the `.content` folder, it's recommended to add a path alias:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "paths": {
+      // [!code ++]
+      "content/*": ["./.content/*"]
+    }
+  }
+}
+```

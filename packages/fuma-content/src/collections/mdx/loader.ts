@@ -1,11 +1,12 @@
-import { fumaMatter } from "@/utils/fuma-matter";
+import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import type { SourceMap } from "rollup";
 import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import type { Loader } from "@/plugins/with-loader";
-import type { DynamicCore } from "@/config/dynamic";
+import type { Loader } from "@/plugins/loader";
+import type { DynamicCore } from "@/dynamic";
+import { MDXCollection } from "../mdx";
 
 const querySchema = z
   .object({
@@ -25,21 +26,11 @@ type CacheEntry = z.infer<typeof cacheEntry>;
 
 export function createMdxLoader({ getCore }: DynamicCore): Loader {
   return {
-    async load({
-      getSource,
-      development: isDevelopment,
-      query,
-      compiler,
-      filePath,
-    }) {
+    async load({ getSource, development: isDevelopment, query, compiler, filePath }) {
       let core = await getCore();
       const value = await getSource();
       const matter = fumaMatter(value);
-      const {
-        collection: collectionName,
-        workspace,
-        only,
-      } = querySchema.parse(query);
+      const { collection: collectionName, workspace, only } = querySchema.parse(query);
       if (workspace) {
         core = core.getWorkspaces().get(workspace) ?? core;
       }
@@ -69,16 +60,15 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
         };
       }
 
-      const collection = collectionName
-        ? core.getCollection(collectionName)
-        : undefined;
-      const handler = collection?.handlers.mdx;
+      let collection = collectionName ? core.getCollection(collectionName) : undefined;
+      if (!(collection instanceof MDXCollection)) collection = undefined;
 
-      if (collection && handler?.frontmatter) {
-        matter.data = await handler.frontmatter.call(
-          { collection, filePath, source: value },
-          matter.data as Record<string, unknown>,
-        );
+      if (collection?.frontmatter) {
+        matter.data = await collection.frontmatter.run(matter.data as Record<string, unknown>, {
+          collection,
+          filePath,
+          source: value,
+        });
       }
 
       if (only === "frontmatter") {

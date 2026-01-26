@@ -10,13 +10,13 @@ import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { cn } from "@/lib/cn";
 
 // language=ts
-const config = `import { defineMDX } from "fuma-content/collections/mdx"
-import { defineMeta } from "fuma-content/collections/meta"
+const config = `import { mdxCollection } from "fuma-content/collections/mdx"
+import { dataCollection } from "fuma-content/collections/data"
 import git from "fuma-content/plugins/git"
 import { defineConfig } from "fuma-content/config"
 import { z } from "zod"
 
-const docs = defineMDX({
+const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: z.object({
     title: z.string(),
@@ -25,7 +25,7 @@ const docs = defineMDX({
   lazy: true,
 })
 
-const authors = defineMeta({
+const authors = dataCollection({
   dir: "content/docs",
   files: ["authors.json"],
   schema: z.object({
@@ -42,8 +42,8 @@ export default defineConfig({
 })`;
 
 // language=tsx
-const serverCode = `import { docs } from "content/mdx"
-import { authors } from "content/meta"
+const serverCode = `import { docs } from "content/docs"
+import { authors } from "content/authors"
 
 for (const file of docs.list()) {
   const { frontmatter, lastModified } = file.compiled
@@ -69,7 +69,8 @@ function Page({ id }: { id: string }) {
 }`;
 
 // language=tsx
-const browserCode = `import { docs, useRenderer } from "content/mdx-browser";
+const browserCode = `import { docs } from "content/docs.browser";
+import { useRenderer } from "fuma-content/collections/mdx/react";
 
 function Page({ id }: { id: string }) {
   const file = docs.get(id)
@@ -88,20 +89,15 @@ function Page({ id }: { id: string }) {
 export default function HomePage() {
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-4 py-16">
-      <h1 className="mb-6 font-semibold text-2xl">
-        Integrate content into your JavaScript app.
-      </h1>
+      <h1 className="mb-6 font-semibold text-2xl">Integrate content into your JavaScript app.</h1>
       <p className="mb-6 text-fd-muted-foreground">
-        Fuma Content is a{" "}
-        <span className="font-medium text-fd-primary">content processing</span>{" "}
+        Fuma Content is a <span className="font-medium text-fd-primary">content processing</span>{" "}
         layer, with native support for MDX.js, JSON and YAML files.
       </p>
       <div className="mb-6 flex flex-row items-center gap-2">
         <Link
           href="/docs"
-          className={cn(
-            buttonVariants({ variant: "primary", className: "px-4" }),
-          )}
+          className={cn(buttonVariants({ variant: "primary", className: "px-4" }))}
         >
           Getting Started
         </Link>

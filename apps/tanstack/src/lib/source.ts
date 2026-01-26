@@ -1,5 +1,5 @@
 import { loader, type MetaData, type Source } from "fumadocs-core/source";
-import { docs } from "content/mdx";
+import { docs } from "content/docs";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
 
 export const source = loader(mySource(), {

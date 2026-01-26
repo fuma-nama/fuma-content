@@ -1,0 +1,45 @@
+---
+title: Node.js
+description: Use Fuma Content in Node.js
+---
+
+## Installation
+
+```npm
+npm i fuma-content
+```
+
+Create a config file to define collections:
+
+<include meta='title="content.config.ts (Example)"'>
+  ../(framework-integration)/.shared.config.ts
+</include>
+
+<include>../(framework-integration)/.shared.tsconfig.mdx</include>
+
+Register Fuma Content as a Node.js hook:
+
+```ts
+import { register } from "fuma-content/node";
+
+register();
+```
+
+## Usage
+
+To interact with Fuma Content, create a [Standalone](/docs/standalone) instance.
+
+For example, to generate collection files:
+
+```ts
+await content.emit();
+```
+
+The Node.js hook allows you to access the generated collection outputs, which may require compilation beforehand (e.g. MDX files).
+
+```ts
+import { docs } from "content/docs";
+
+// the content inside is compiled
+console.log(docs.list());
+```

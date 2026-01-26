@@ -1,14 +1,17 @@
-import type { LoadedConfig } from "@/config/build";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { FSWatcher } from "chokidar";
-import type { Collection } from "@/collections";
+import { Collection } from "@/collections";
 import type * as Vite from "vite";
 import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
 import { CodeGenerator } from "@/utils/code-generator";
+import type { Awaitable } from "@/types";
+import type { GlobalConfig } from "./config";
 
-type Awaitable<T> = T | PromiseLike<T>;
+export interface ResolvedConfig extends Omit<GlobalConfig, "collections"> {
+  collections: Map<string, Collection>;
+}
 
 export interface EmitEntry {
   /**
@@ -43,35 +46,30 @@ export interface Plugin {
    */
   name: string;
 
+  /** when `true`, only keep the last plugin with same `name`. */
+  dedupe?: boolean;
+
   /**
    * on config loaded/updated
    */
-  config?: (
-    this: PluginContext,
-    config: LoadedConfig,
-  ) => Awaitable<void | LoadedConfig>;
+  config?: (this: PluginContext, config: ResolvedConfig) => Awaitable<void | ResolvedConfig>;
 
+  /**
+   * called after collection initialization
+   */
   collection?: (this: PluginContext, collection: Collection) => Awaitable<void>;
 
   /**
-   * Generate files (e.g. types, index file, or JSON schemas)
+   * Configure watch/dev server
    */
-  emit?: (this: EmitContext) => Awaitable<EmitEntry[]>;
-
-  /**
-   * Configure Fumadocs dev server
-   */
-  configureServer?: (
-    this: PluginContext,
-    server: ServerContext,
-  ) => Awaitable<void>;
+  configureServer?: (this: PluginContext, server: ServerContext) => void;
 
   vite?: {
     createPlugin?: (this: PluginContext) => Vite.PluginOption;
   };
 
   bun?: {
-    build?: (this: PluginContext, build: Bun.PluginBuilder) => Awaitable<void>;
+    setup?: (this: PluginContext, build: Bun.PluginBuilder) => Awaitable<void>;
   };
 
   next?: {
@@ -83,9 +81,7 @@ export interface Plugin {
   };
 }
 
-export type PluginOption = Awaitable<
-  Plugin | PluginOption[] | false | undefined
->;
+export type PluginOption = Awaitable<Plugin | PluginOption[] | false | undefined>;
 
 export interface ServerContext {
   /**
@@ -96,19 +92,25 @@ export interface ServerContext {
   watcher?: FSWatcher;
 }
 
-export interface CoreOptions {
+export type CoreOptions = Partial<ResolvedCoreOptions>;
+
+/**
+ * the resolved options, all paths are absolute
+ */
+export interface ResolvedCoreOptions {
+  cwd: string;
+  /**
+   * Path to source configuration file
+   *
+   * @defaultValue content.config.ts
+   */
   configPath: string;
+  /**
+   * Directory for output files
+   *
+   * @defaultValue '.content'
+   */
   outDir: string;
-  plugins?: PluginOption[];
-
-  emit?: {
-    target?: "default" | "vite";
-    /**
-     * add .js extenstion to imports
-     */
-    jsExtension?: boolean;
-  };
-
   /**
    * the workspace info if this instance is created as a workspace
    */
@@ -117,13 +119,14 @@ export interface CoreOptions {
     name: string;
     dir: string;
   };
+  plugins?: PluginOption;
 }
 
 export interface EmitOptions {
   /**
-   * filter the plugins to run emit
+   * filter the collections to run emit
    */
-  filterPlugin?: (plugin: Plugin) => boolean;
+  filterCollection?: (collection: Collection) => boolean;
 
   /**
    * filter the workspaces to run emit
@@ -141,23 +144,32 @@ export interface EmitOutput {
   workspaces: Record<string, EmitEntry[]>;
 }
 
-async function getPlugins(pluginOptions: PluginOption[]): Promise<Plugin[]> {
+async function getPlugins(pluginOptions: PluginOption[], dedupe = true): Promise<Plugin[]> {
   const plugins: Plugin[] = [];
-
   for (const option of await Promise.all(pluginOptions)) {
     if (!option) continue;
-    if (Array.isArray(option)) plugins.push(...(await getPlugins(option)));
+    if (Array.isArray(option)) plugins.push(...(await getPlugins(option, false)));
     else plugins.push(option);
   }
 
-  return plugins;
+  if (!dedupe) return plugins;
+
+  const excludedName = new Set<string>();
+  const deduped: Plugin[] = [];
+  for (let i = plugins.length - 1; i >= 0; i--) {
+    const plugin = plugins[i];
+    if (excludedName.has(plugin.name)) continue;
+    deduped.unshift(plugin);
+    if (plugin.dedupe) excludedName.add(plugin.name);
+  }
+  return deduped;
 }
 
 export class Core {
   private readonly workspaces = new Map<string, Core>();
-  private readonly options: CoreOptions;
+  private readonly options: ResolvedCoreOptions;
   private plugins: Plugin[] = [];
-  private config!: LoadedConfig;
+  private config!: ResolvedConfig;
   static defaultOptions = {
     configPath: "content.config.ts",
     outDir: ".content",
@@ -170,24 +182,31 @@ export class Core {
    */
   readonly cache = new Map<string, unknown>();
 
-  constructor(options: CoreOptions) {
-    this.options = options;
+  constructor(options: CoreOptions = {}) {
+    const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
+    this.options = {
+      ...options,
+      cwd,
+      outDir: path.resolve(cwd, options.outDir ?? Core.defaultOptions.outDir),
+      configPath: path.resolve(cwd, options.configPath ?? Core.defaultOptions.configPath),
+    };
   }
 
-  async init({ config: newConfig }: { config: Awaitable<LoadedConfig> }) {
-    this.config = await newConfig;
+  async init({
+    config: newConfig,
+  }: {
+    /**
+     * either the default export or all exports of config file.
+     */
+    config: Awaitable<Record<string, unknown>>;
+  }) {
+    this.config = await this.initConfig(await newConfig);
     this.cache.clear();
     this.workspaces.clear();
-    const loadedCollectionTypeIds = new Set<string>();
     this.plugins = await getPlugins([
       this.options.plugins,
       this.config.plugins,
-      ...this.config.collections.values().map(({ typeInfo }) => {
-        if (loadedCollectionTypeIds.has(typeInfo.id)) return false;
-
-        loadedCollectionTypeIds.add(typeInfo.id);
-        return typeInfo.plugins;
-      }),
+      ...this.config.collections.values().map((collection) => collection.plugins),
     ]);
 
     const ctx = this.getPluginContext();
@@ -196,36 +215,35 @@ export class Core {
       if (out) this.config = out;
     }
 
-    const { workspace, outDir } = this.options;
-    // only support workspaces with max depth 1
-    if (!workspace) {
-      await Promise.all(
-        Object.entries(this.config.workspaces).map(
-          async ([name, workspace]) => {
-            const child = new Core({
-              ...this.options,
-              outDir: path.join(outDir, name),
-              workspace: {
-                name,
-                parent: this,
-                dir: workspace.dir,
-              },
-            });
-
-            await child.init({ config: workspace.config });
-            this.workspaces.set(name, child);
-          },
-        ),
-      );
-    }
-
     await Promise.all(
       this.config.collections.values().map(async (collection) => {
+        collection.onConfig.run({ collection, core: this, config: this.config });
+
         for (const plugin of this.plugins) {
           await plugin.collection?.call(ctx, collection);
         }
       }),
     );
+
+    // only support workspaces with max depth 1
+    if (!this.options.workspace && this.config.workspaces) {
+      await Promise.all(
+        Object.entries(this.config.workspaces).map(async ([name, workspace]) => {
+          const child = new Core({
+            ...this.options,
+            cwd: path.resolve(this.options.cwd, workspace.dir),
+            workspace: {
+              name,
+              parent: this,
+              dir: workspace.dir,
+            },
+          });
+
+          await child.init({ config: workspace.config as Record<string, unknown> });
+          this.workspaces.set(name, child);
+        }),
+      );
+    }
   }
 
   getWorkspaces() {
@@ -234,7 +252,7 @@ export class Core {
   getOptions() {
     return this.options;
   }
-  getConfig(): LoadedConfig {
+  getConfig(): ResolvedConfig {
     return this.config;
   }
   /**
@@ -273,27 +291,28 @@ export class Core {
   }
   async initServer(server: ServerContext) {
     const ctx = this.getPluginContext();
-    const promises: Awaitable<void>[] = [];
 
+    server.watcher?.add(this.options.configPath);
     for (const plugin of this.plugins) {
-      promises.push(plugin.configureServer?.call(ctx, server));
+      plugin.configureServer?.call(ctx, server);
+    }
+    for (const collection of this.getCollections()) {
+      collection.onServer.run({ collection, core: this, server });
     }
     for (const workspace of this.workspaces.values()) {
-      promises.push(workspace.initServer(server));
+      await workspace.initServer(server);
     }
+  }
 
-    await Promise.all(promises);
+  async clearOutputDirectory() {
+    await fs.rm(this.options.outDir, { recursive: true, force: true });
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
-    const {
-      workspace,
-      outDir,
-      emit: { target, jsExtension } = {},
-    } = this.options;
-    const { filterPlugin, filterWorkspace, write = false } = emitOptions;
+    const { workspace, outDir } = this.options;
+    const { target, jsExtension } = this.config.emit ?? {};
+    const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
-    const globCache = new Map<string, Promise<string[]>>();
     const ctx: EmitContext = {
       ...this.getPluginContext(),
       createCodeGenerator: async (path, content) => {
@@ -301,7 +320,6 @@ export class Core {
           target,
           outDir,
           jsExtension,
-          globCache,
         });
         await content({
           core: this,
@@ -321,15 +339,13 @@ export class Core {
       workspaces: {},
     };
 
-    for (const li of await Promise.all(
-      this.plugins.map((plugin) => {
-        if ((filterPlugin && !filterPlugin(plugin)) || !plugin.emit)
-          return null;
-        return plugin.emit.call(ctx);
-      }),
-    )) {
-      if (!li) continue;
-      for (const item of li) {
+    const generated: Awaitable<EmitEntry[]>[] = [];
+    for (const collection of this.getCollections()) {
+      if (filterCollection && !filterCollection(collection)) continue;
+      generated.push(collection.onEmit.run([], ctx));
+    }
+    for (const entries of await Promise.all(generated)) {
+      for (const item of entries) {
         if (added.has(item.path)) continue;
         out.entries.push(item);
         added.add(item.path);
@@ -347,18 +363,53 @@ export class Core {
 
       console.log(
         workspace
-          ? `[MDX: ${workspace.name}] generated files in ${performance.now() - start}ms`
-          : `[MDX] generated files in ${performance.now() - start}ms`,
+          ? `[fuma-content: ${workspace.name}] generated files in ${performance.now() - start}ms`
+          : `[fuma-content] generated files in ${performance.now() - start}ms`,
       );
     }
 
-    await Promise.all(
-      this.workspaces.entries().map(async ([name, workspace]) => {
-        if (filterWorkspace && !filterWorkspace(name)) return;
-        out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
-      }),
-    );
+    for (const [name, workspace] of this.workspaces.entries()) {
+      if (filterWorkspace && !filterWorkspace(name)) continue;
+      out.workspaces[name] = (await workspace.emit(emitOptions)).entries;
+    }
 
     return out;
+  }
+
+  /**
+   * convert absolute path into a runtime path (relative to **runtime** cwd)
+   */
+  _toRuntimePath(absolutePath: string) {
+    return path.relative(process.cwd(), absolutePath);
+  }
+
+  private async initConfig(config: Record<string, unknown>): Promise<ResolvedConfig> {
+    const collections = new Map<string, Collection>();
+    let globalConfig: GlobalConfig;
+
+    if ("default" in config) {
+      globalConfig = config.default as GlobalConfig;
+      for (const [k, v] of Object.entries(config)) {
+        if (v instanceof Collection) {
+          globalConfig.collections ??= {};
+          globalConfig.collections[k] = v;
+        }
+      }
+    } else {
+      globalConfig = config as GlobalConfig;
+    }
+
+    globalConfig.collections ??= {};
+    await Promise.all(
+      Object.entries(globalConfig.collections).map(async ([name, collection]) => {
+        collection.name = name;
+        collections.set(name, collection);
+        await collection.onInit.run({ collection, core: this });
+      }),
+    );
+    return {
+      ...globalConfig,
+      collections,
+    };
   }
 }

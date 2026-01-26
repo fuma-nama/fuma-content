@@ -1,11 +1,10 @@
-import {
-  type InferPageType,
-  loader,
-  type MetaData,
-  type Source,
-} from "fumadocs-core/source";
+import { type InferPageType, loader, type Source, VirtualFile } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
-import { docs } from "content/mdx";
+import { docs } from "content/docs";
+import { meta } from "content/meta";
+import type { TOCItemType } from "fumadocs-core/toc";
+import type { StructuredData } from "fumadocs-core/mdx-plugins";
+import { Item, visit } from "fumadocs-core/page-tree";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(mySource(), {
@@ -13,24 +12,44 @@ export const source = loader(mySource(), {
   plugins: [lucideIconsPlugin()],
 });
 
+type PageData = (typeof docs)["$inferData"]["compiled"]["frontmatter"] & {
+  toc?: TOCItemType[];
+  structuredData?: StructuredData;
+  compiled: (typeof docs)["$inferData"]["compiled"];
+};
+
+type MetaData = (typeof meta)["$inferData"]["data"];
 function mySource(): Source<{
   metaData: MetaData;
-  pageData: (typeof docs)["$inferData"]["compiled"]["frontmatter"] & {
-    compiled: (typeof docs)["$inferData"]["compiled"];
-  };
+  pageData: PageData;
 }> {
-  return {
-    files: docs.list().map((doc) => ({
+  const files: VirtualFile<{ metaData: MetaData; pageData: PageData }>[] = [];
+  for (const doc of docs.list()) {
+    files.push({
       type: "page",
       path: doc.path,
       absolutePath: doc.fullPath,
       data: {
         ...doc.compiled.frontmatter,
-        structuredData: doc.compiled.structuredData,
+        structuredData: doc.compiled.structuredData as StructuredData,
+        toc: doc.compiled.toc as TOCItemType[],
         compiled: doc.compiled,
       },
-    })),
-  } satisfies Source;
+    });
+  }
+
+  for (const item of meta.list()) {
+    files.push({
+      type: "meta",
+      path: item.path,
+      absolutePath: item.fullPath,
+      data: item.data,
+    });
+  }
+
+  return {
+    files,
+  };
 }
 
 export function getPageImage(page: InferPageType<typeof source>) {
@@ -48,4 +67,15 @@ export async function getLLMText(page: InferPageType<typeof source>) {
   return `# ${page.data.title}
 
 ${processed}`;
+}
+
+export function getNodesUnderDirectory(dir: string) {
+  const nodes: Item[] = [];
+  visit(source.getPageTree(), (node) => {
+    if ("type" in node && node.type === "page" && node.$ref?.file.startsWith(`${dir}/`)) {
+      nodes.push(node);
+    }
+  });
+
+  return nodes;
 }
