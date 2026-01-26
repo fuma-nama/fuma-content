@@ -40,8 +40,9 @@ export class FileSystemCollection extends Collection {
    * the result is cached.
    */
   async getFiles() {
-    const { glob } = await import("tinyglobby");
     return this.filesCache.cached("", async () => {
+      const { glob } = await import("tinyglobby");
+
       const out = await glob(this.getPatterns(), { cwd: this.dir });
       return out.filter((v) => this.isFileSupported(v));
     });

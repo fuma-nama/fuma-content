@@ -15,7 +15,6 @@ import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 import { gitHook } from "@/plugins/git";
 import path from "node:path";
-import { URLSearchParams } from "node:url";
 
 interface CompilationContext {
   collection: Collection;
@@ -116,16 +115,20 @@ export class MDXCollection<
     }
 
     this.onEmit.pipe(async (entries, { createCodeGenerator }) => {
-      const add = await Promise.all([
-        createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStoreServer(ctx)),
-        createCodeGenerator(`${this.name}.browser.ts`, (ctx) =>
+      entries.push(
+        await createCodeGenerator(`${this.name}.ts`, (ctx) =>
+          this.generateCollectionStoreServer(ctx),
+        ),
+        await createCodeGenerator(`${this.name}.browser.ts`, (ctx) =>
           this.generateCollectionStoreBrowser(ctx),
         ),
-        createCodeGenerator(`${this.name}.dynamic.ts`, (ctx) =>
-          this.generateCollectionStoreDynamic(ctx),
-        ),
-      ]);
-      entries.push(...add);
+      );
+      if (this.dynamic)
+        entries.push(
+          await createCodeGenerator(`${this.name}.dynamic.ts`, (ctx) =>
+            this.generateCollectionStoreDynamic(ctx),
+          ),
+        );
       return entries;
     });
     this.onServer.hook(({ core, server }) => {
@@ -177,14 +180,14 @@ export class MDXCollection<
   ) {
     let s = `{`;
     const files = await this.getFiles();
-    const query = new URLSearchParams({
+    const query = codegen.formatQuery({
       collection: this.name,
       only: "frontmatter",
+      workspace,
     });
-    if (workspace) query.set("workspace", workspace);
     for (const file of files) {
       const fullPath = path.join(this.dir, file);
-      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query}`;
       if (eager) {
         const name = codegen.generateImportName();
         codegen.addNamedImport([`frontmatter as ${name}`], specifier);
@@ -203,13 +206,13 @@ export class MDXCollection<
   ) {
     let s = `{`;
     const files = await this.getFiles();
-    const query = new URLSearchParams({
+    const query = codegen.formatQuery({
       collection: this.name,
+      workspace,
     });
-    if (workspace) query.set("workspace", workspace);
     for (const file of files) {
       const fullPath = path.join(this.dir, file);
-      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query}`;
       if (eager) {
         const name = codegen.generateImportName();
         codegen.addNamespaceImport(name, specifier);
@@ -235,10 +238,8 @@ export class MDXCollection<
 
     if (this.lazy) {
       codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
-      const [headGlob, bodyGlob] = await Promise.all([
-        this.generateDocCollectionFrontmatterGlob(context, true),
-        this.generateDocCollectionGlob(context),
-      ]);
+      const headGlob = await this.generateDocCollectionFrontmatterGlob(context, true);
+      const bodyGlob = await this.generateDocCollectionGlob(context);
 
       code = {
         fn: "mdxStoreLazy",

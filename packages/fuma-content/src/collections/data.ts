@@ -7,7 +7,6 @@ import { asyncPipe } from "@/utils/pipe";
 import { slash } from "@/utils/code-generator";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 import path from "node:path";
-import { URLSearchParams } from "node:url";
 
 export interface DataTransformationContext {
   path: string;
@@ -88,13 +87,13 @@ export class DataCollection<
     );
     const base = slash(core._toRuntimePath(this.dir));
     let records = "{";
-    const query = new URLSearchParams({
+    const query = codegen.formatQuery({
       collection: this.name,
+      workspace,
     });
-    if (workspace) query.set("workspace", workspace);
     for (const file of await this.getFiles()) {
       const fullPath = path.join(this.dir, file);
-      const specifier = `${codegen.formatImportPath(fullPath)}?${query.toString()}`;
+      const specifier = `${codegen.formatImportPath(fullPath)}?${query}`;
       const name = codegen.generateImportName();
       codegen.addNamedImport([`default as ${name}`], specifier);
       records += `"${slash(file)}": ${name},`;

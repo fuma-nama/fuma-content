@@ -1,4 +1,5 @@
 import path from "node:path";
+import { URLSearchParams } from "node:url";
 
 export interface CodeGeneratorOptions {
   target: "default" | "vite";
@@ -89,11 +90,20 @@ export class CodeGenerator {
     return s;
   }
 
+  formatQuery(query: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    for (const k in query) {
+      const value = query[k];
+      if (typeof value === "string") params.set(k, value);
+    }
+    return params.toString();
+  }
+
   formatImportPath(file: string) {
     const ext = path.extname(file);
     let filename: string;
 
-    if (ext === ".ts") {
+    if (ext === ".ts" || ext === ".tsx") {
       filename = file.substring(0, file.length - ext.length);
       if (this.options.jsExtension) filename += ".js";
     } else {
@@ -101,7 +111,7 @@ export class CodeGenerator {
     }
 
     const importPath = slash(path.relative(this.options.outDir, filename));
-    return importPath.startsWith(".") ? importPath : `./${importPath}`;
+    return importPath.startsWith("../") ? importPath : `./${importPath}`;
   }
 
   toString() {
