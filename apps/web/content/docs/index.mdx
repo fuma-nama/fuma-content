@@ -11,101 +11,24 @@ Fuma Content introduces primitives for content processing, with a carefully desi
 
 Fuma Content requires a bundler or runtime loader (like Bun or Node.js loader) to work, it supports major frameworks like Vite, Next.js, and JavaScript runtimes.
 
-## Installation
-
-```npm
-npm i fuma-content
-```
+## Setup
 
 Configure it according to your framework.
-
-```ts tab="Next.js" title="next.config.mjs"
-import { createContent } from "fuma-content/next";
-
-/** @type {import('next').NextConfig} */
-const config = {
-  reactStrictMode: true,
-};
-
-const withContent = await createContent();
-
-export default withContent(config);
-```
-
-```ts tab="Vite" title="vite.config.ts"
-import { defineConfig } from "vite";
-import tsConfigPaths from "vite-tsconfig-paths";
-import content from "fuma-content/vite";
-
-export default defineConfig({
-  plugins: [
-    content(await import("./content.config")),
-    // recommended
-    tsConfigPaths({
-      projects: ["./tsconfig.json"],
-    }),
-  ],
-});
-```
-
-```toml tab="Bun" title="bunfig.toml"
-preload = ["./scripts/preload.ts"]
-```
-
-```ts tab="Bun" title="scripts/preload.ts"
-import { createContentPlugin } from "fumadocs-mdx/bun";
-
-Bun.plugin(createContentPlugin());
-```
-
-```ts tab="Node.js" title="my-app.ts"
-import { register } from "node:module";
-
-// add this to any entry point of your app/script
-// make sure your Node.js supports TypeScript (e.g. ts-node or 23.6.0+)
-register("fumadocs-mdx/node/loader", import.meta.url);
-```
-
-Create a config file to define collections:
-
-```ts title="content.config.ts"
-import { defineConfig } from "fuma-content/config";
-import { mdxCollection } from "fuma-content/collections/mdx";
-
-export default defineConfig({
-  collections: {
-    docs: mdxCollection({
-      dir: "content/docs",
-      // you can define a Standard Schema for frontmatter
-      // frontmatter: ...
-    }),
-  },
-});
-```
-
-Fuma Content is now configured, start the dev server of your framework (e.g. `next dev`) to access the compiled content.
-
-## Usage
-
-Each collection generates its own file in the `.content` folder, it's recommended to add a path alias:
-
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "paths": {
-      // [!code ++]
-      "content/*": [".content/*"]
-    }
-  }
-}
-```
-
-See below for all collections:
 
 import { getNodesUnderDirectory } from "@/lib/source";
 
 <Cards>
-  {getNodesUnderDirectory("collections").map((peer) => (
+  {getNodesUnderDirectory("(framework-integration)").map((peer) => (
+    <Card key={peer.url} title={peer.name} href={peer.url}>
+      {peer.description}
+    </Card>
+  ))}
+</Cards>
+
+Without a framework, you can also use Fuma Content on different JS runtimes, with a runtime adapter.
+
+<Cards>
+  {getNodesUnderDirectory("(runtime-integration)").map((peer) => (
     <Card key={peer.url} title={peer.name} href={peer.url}>
       {peer.description}
     </Card>

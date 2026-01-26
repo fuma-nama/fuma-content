@@ -1,3 +1,10 @@
 {
-  "pages": ["---Introduction---", "...", "---Collections---", "...collections"]
+  "pages": [
+    "---Introduction---",
+    "...",
+    "---Collections---",
+    "...collections",
+    "---Features---",
+    "standalone"
+  ]
 }

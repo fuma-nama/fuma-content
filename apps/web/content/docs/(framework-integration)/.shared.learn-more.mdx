@@ -1,0 +1,23 @@
+## Usage
+
+You can access the collections, such as the MDX collection you defined:
+
+```ts
+import { docs } from "content/docs";
+
+console.log(docs.list());
+```
+
+## Learn More
+
+See below for usage of built-in collections:
+
+import { getNodesUnderDirectory } from "@/lib/source";
+
+<Cards>
+  {getNodesUnderDirectory("collections").map((peer) => (
+    <Card key={peer.url} title={peer.name} href={peer.url}>
+      {peer.description}
+    </Card>
+  ))}
+</Cards>

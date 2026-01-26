@@ -1,0 +1,52 @@
+---
+title: Bun
+description: Use Fuma Content in Bun
+---
+
+## Installation
+
+```npm
+npm i fuma-content
+```
+
+Create a config file to define collections:
+
+<include meta='title="content.config.ts (Example)"'>
+  ../(framework-integration)/.shared.config.ts
+</include>
+
+<include>../(framework-integration)/.shared.tsconfig.mdx</include>
+
+Add the Fuma Content plugin, make sure to add it in preload script as it is a loader plugin.
+
+```ts tab="scripts/preload.ts"
+import { createContent } from "fumadocs-mdx/bun";
+
+export const content = await createContent();
+
+// register loader plugins
+Bun.plugin(content.createBunPlugin());
+```
+
+```toml tab="bunfig.toml"
+preload = ["./scripts/preload.ts"]
+```
+
+## Usage
+
+The `content` object exposes low-level API of Fuma Content, you can see [Standalone](/docs/standalone) for available APIs & usage.
+
+For example, to generate collection files:
+
+```ts
+await content.emit();
+```
+
+With Bun plugin configured, you can access the generated collection outputs:
+
+```ts
+import { docs } from "content/docs";
+
+// the content inside is compiled
+console.log(docs.list());
+```
