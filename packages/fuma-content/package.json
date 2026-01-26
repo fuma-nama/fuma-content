@@ -49,9 +49,9 @@
       "import": "./dist/collections/*.js",
       "default": "./dist/collections/*.js"
     },
-    "./node/loader": {
-      "types": "./dist/node/loader.d.ts",
-      "import": "./dist/node/loader.js"
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js"
     },
     "./bun": {
       "types": "./dist/bun/index.d.ts",

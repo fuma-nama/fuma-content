@@ -68,6 +68,9 @@ export interface LoaderConfig {
    */
   test?: RegExp;
 
+  /**
+   * @remarks it doesn't configure automatically for Next.js, you have to define the webpack/turbopack config in `configureNext()`.
+   */
   createLoader: (this: PluginContext, environment: LoaderEnvironment) => Promise<Loader>;
   configureNext?: (this: NextLoaderContext, next: NextConfig) => NextConfig;
 }
@@ -80,8 +83,6 @@ interface ResolvedLoader {
 
 /**
  * a light layer for implementing loaders.
- *
- * @remarks it doesn't include Next.js, you have to define the webpack/turbopack config, and export the loaders on your own.
  */
 export function loaderPlugin(): Plugin {
   // env -> loaders
@@ -143,7 +144,7 @@ export function loaderPlugin(): Plugin {
       },
     },
     bun: {
-      async build(build) {
+      async setup(build) {
         const { toBun } = await import("./bun");
 
         for (const loader of await initLoaders(this, "bun")) {

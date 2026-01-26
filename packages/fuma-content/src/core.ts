@@ -69,7 +69,7 @@ export interface Plugin {
   };
 
   bun?: {
-    build?: (this: PluginContext, build: Bun.PluginBuilder) => Awaitable<void>;
+    setup?: (this: PluginContext, build: Bun.PluginBuilder) => Awaitable<void>;
   };
 
   next?: {
@@ -99,7 +99,17 @@ export type CoreOptions = Partial<ResolvedCoreOptions>;
  */
 export interface ResolvedCoreOptions {
   cwd: string;
+  /**
+   * Path to source configuration file
+   *
+   * @defaultValue content.config.ts
+   */
   configPath: string;
+  /**
+   * Directory for output files
+   *
+   * @defaultValue '.content'
+   */
   outDir: string;
   /**
    * the workspace info if this instance is created as a workspace

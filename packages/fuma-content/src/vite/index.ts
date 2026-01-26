@@ -1,21 +1,9 @@
 import type { PluginOption } from "vite";
 import type { FSWatcher } from "chokidar";
-import { Core, type Plugin } from "@/core";
+import { Core, CoreOptions, type Plugin } from "@/core";
 import { loaderPlugin } from "@/plugins/loader";
 
-export interface PluginOptions {
-  /**
-   * @defaultValue content.config.ts
-   */
-  configPath?: string;
-
-  /**
-   * Output directory of generated files
-   *
-   * @defaultValue '.content'
-   */
-  outDir?: string;
-
+export interface PluginOptions extends Pick<CoreOptions, "configPath" | "cwd" | "outDir"> {
   /**
    * clean output directory on start
    *
@@ -26,9 +14,9 @@ export interface PluginOptions {
 
 export default async function content(
   config: Record<string, unknown>,
-  _pluginOpitons: PluginOptions = {},
+  pluginOpitons: PluginOptions = {},
 ): Promise<PluginOption[]> {
-  const pluginOpitons = applyDefaults(_pluginOpitons);
+  const { clean = true } = pluginOpitons;
   const core = createViteCore(pluginOpitons);
   await core.init({
     config,
@@ -40,7 +28,7 @@ export default async function content(
     {
       name: "fuma-content",
       async buildStart() {
-        if (pluginOpitons.clean) await core.clearOutputDirectory();
+        if (clean) await core.clearOutputDirectory();
         await core.emit({ write: true });
       },
       async configureServer(server) {
@@ -52,8 +40,9 @@ export default async function content(
   ];
 }
 
-function createViteCore({ configPath, outDir }: Required<PluginOptions>) {
+function createViteCore({ configPath, outDir, cwd }: PluginOptions) {
   return new Core({
+    cwd,
     configPath,
     outDir,
     plugins: [vitePlugin(), loaderPlugin()],
@@ -74,17 +63,9 @@ function vitePlugin(): Plugin {
 
 export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {
   const { loadConfig } = await import("@/config/load-from-file");
-  const core = createViteCore(applyDefaults(pluginOptions));
+  const core = createViteCore(pluginOptions);
   await core.init({
     config: loadConfig(core, true),
   });
   return core;
-}
-
-function applyDefaults(options: PluginOptions): Required<PluginOptions> {
-  return {
-    configPath: options.configPath ?? Core.defaultOptions.configPath,
-    outDir: options.outDir ?? Core.defaultOptions.outDir,
-    clean: options.clean ?? true,
-  };
 }

@@ -1,23 +1,11 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import { loadConfig } from "@/config/load-from-file";
-import { Core } from "@/core";
+import { Core, CoreOptions } from "@/core";
 import type { FSWatcher } from "chokidar";
 import { loaderPlugin } from "@/plugins/loader";
 
-export interface NextOptions {
-  /**
-   * Path to source configuration file
-   */
-  configPath?: string;
-
-  /**
-   * Directory for output files
-   *
-   * @defaultValue '.content'
-   */
-  outDir?: string;
-
+export interface NextOptions extends Pick<CoreOptions, "cwd" | "configPath" | "outDir"> {
   /**
    * clean output directory on start
    *
@@ -26,13 +14,13 @@ export interface NextOptions {
   clean?: boolean;
 }
 
-export async function createContent(rawOptions: NextOptions = {}) {
+export async function createContent(options: NextOptions = {}) {
+  const { clean = true } = options;
   const isFirstStart = process.env._FUMA_CONTENT !== "1";
   process.env._FUMA_CONTENT = "1";
 
-  const nextOptions = applyDefaults(rawOptions);
-  const core = createNextCore(nextOptions);
-  if (nextOptions.clean && isFirstStart) {
+  const core = createNextCore(options);
+  if (clean && isFirstStart) {
     await core.clearOutputDirectory();
   }
 
@@ -104,25 +92,18 @@ async function init(dev: boolean, core: Core): Promise<void> {
 }
 
 export async function createStandaloneCore(options: NextOptions) {
-  const core = createNextCore(applyDefaults(options));
+  const core = createNextCore(options);
   await core.init({
     config: loadConfig(core, true),
   });
   return core;
 }
 
-function applyDefaults(options: NextOptions): Required<NextOptions> {
-  return {
-    outDir: options.outDir ?? Core.defaultOptions.outDir,
-    configPath: options.configPath ?? Core.defaultOptions.configPath,
-    clean: options.clean ?? true,
-  };
-}
-
-function createNextCore(options: Required<NextOptions>): Core {
+function createNextCore({ configPath, cwd, outDir }: NextOptions): Core {
   return new Core({
-    outDir: options.outDir,
-    configPath: options.configPath,
+    configPath,
+    cwd,
+    outDir,
     plugins: [loaderPlugin()],
   });
 }

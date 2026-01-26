@@ -3,23 +3,33 @@ import { pathToFileURL } from "node:url";
 import { type CoreOptions, Core } from "@/core";
 import { loaderPlugin } from "@/plugins/loader";
 
-export type ContentPluginOptions = Omit<Partial<CoreOptions>, "plugins">;
+export type BunOptions = Omit<CoreOptions, "plugins" | "workspace">;
 
-export function createContentPlugin(options: ContentPluginOptions = {}): BunPlugin {
-  return {
-    name: "fuma-content",
-    async setup(build) {
-      const core = new Core({ ...options, plugins: [loaderPlugin()] });
-      const importPath = pathToFileURL(core.getOptions().configPath).href;
+export async function createContent(options: BunOptions): Promise<BunCore> {
+  const core = new BunCore({
+    ...options,
+    plugins: [loaderPlugin()],
+  });
+  const importPath = pathToFileURL(core.getOptions().configPath).href;
 
-      await core.init({
-        config: await import(importPath),
-      });
+  await core.init({
+    config: await import(importPath),
+  });
+  return core;
+}
 
-      const ctx = core.getPluginContext();
-      for (const plugin of core.getPlugins(true)) {
-        await plugin.bun?.build?.call(ctx, build);
-      }
-    },
-  };
+export class BunCore extends Core {
+  createBunPlugin(): BunPlugin {
+    return {
+      name: "fuma-content",
+      setup: async (build) => {
+        const ctx = this.getPluginContext();
+
+        for (const plugin of this.getPlugins(true)) {
+          const setup = plugin.bun?.setup;
+          if (setup) await setup.call(ctx, build);
+        }
+      },
+    };
+  }
 }

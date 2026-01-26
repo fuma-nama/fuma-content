@@ -12,9 +12,3 @@ export type GetCollectionConfig<Config, Name extends string> =
       : never;
 
 export type Awaitable<T> = T | PromiseLike<T>;
-
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
-  ? I
-  : never;
