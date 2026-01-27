@@ -1,0 +1,30 @@
+---
+title: Overview
+description: Introduction to plugins.
+---
+
+## Creating Plugin
+
+You can create a plugin with:
+
+```ts
+import type { Plugin } from "fuma-content";
+
+export default function myPlugin(): Plugin {
+  return {
+    name: "custom:my-plugin",
+    config() {
+      const { cwd } = this.core.getOptions();
+      console.log(cwd);
+    },
+    // you can define different hooks
+    async collection(collection) {
+      console.log(collection);
+    },
+  };
+}
+```
+
+### Hook Order
+
+When triggering event on multiple plugins, event hooks are called according to its order in `plugins` array. Order is strictly preserved.

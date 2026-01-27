@@ -1,0 +1,51 @@
+---
+title: Custom
+description: Create your collection.
+---
+
+## Overview
+
+Fuma Content uses class for collections:
+
+```ts
+import { Collection } from "fuma-content/collections";
+
+export class MyCollection extends Collection {
+  constructor() {
+    super();
+    this.onInit.hook(({ core }) => {
+      // init code
+    });
+    this.onServer.hook(({ server }) => {
+      // customise watch server
+      server.watcher?.on("all", (event, file) => {});
+    });
+  }
+}
+```
+
+You can hook into different events from the collection.
+
+### File Collection
+
+For file-based collections, you can also extend from file collection:
+
+```ts
+import { FileCollection } from "fuma-content/collections/fs";
+
+export class MyCollection extends FileCollection {
+  constructor() {
+    super({
+      dir: "content",
+      files: ["test/**/*.mdx"],
+      supportedFormats: ["mdx"],
+    });
+  }
+}
+```
+
+This introduces methods like `collection.getFiles()` & `collection.hasFile()`.
+
+### Hook Order
+
+When triggering event on multiple collections, event hooks are called unorderedly (order is not preserved).
