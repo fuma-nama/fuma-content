@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
 import { documentCollection, type DocumentItem } from "@/lib/data/store";
-import { usePathname, useRouter } from "next/navigation";
 import { isActive } from "@/lib/utils/urls";
+import { useLocation, useNavigate } from "react-router";
 
 export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useNavigate();
+  const pathname = useLocation().pathname;
 
   return (
     <DropdownMenu>
@@ -36,7 +36,7 @@ export function DocumentActionsDropdown({ document }: { document: DocumentItem }
             onClick={() => {
               documentCollection.delete(`${document.collectionId}-${document.id}`);
               if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
-                router.push(`/collection/${document.collectionId}`);
+                navigate(`/collection/${document.collectionId}`);
               }
             }}
           >
@@ -56,8 +56,8 @@ export function DocumentActionsContext({
   document: DocumentItem;
   children: ReactElement;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useNavigate();
+  const pathname = useLocation().pathname;
 
   return (
     <ContextMenu>
@@ -69,7 +69,7 @@ export function DocumentActionsContext({
             onClick={() => {
               documentCollection.delete(`${document.collectionId}-${document.id}`);
               if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
-                router.push(`/collection/${document.collectionId}`);
+                navigate(`/collection/${document.collectionId}`);
               }
             }}
           >

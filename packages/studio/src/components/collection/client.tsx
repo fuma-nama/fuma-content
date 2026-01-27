@@ -7,9 +7,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { documentCollection, type DocumentItem } from "@/lib/data/store";
-import { useRouter } from "next/navigation";
 import { type ReactNode, createContext, use, useCallback, useMemo, useState } from "react";
 import { useClientContext } from "./context";
+import { useNavigate } from "react-router";
 
 const CreateDialogContext = createContext<{
   open: boolean;
@@ -25,7 +25,7 @@ export function useCreateDocumentDialog(collectionId: string) {
     component: useCallback(
       ({ children }: { children: ReactNode }) => {
         const [open, setOpen] = useState(false);
-        const router = useRouter();
+        const navigate = useNavigate();
 
         return (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -39,11 +39,11 @@ export function useCreateDocumentDialog(collectionId: string) {
                     open,
                     setOpen,
                     onCreate(item) {
-                      router.push(`/collection/${item.collectionId}/${item.id}`);
+                      navigate(`/collection/${item.collectionId}/${item.id}`);
                       documentCollection.utils.writeInsert(item);
                     },
                   }),
-                  [open, router],
+                  [open],
                 )}
               >
                 <Content collectionId={collectionId} useDialog={useDialog} />

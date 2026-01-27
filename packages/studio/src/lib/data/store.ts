@@ -7,7 +7,8 @@ export interface CollectionItem {
   id: string;
   name: string;
   badge?: string;
-  handlers?: Record<string, null>;
+
+  supportStudio: boolean;
 }
 
 export interface DocumentItem {

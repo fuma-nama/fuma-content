@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2023",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -14,24 +14,11 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@lib/*": ["./lib/*"]
-    },
-    "types": ["./lib/env.d.ts"]
+      "@/*": ["./src/*"]
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.mts",
-    ".studio/types/**/*.ts",
-    ".studio/dev/types/**/*.ts"
-  ],
+  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { studioHook } from "@lib/index";
+import { studioHook } from "@/lib/content/index";
 import { getCore, requireDocument } from "../config";
 import type { CollectionItem, DocumentItem } from "./store";
 
@@ -10,6 +10,7 @@ export async function getCollectionItems(): Promise<CollectionItem[]> {
     id: collection.name,
     name: collection.name,
     badge: collection.constructor.name,
+    supportStudio: collection.pluginHook(studioHook).disabled !== false,
   }));
 }
 

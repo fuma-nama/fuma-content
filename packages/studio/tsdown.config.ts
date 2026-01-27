@@ -1,10 +1,9 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["./lib/index.tsx", "./lib/bin.ts"],
+  entry: ["./src/lib/content/bin.ts"],
   format: "esm",
   dts: true,
-  target: "node22",
-  external: ["virtual:content.config"],
+  target: "es2023",
   unbundle: true,
 });
