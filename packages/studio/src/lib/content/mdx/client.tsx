@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 import { useRef, useState, useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { CheckIcon, CircleIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, CircleIcon } from "lucide-react";
 import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
 import { createMDXDocument, saveMDXDocument } from "./actions";
 import { useForm } from "react-hook-form";
@@ -42,9 +42,13 @@ export const clientContext: ClientContext = {
         <form
           className="flex flex-col gap-2"
           onSubmit={form.handleSubmit(async (values) => {
-            const created = await createMDXDocument(collectionId, values.name, "");
-            onCreate(created);
-            setOpen(false);
+            try {
+              const created = await createMDXDocument(collectionId, values.name, "");
+              onCreate(created);
+              setOpen(false);
+            } catch (e) {
+              form.setError("root", { message: Error.isError(e) ? e.message : String(e) });
+            }
           })}
         >
           <Label htmlFor="name">Name</Label>
@@ -53,6 +57,9 @@ export const clientContext: ClientContext = {
           <Button type="submit" className="mt-4">
             Create
           </Button>
+          <p className="text-destructive text-sm empty:hidden">
+            {form.formState.errors.root?.message}
+          </p>
         </form>
       );
     },
@@ -85,7 +92,9 @@ function MDXDocEditor({
   onSync: (frontmatter: Record<string, unknown>, content: string) => void | Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [status, setStatus] = useState<"sync" | "updated">("sync");
+  const [status, setStatus] = useState<"sync" | "updated" | { type: "error"; message: string }>(
+    "sync",
+  );
   const timerRef = useRef<number | null>(null);
   const currentValue = useRef<{ frontmatter: Record<string, unknown>; content: string }>({
     frontmatter: defaultFrontmatter,
@@ -99,10 +108,17 @@ function MDXDocEditor({
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       startTransition(async () => {
-        syncAction?.();
-        const { frontmatter, content } = currentValue.current;
-        await onSyncCallback(frontmatter, content);
-        setStatus("sync");
+        try {
+          syncAction?.();
+          const { frontmatter, content } = currentValue.current;
+          await onSyncCallback(frontmatter, content);
+          setStatus("sync");
+        } catch (e) {
+          setStatus({
+            type: "error",
+            message: Error.isError(e) ? e.message : "Failed to save document",
+          });
+        }
       });
     }, 500);
   };
@@ -177,10 +193,15 @@ function MDXDocEditor({
             <CheckIcon className="size-4 text-green-400" />
             <span>In Sync</span>
           </>
-        ) : (
+        ) : status === "updated" ? (
           <>
             <CircleIcon className="size-4 fill-current stroke-transparent text-orange-400" />
             <p>Updated</p>
+          </>
+        ) : (
+          <>
+            <AlertCircleIcon className="size-4 text-destructive" />
+            <p>{status.message}</p>
           </>
         )}
       </div>

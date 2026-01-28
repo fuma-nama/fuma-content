@@ -110,6 +110,7 @@ function mdx(collection: MDXCollection): StudioHook<MDXStudioDocument> {
           : undefined;
         return (
           <MDXDocUpdateEditor
+            key={document.id}
             documentId={document.id}
             collectionId={collection.name}
             jsonSchema={jsonSchema}

@@ -13,4 +13,7 @@ export default defineConfig({
     external: ["fuma-content"],
     noExternal: ["katex", "@platejs/math", "@platejs/slate", "@udecode/utils", "slate-dom"],
   },
+  optimizeDeps: {
+    include: ["@tanstack/react-query**"],
+  },
 });
