@@ -28,3 +28,34 @@ export default function myPlugin(): Plugin {
 ### Hook Order
 
 When triggering event on multiple plugins, event hooks are called according to its order in `plugins` array. Order is strictly preserved.
+
+## Plugin Hook
+
+Plugins can attach custom data & hooks to collections using a **Plugin Hook**:
+
+```ts
+import { defineCollectionHook } from "fuma-content/collections";
+import { asyncHook, type AsyncHook } from "fuma-content";
+
+export interface MyHook {
+  /**
+   * example for defining hook to listen to events.
+   */
+  onCustomEvent: AsyncHook<{ content: string }>;
+}
+
+export const myHook = defineCollectionHook<MyHook>(() => ({
+  // initial value
+  onCustomEvent: asyncHook(),
+}));
+```
+
+It can be accessed or attached from collections:
+
+```ts
+// initialize & access hook value
+const hook = collection.pluginHook(myHook);
+
+// call hooks
+await hook.onCustomEvent.run({ content: "test" });
+```

@@ -6,7 +6,6 @@
 
 - fd63764: rename meta to data colleciton
 - 6ad0b96: **Redesign Collection System**
-
   - Access collections from `content/<collection_name>` & `content/<collection_name>.<environment>`.
   - Define collections via `mdxCollection()` & `dataCollection()` instead.
   - Support hooks in collections.
