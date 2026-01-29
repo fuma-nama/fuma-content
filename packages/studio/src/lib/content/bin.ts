@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { program } from "commander";
 import { name as appName, version as appVersion } from "../../../package.json";
 import { x } from "tinyexec";
-import { intro, outro, confirm, isCancel, log, spinner } from "@clack/prompts";
+import { intro, outro, confirm, isCancel, log } from "@clack/prompts";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

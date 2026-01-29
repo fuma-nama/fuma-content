@@ -80,6 +80,10 @@ function mdx(collection: MDXCollection): StudioHook<MDXStudioDocument> {
     }
   }
 
+  function encodeId(file: string) {
+    return file.replaceAll(/\(|\)|\//g, "--");
+  }
+
   return {
     async getDocuments() {
       collection.invalidateCache();
@@ -90,7 +94,7 @@ function mdx(collection: MDXCollection): StudioHook<MDXStudioDocument> {
 
         return {
           type: "mdx",
-          id: file,
+          id: encodeId(file),
           name: file,
           filePath,
         };
