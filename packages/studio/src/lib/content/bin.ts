@@ -7,7 +7,6 @@ import { program } from "commander";
 import { name as appName, version as appVersion } from "../../../package.json";
 import { x } from "tinyexec";
 import { intro, outro, confirm, isCancel, log, spinner } from "@clack/prompts";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -24,11 +23,10 @@ void main();
 async function main() {
   const isCI = process.env.CI === "1";
   const { bind: HOST, port: PORT } = options;
-  const nextBinPath = path.join(__dirname, "../node_modules/next/dist/bin/next");
-  // where the main app locates
-  const appDir = path.join(__dirname, "../");
+  const serveBinPath = path.join(__dirname, "../node_modules/@react-router/serve/bin.js");
+  // where the `pacage.json` locates
+  const rootDir = path.join(__dirname, "../");
   const studioConfig = path.resolve("content.config.ts");
-  const studioDist = path.resolve(".studio");
 
   intro(`Fuma Content ${appVersion}`);
   log.info(`Config Path: ${studioConfig}`);
@@ -39,43 +37,16 @@ async function main() {
     PORT: String(PORT),
     STUDIO_PARENT_DIR: process.cwd(),
     STUDIO_VERSION: appVersion,
-    STUDIO_DIST: studioDist,
     STUDIO_CONFIG: studioConfig,
     CI: "1",
     DISABLE_ANALYTICS: "true",
   };
 
-  {
-    const spin = spinner();
-    spin.start("Building App (powered by Next.js)");
-    const storedLogs: string[] = [];
-    try {
-      const buildResult = x("node", [nextBinPath, "build"], {
-        nodeOptions: {
-          stdio: ["ignore", "pipe", "pipe"],
-          env,
-          cwd: appDir,
-        },
-        throwOnError: true,
-      });
-
-      for await (const line of buildResult) {
-        spin.message(`Building App: ${line.trim()}`);
-        storedLogs.push(line);
-      }
-    } catch (e) {
-      spin.error(storedLogs.join("\n"));
-      process.exit();
-    }
-
-    spin.stop("Compiled to .studio directory");
-  }
-
-  const serverProcess = x("node", [nextBinPath, "start"], {
+  const serverProcess = x("node", [serveBinPath, "build/server/index.js"], {
     nodeOptions: {
       stdio: ["ignore", "pipe", "pipe"],
       env,
-      cwd: appDir,
+      cwd: rootDir,
     },
   });
 
@@ -87,7 +58,7 @@ async function main() {
   for await (const message of serverProcess) {
     log.message(message, { spacing: 0 });
 
-    if (message.includes(`✓ Ready in`) && !isCI) {
+    if (message.includes(`[react-router-serve]`) && !isCI) {
       const shouldOpen = await confirm({
         message: "Do you want to open on browser?",
       });
