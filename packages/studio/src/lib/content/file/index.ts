@@ -49,7 +49,7 @@ export function isFileDocument(doc: StudioDocument): doc is FileStudioDocument {
   return "isFile" in doc && doc.isFile === true;
 }
 
-export function encodeId(file: string) {
+function encodeId(file: string) {
   return file.replaceAll("/", "--");
 }
 
@@ -75,8 +75,10 @@ export async function createFileDocument(
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, content);
+  const relativePath = path.relative(collection.dir, filePath);
   return {
+    id: encodeId(relativePath),
     fullPath: filePath,
-    relativePath: path.relative(collection.dir, filePath),
+    relativePath,
   };
 }

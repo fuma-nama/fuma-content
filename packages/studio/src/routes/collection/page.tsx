@@ -30,8 +30,8 @@ export default function Page(args: Route.ComponentProps) {
         .where((b) => eq(b.documentCollection.collectionId, collectionId)),
     [collectionId],
   );
-  const createDoc = useCreateDocumentDialog(collectionId);
   if (!info) throw new NotFoundError();
+  const createDoc = useCreateDocumentDialog(info);
 
   info.name;
   return (

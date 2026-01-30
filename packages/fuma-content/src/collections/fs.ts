@@ -9,12 +9,16 @@ export class FileSystemCollection extends Collection {
    * content directory (absolute)
    */
   dir = null as unknown as string;
-  private readonly config: FileSystemCollectionConfig;
   private readonly filesCache = createCache<string[]>();
+  /** the glob patterns to match files in collection, this doesn't take `supportedFormats` into account. */
+  private readonly patterns: string[];
+  readonly supportedFileFormats: string[] | undefined;
 
   constructor(config: FileSystemCollectionConfig) {
     super();
-    this.config = config;
+    const { files, supportedFormats } = config;
+    this.patterns = files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
+    this.supportedFileFormats = supportedFormats;
     this.onInit.hook(({ core }) => {
       this.dir = path.resolve(core.getOptions().cwd, config.dir);
     });
@@ -28,10 +32,8 @@ export class FileSystemCollection extends Collection {
   }
 
   isFileSupported(filePath: string) {
-    const { supportedFormats } = this.config;
-    if (!supportedFormats) return true;
-
-    return supportedFormats.some((format) => filePath.endsWith(`.${format}`));
+    if (!this.supportedFileFormats) return true;
+    return this.supportedFileFormats.some((format) => filePath.endsWith(`.${format}`));
   }
 
   /**
@@ -43,7 +45,7 @@ export class FileSystemCollection extends Collection {
     return this.filesCache.cached("", async () => {
       const { glob } = await import("tinyglobby");
 
-      const out = await glob(this.getPatterns(), { cwd: this.dir });
+      const out = await glob(this.patterns, { cwd: this.dir });
       return out.filter((v) => this.isFileSupported(v));
     });
   }
@@ -54,13 +56,7 @@ export class FileSystemCollection extends Collection {
     const relativePath = path.relative(this.dir, filePath);
     if (relativePath.startsWith(`..${path.sep}`)) return false;
 
-    return (this.matcher ??= picomatch(this.getPatterns()))(relativePath);
-  }
-
-  /** get glob patterns to match files in collection, this doesn't take `supportedFormats` into account. */
-  getPatterns() {
-    const { files, supportedFormats } = this.config;
-    return files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
+    return (this.matcher ??= picomatch(this.patterns))(relativePath);
   }
 
   invalidateCache() {

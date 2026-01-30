@@ -21,7 +21,7 @@ export interface StudioDocument {
 }
 
 export interface CreateDocumentDialogContext {
-  collectionId: string;
+  collection: CollectionItem;
   useDialog: () => {
     open: boolean;
     setOpen: (v: boolean) => void;

@@ -9,6 +9,10 @@ export interface CollectionItem {
   badge?: string;
 
   supportStudio: boolean;
+  /** Data Collection only  */
+  _data?: {
+    formats: string[];
+  };
 }
 
 export interface DocumentItem {

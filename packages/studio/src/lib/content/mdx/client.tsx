@@ -30,7 +30,7 @@ interface MDXDocUpdateEditorProps {
 
 export const clientContext: ClientContext = {
   dialogs: {
-    createDocument({ collectionId, useDialog }) {
+    createDocument({ collection, useDialog }) {
       const { setOpen, onCreate } = useDialog();
       const form = useForm({
         defaultValues: {
@@ -43,7 +43,11 @@ export const clientContext: ClientContext = {
           className="flex flex-col gap-2"
           onSubmit={form.handleSubmit(async (values) => {
             try {
-              const created = await createMDXDocument(collectionId, values.name, "");
+              const created = await createMDXDocument({
+                collectionId: collection.id,
+                name: values.name,
+                content: "",
+              });
               onCreate(created);
               setOpen(false);
             } catch (e) {
@@ -71,7 +75,12 @@ export function MDXDocUpdateEditor({ collectionId, documentId, ...rest }: MDXDoc
     <MDXDocEditor
       {...rest}
       onSync={(frontmatter, content) => {
-        return saveMDXDocument(collectionId, documentId, frontmatter, content);
+        return saveMDXDocument({
+          collectionId,
+          documentId,
+          frontmatter,
+          content,
+        });
       }}
     />
   );

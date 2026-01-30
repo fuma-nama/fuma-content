@@ -71,7 +71,15 @@ export function dataHook(collection: DataCollection): StudioHook<DataStudioDocum
       return docs.find((doc) => doc.id === id);
     },
     toItem() {
-      return { id: collection.name, name: collection.name, supportStudio: true, badge: "Data" };
+      return {
+        id: collection.name,
+        name: collection.name,
+        supportStudio: true,
+        badge: "Data",
+        _data: {
+          formats: collection.supportedFileFormats ?? ["json", "yaml"],
+        },
+      };
     },
     pages: {
       async edit({ document }) {

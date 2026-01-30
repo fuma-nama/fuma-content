@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { documentCollection, type DocumentItem } from "@/lib/data/store";
+import { CollectionItem, documentCollection, type DocumentItem } from "@/lib/data/store";
 import { type ReactNode, createContext, use, useCallback, useMemo, useState } from "react";
 import { useClientContext } from "./context";
 import { useNavigate } from "react-router";
@@ -17,8 +17,8 @@ const CreateDialogContext = createContext<{
   onCreate: (item: DocumentItem) => void;
 } | null>(null);
 
-export function useCreateDocumentDialog(collectionId: string) {
-  const Content = useClientContext(collectionId).dialogs?.createDocument;
+export function useCreateDocumentDialog(collection: CollectionItem) {
+  const Content = useClientContext(collection.id).dialogs?.createDocument;
   if (!Content) return null;
 
   return {
@@ -46,7 +46,7 @@ export function useCreateDocumentDialog(collectionId: string) {
                   [open],
                 )}
               >
-                <Content collectionId={collectionId} useDialog={useDialog} />
+                <Content collection={collection} useDialog={useDialog} />
               </CreateDialogContext>
             </DialogContent>
           </Dialog>

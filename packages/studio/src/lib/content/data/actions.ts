@@ -2,7 +2,7 @@
 import { getCore, requireDocument } from "@/lib/config";
 import type { DocumentItem } from "@/lib/data/store";
 import { studioHook } from "..";
-import { createFileDocument, encodeId } from "../file";
+import { createFileDocument } from "../file";
 import { encoderDecoders, getEncoderDecoder, isDataDocument } from ".";
 import { DataCollection } from "fuma-content/collections/data";
 import z from "zod";
@@ -40,7 +40,7 @@ export async function createDataDocument(
   const collection = core.getCollection(collectionId);
   if (!(collection instanceof DataCollection)) throw new Error("Invalid collection ID");
 
-  const { relativePath } = await createFileDocument(
+  const { id, relativePath } = await createFileDocument(
     collection,
     `${name}.${type}`,
     await getEncoderDecoder(type).encode(data),
@@ -48,7 +48,7 @@ export async function createDataDocument(
 
   return {
     collectionId,
-    id: encodeId(relativePath),
+    id,
     name: relativePath,
     permissions: {
       delete: collection.pluginHook(studioHook).actions?.deleteDocument !== undefined,

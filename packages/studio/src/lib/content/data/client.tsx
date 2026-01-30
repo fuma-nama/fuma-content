@@ -34,12 +34,12 @@ interface DataDocEditProps {
 
 export const clientContext: ClientContext = {
   dialogs: {
-    createDocument({ collectionId, useDialog }) {
+    createDocument({ collection, useDialog }) {
       const { setOpen, onCreate } = useDialog();
       const form = useForm({
         defaultValues: {
           name: "",
-          type: "json" as "json" | "yaml",
+          type: collection._data!.formats[0] as "json" | "yaml",
         },
       });
 
@@ -49,7 +49,7 @@ export const clientContext: ClientContext = {
           onSubmit={form.handleSubmit(async (values) => {
             try {
               const created = await createDataDocument({
-                collectionId,
+                collectionId: collection.id,
                 name: values.name,
                 type: values.type,
                 data: {},
@@ -73,8 +73,11 @@ export const clientContext: ClientContext = {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="json">JSON</SelectItem>
-                    <SelectItem value="yaml">YAML</SelectItem>
+                    {collection._data!.formats.map((format) => (
+                      <SelectItem key={format} value={format}>
+                        {format}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
