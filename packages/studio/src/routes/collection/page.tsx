@@ -15,16 +15,20 @@ import { NotFoundError } from "@/root";
 
 export default function Page(args: Route.ComponentProps) {
   const collectionId = args.params.name;
-  const { data: info } = useLiveQuery((q) =>
-    q
-      .from({ collection })
-      .where((b) => eq(b.collection.id, collectionId))
-      .findOne(),
+  const { data: info } = useLiveQuery(
+    (q) =>
+      q
+        .from({ collection })
+        .where((b) => eq(b.collection.id, collectionId))
+        .findOne(),
+    [collectionId],
   );
-  const { data: documents } = useLiveQuery((q) =>
-    q
-      .from({ documentCollection })
-      .where((b) => eq(b.documentCollection.collectionId, collectionId)),
+  const { data: documents } = useLiveQuery(
+    (q) =>
+      q
+        .from({ documentCollection })
+        .where((b) => eq(b.documentCollection.collectionId, collectionId)),
+    [collectionId],
   );
   const createDoc = useCreateDocumentDialog(collectionId);
   if (!info) throw new NotFoundError();

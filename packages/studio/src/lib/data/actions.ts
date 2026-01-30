@@ -6,12 +6,9 @@ import type { CollectionItem, DocumentItem } from "./store";
 
 export async function getCollectionItems(): Promise<CollectionItem[]> {
   const core = await getCore();
-  return core.getCollections(true).map<CollectionItem>((collection) => ({
-    id: collection.name,
-    name: collection.name,
-    badge: collection.constructor.name,
-    supportStudio: collection.pluginHook(studioHook).disabled !== false,
-  }));
+  return core
+    .getCollections(true)
+    .map<CollectionItem>((collection) => collection.pluginHook(studioHook).toItem());
 }
 
 export async function getDocumentItems(): Promise<DocumentItem[]> {
@@ -20,16 +17,8 @@ export async function getDocumentItems(): Promise<DocumentItem[]> {
     core.getCollections(true).map(async (collection) => {
       const hook = collection.pluginHook(studioHook);
       const docs = await hook.getDocuments();
-      const supportDelete = hook.actions?.deleteDocument !== undefined;
 
-      return docs.map<DocumentItem>((doc) => ({
-        name: doc.name,
-        id: doc.id,
-        collectionId: collection.name,
-        permissions: {
-          delete: supportDelete,
-        },
-      }));
+      return docs.map<DocumentItem>((doc) => doc.toItem({ collectionId: collection.name }));
     }),
   );
 

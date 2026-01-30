@@ -1,4 +1,4 @@
-import type { StudioDocument } from "..";
+import { studioHook, type StudioDocument } from "..";
 import fs from "node:fs/promises";
 import type { FileSystemCollection } from "fuma-content/collections/fs";
 import path from "node:path";
@@ -11,12 +11,27 @@ export interface FileStudioDocument extends StudioDocument {
   write: (content: string) => Promise<void>;
 }
 
-export function fileDocument(file: string, name = file): FileStudioDocument {
+export function fileDocument(
+  collection: FileSystemCollection,
+  fullPath: string,
+  name?: string,
+): FileStudioDocument {
+  const relativePath = path.relative(collection.dir, fullPath);
   return {
-    id: encodeId(file),
+    id: encodeId(relativePath),
     isFile: true,
-    filePath: file,
-    name,
+    filePath: fullPath,
+    name: name ?? relativePath,
+    toItem({ collectionId }) {
+      return {
+        id: this.id,
+        name: this.name,
+        permissions: {
+          delete: collection.pluginHook(studioHook).actions?.deleteDocument !== undefined,
+        },
+        collectionId,
+      };
+    },
     async read() {
       try {
         return (await fs.readFile(this.filePath)).toString();

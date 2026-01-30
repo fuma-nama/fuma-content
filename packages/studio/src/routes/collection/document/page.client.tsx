@@ -6,11 +6,13 @@ import { eq, and, useLiveQuery } from "@tanstack/react-db";
 import { Link } from "react-router";
 
 export function Header({ collectionId, documentId }: { collectionId: string; documentId: string }) {
-  const query = useLiveQuery((q) =>
-    q
-      .from({ doc: documentCollection })
-      .where((b) => and(eq(b.doc.id, documentId), eq(b.doc.collectionId, collectionId)))
-      .findOne(),
+  const query = useLiveQuery(
+    (q) =>
+      q
+        .from({ doc: documentCollection })
+        .where((b) => and(eq(b.doc.id, documentId), eq(b.doc.collectionId, collectionId)))
+        .findOne(),
+    [documentId, collectionId],
   );
   const doc = query.data;
   if (!doc) return;

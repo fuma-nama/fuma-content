@@ -3,11 +3,19 @@ import { getCore, requireDocument } from "@/lib/config";
 import type { DocumentItem } from "@/lib/data/store";
 import { studioHook } from "..";
 import { createFileDocument, encodeId } from "../file";
-import { isDataDocument } from ".";
+import { encoderDecoders, getEncoderDecoder, isDataDocument } from ".";
 import { DataCollection } from "fuma-content/collections/data";
+import z from "zod";
+
+const saveSchema = z.object({
+  collectionId: z.string(),
+  documentId: z.string(),
+  data: z.unknown(),
+});
 
 // TODO: check security when implementing auth system
-export async function saveDataDocument(collectionId: string, documentId: string, data: unknown) {
+export async function saveDataDocument(input: z.input<typeof saveSchema>) {
+  const { collectionId, data, documentId } = saveSchema.parse(input);
   const { document: doc } = await requireDocument(collectionId, documentId);
   const core = await getCore();
   const collection = core.getCollection(collectionId);
@@ -18,19 +26,24 @@ export async function saveDataDocument(collectionId: string, documentId: string,
   }
 }
 
+const createSchema = z.object({
+  collectionId: z.string(),
+  name: z.string(),
+  type: z.literal(Object.keys(encoderDecoders) as (keyof typeof encoderDecoders)[]),
+  data: z.unknown(),
+});
 export async function createDataDocument(
-  collectionId: string,
-  name: string,
-  data: unknown,
+  input: z.input<typeof createSchema>,
 ): Promise<DocumentItem> {
+  const { collectionId, name, type, data } = createSchema.parse(input);
   const core = await getCore();
   const collection = core.getCollection(collectionId);
   if (!(collection instanceof DataCollection)) throw new Error("Invalid collection ID");
 
   const { relativePath } = await createFileDocument(
     collection,
-    `${name}.json`,
-    JSON.stringify(data, null, 2),
+    `${name}.${type}`,
+    await getEncoderDecoder(type).encode(data),
   );
 
   return {

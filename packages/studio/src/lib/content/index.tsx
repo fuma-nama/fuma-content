@@ -1,6 +1,6 @@
 import { defineCollectionHook, type Collection } from "fuma-content/collections";
 import type { FC } from "react";
-import type { DocumentItem } from "@/lib/data/store";
+import type { CollectionItem, DocumentItem } from "@/lib/data/store";
 import { MDXCollection } from "fuma-content/collections/mdx";
 import { mdxHook } from "./mdx";
 import { DataCollection } from "fuma-content/collections/data";
@@ -16,6 +16,8 @@ export interface StudioDocument {
    */
   id: string;
   name: string;
+
+  toItem: (options: { collectionId: string }) => DocumentItem;
 }
 
 export interface CreateDocumentDialogContext {
@@ -32,6 +34,7 @@ export interface StudioHook<Doc extends StudioDocument = StudioDocument> {
   init?: () => Awaitable<void>;
   getDocuments: () => Awaitable<Doc[]>;
   getDocument: (id: string) => Awaitable<Doc | undefined>;
+  toItem: () => CollectionItem;
 
   pages?: {
     edit?: FC<{ document: Doc; collection: Collection }>;
@@ -66,6 +69,14 @@ export const studioHook = defineCollectionHook<StudioHook, StudioHook | undefine
       },
       getDocument() {
         return undefined;
+      },
+      toItem() {
+        return {
+          id: collection.name,
+          name: collection.name,
+          supportStudio: false,
+          badge: collection.constructor.name,
+        };
       },
     };
   },

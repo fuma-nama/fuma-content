@@ -14,10 +14,14 @@ export function isMDXDocument(doc: StudioDocument): doc is MDXStudioDocument {
   return "isMDX" in doc && doc.isMDX === true;
 }
 
-export function mdxDocument(file: string, name?: string): MDXStudioDocument {
+export function mdxDocument(
+  collection: MDXCollection,
+  file: string,
+  name?: string,
+): MDXStudioDocument {
   return {
     isMDX: true,
-    ...fileDocument(file, name),
+    ...fileDocument(collection, file, name),
   };
 }
 
@@ -28,9 +32,7 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
       const files = await collection.getFiles();
 
       return files.map((file) => {
-        const filePath = path.join(collection.dir, file);
-
-        return mdxDocument(filePath, file);
+        return mdxDocument(collection, path.join(collection.dir, file));
       });
     },
     async getDocument(id) {
@@ -56,6 +58,9 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
           />
         );
       },
+    },
+    toItem() {
+      return { id: collection.name, name: collection.name, supportStudio: true, badge: "MDX" };
     },
     async client() {
       const { clientContext } = await import("./client");

@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,13 @@ import { ClientContext } from "..";
 import { StatusBar } from "@/components/edit/status-bar";
 import { useSync } from "@/components/edit/use-sync";
 import { createDataDocument, saveDataDocument } from "./actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DataDocEditProps {
   collectionId: string;
@@ -32,6 +39,7 @@ export const clientContext: ClientContext = {
       const form = useForm({
         defaultValues: {
           name: "",
+          type: "json" as "json" | "yaml",
         },
       });
 
@@ -40,7 +48,12 @@ export const clientContext: ClientContext = {
           className="flex flex-col gap-2"
           onSubmit={form.handleSubmit(async (values) => {
             try {
-              const created = await createDataDocument(collectionId, values.name, {});
+              const created = await createDataDocument({
+                collectionId,
+                name: values.name,
+                type: values.type,
+                data: {},
+              });
               onCreate(created);
               setOpen(false);
             } catch (e) {
@@ -49,7 +62,24 @@ export const clientContext: ClientContext = {
           })}
         >
           <Label htmlFor="name">Name</Label>
-          <Input id="name" {...form.register("name")} placeholder="hello-world" />
+          <div className="flex flex-row gap-2">
+            <Input id="name" {...form.register("name")} placeholder="hello-world" />
+            <Controller
+              name="type"
+              control={form.control}
+              render={({ field: { value, onChange, ...field } }) => (
+                <Select value={value} onValueChange={onChange}>
+                  <SelectTrigger {...field}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="json">JSON</SelectItem>
+                    <SelectItem value="yaml">YAML</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
 
           <Button type="submit" className="mt-4">
             Create
@@ -68,7 +98,7 @@ export function DataDocEdit({ collectionId, documentId, ...rest }: DataDocEditPr
     <DocEditor
       {...rest}
       onSync={(data) => {
-        return saveDataDocument(collectionId, documentId, data);
+        return saveDataDocument({ collectionId, documentId, data });
       }}
     />
   );
