@@ -50,6 +50,11 @@
   --color-brand: var(--brand);
 }
 
+@theme {
+  --default-mono-font-family: "Geist Mono", monospace;
+  --default-font-family: "Geist", sans-serif;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
