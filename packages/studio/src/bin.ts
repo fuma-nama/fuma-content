@@ -4,7 +4,7 @@ import open from "open";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { program } from "commander";
-import { name as appName, version as appVersion } from "../../../package.json";
+import { name as appName, version as appVersion } from "../package.json";
 import { x } from "tinyexec";
 import { intro, outro, confirm, isCancel, log } from "@clack/prompts";
 const __filename = fileURLToPath(import.meta.url);
@@ -56,8 +56,6 @@ async function main() {
   });
 
   for await (const message of serverProcess) {
-    log.message(message, { spacing: 0 });
-
     if (message.includes(`[react-router-serve]`) && !isCI) {
       const shouldOpen = await confirm({
         message: "Do you want to open on browser?",
@@ -71,6 +69,10 @@ async function main() {
         log.message(`Opening browser at http://${HOST}:${PORT}`, { spacing: 0 });
         void open(`http://${HOST}:${PORT}`);
       }
+
+      continue;
     }
+
+    log.message(message, { spacing: 0 });
   }
 }

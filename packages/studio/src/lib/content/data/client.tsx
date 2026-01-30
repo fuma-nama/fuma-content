@@ -1,6 +1,5 @@
 "use client";
 
-import { MDXEditor, MDXEditorContainer, MDXEditorView } from "@/components/editor/md";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import {
   JSONSchemaEditorContent,
@@ -9,8 +8,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
 import { useRef } from "react";
-import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
-import { createMDXDocument, saveMDXDocument } from "./actions";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,14 +15,14 @@ import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
 import { StatusBar } from "@/components/edit/status-bar";
 import { useSync } from "@/components/edit/use-sync";
+import { createDataDocument, saveDataDocument } from "./actions";
 
-interface MDXDocUpdateEditorProps {
+interface DataDocEditProps {
   collectionId: string;
   documentId: string;
 
   jsonSchema?: JSONSchema;
-  content: string;
-  frontmatter?: Record<string, unknown>;
+  data: unknown;
 }
 
 export const clientContext: ClientContext = {
@@ -43,7 +40,7 @@ export const clientContext: ClientContext = {
           className="flex flex-col gap-2"
           onSubmit={form.handleSubmit(async (values) => {
             try {
-              const created = await createMDXDocument(collectionId, values.name, "");
+              const created = await createDataDocument(collectionId, values.name, {});
               onCreate(created);
               setOpen(false);
             } catch (e) {
@@ -66,38 +63,31 @@ export const clientContext: ClientContext = {
   },
 };
 
-export function MDXDocUpdateEditor({ collectionId, documentId, ...rest }: MDXDocUpdateEditorProps) {
+export function DataDocEdit({ collectionId, documentId, ...rest }: DataDocEditProps) {
   return (
-    <MDXDocEditor
+    <DocEditor
       {...rest}
-      onSync={(frontmatter, content) => {
-        return saveMDXDocument(collectionId, documentId, frontmatter, content);
+      onSync={(data) => {
+        return saveDataDocument(collectionId, documentId, data);
       }}
     />
   );
 }
 
-/**
- * Combined MDX editor with frontmatter form using JSON Schema
- */
-function MDXDocEditor({
+function DocEditor({
   jsonSchema,
-  content: defaultContent,
-  frontmatter: defaultFrontmatter = {},
+  data: defaultData,
   onSync: onSyncCallback,
 }: {
   jsonSchema?: JSONSchema;
-  content: string;
-  frontmatter?: Record<string, unknown>;
-  onSync: (frontmatter: Record<string, unknown>, content: string) => void | Promise<void>;
+  data: unknown;
+  onSync: (data: unknown) => void | Promise<void>;
 }) {
-  const currentValue = useRef<{ frontmatter: Record<string, unknown>; content: string }>({
-    frontmatter: defaultFrontmatter,
-    content: defaultContent,
+  const currentValue = useRef({
+    data: defaultData,
   });
   const { onSync, status } = useSync(() => {
-    const { frontmatter, content } = currentValue.current;
-    return onSyncCallback(frontmatter, content);
+    return onSyncCallback(currentValue.current.data);
   });
 
   return (
@@ -111,10 +101,10 @@ function MDXDocEditor({
           <TabsContent value="visual" className="-mt-6">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
-              defaultValue={defaultFrontmatter}
+              defaultValue={defaultData}
               onValueChange={(value) => {
                 onSync(() => {
-                  currentValue.current.frontmatter = value as Record<string, unknown>;
+                  currentValue.current.data = value;
                 });
               }}
               writeOnly
@@ -126,38 +116,16 @@ function MDXDocEditor({
         )}
         <TabsContent value="code">
           <YamlEditorLazy
-            defaultValue={defaultFrontmatter}
+            defaultValue={defaultData}
             onValueChange={(value) => {
               onSync(() => {
-                currentValue.current.frontmatter = value as Record<string, unknown>;
+                currentValue.current.data = value;
               });
             }}
           />
         </TabsContent>
       </Tabs>
-      <Tabs defaultValue="visual" className="flex-1">
-        <TabsList>
-          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-          <TabsTrigger value="code">Code Editor</TabsTrigger>
-        </TabsList>
-        <TabsContent value="visual">
-          <MDXEditor
-            defaultValue={defaultContent}
-            onUpdate={(options) => {
-              onSync(() => {
-                currentValue.current.content = options.getMarkdown();
-              });
-            }}
-          >
-            <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
-              <MDXEditorView />
-            </MDXEditorContainer>
-          </MDXEditor>
-        </TabsContent>
-        <TabsContent value="code" className="size-full">
-          <MDXCodeEditorLazy defaultValue={defaultContent} onValueChange={() => null} />
-        </TabsContent>
-      </Tabs>
+
       <StatusBar status={status} />
     </>
   );

@@ -18,7 +18,7 @@ export function Header({ collectionId, documentId }: { collectionId: string; doc
   return (
     <SiteHeader>
       <Link to={`/collection/${collectionId}`} className="font-mono text-sm">
-        {collectionId}/{documentId}
+        {collectionId}/{doc.name}
       </Link>
       <DocumentActionsDropdown document={doc} />
     </SiteHeader>
