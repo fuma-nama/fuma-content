@@ -14,7 +14,8 @@
     "content-studio": "./dist/bin.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "build"
   ],
   "type": "module",
   "publishConfig": {
