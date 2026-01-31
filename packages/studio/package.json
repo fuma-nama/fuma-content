@@ -1,6 +1,6 @@
 {
   "name": "@fuma-content/studio",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The studio integration of Fuma Content",
   "keywords": [
     "Contentlayer",
@@ -124,6 +124,6 @@
     "vite-tsconfig-paths": "^6.0.5"
   },
   "peerDependencies": {
-    "fuma-content": "^1.0.3"
+    "fuma-content": "^1.1.1"
   }
 }

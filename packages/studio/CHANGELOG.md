@@ -1,5 +1,13 @@
 # @fuma-content/studio
 
+## 1.0.1
+
+### Patch Changes
+
+- 53f42c9: Improved Content Studio
+- Updated dependencies [53f42c9]
+  - fuma-content@1.1.1
+
 ## 1.0.0
 
 ### Patch Changes
