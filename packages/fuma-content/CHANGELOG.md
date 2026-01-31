@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.1.1
+
+### Patch Changes
+
+- 53f42c9: Improved Content Studio
+
 ## 1.1.0
 
 ### Minor Changes
