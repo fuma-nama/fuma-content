@@ -155,11 +155,7 @@ export function TurnIntoToolbarButton(props: ComponentProps<typeof DropdownMenu>
           label="Turn into"
         >
           {turnIntoItems.map(({ icon, label, value: itemValue }) => (
-            <DropdownMenuRadioItem
-              key={itemValue}
-              className="pl-2 *:first:[span]:hidden"
-              value={itemValue}
-            >
+            <DropdownMenuRadioItem key={itemValue} className="pl-2" value={itemValue}>
               <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
                 <DropdownMenuItemIndicator>
                   <CheckIcon />

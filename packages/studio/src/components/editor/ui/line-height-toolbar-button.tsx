@@ -46,11 +46,7 @@ export function LineHeightToolbarButton(props: React.ComponentProps<typeof Dropd
           }}
         >
           {values.map((value) => (
-            <DropdownMenuRadioItem
-              key={value}
-              className="min-w-[180px] pl-2 *:first:[span]:hidden"
-              value={value}
-            >
+            <DropdownMenuRadioItem key={value} className="min-w-[180px] pl-2" value={value}>
               <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
                 <DropdownMenuItemIndicator>
                   <CheckIcon />
