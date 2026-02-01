@@ -23,7 +23,7 @@ void main();
 async function main() {
   const isCI = process.env.CI === "1";
   const { bind: HOST, port: PORT } = options;
-  const serveBinPath = path.join(__dirname, "../node_modules/@react-router/serve/bin.js");
+  const serveBinPath = path.join(__dirname, "./bin/cli.mjs");
   // where the `pacage.json` locates
   const rootDir = path.join(__dirname, "../");
   const studioConfig = path.resolve("content.config.ts");
@@ -57,6 +57,9 @@ async function main() {
 
   for await (const message of serverProcess) {
     if (message.includes(`[react-router-serve]`) && !isCI) {
+      const url = `http://${HOST}:${PORT}`;
+      log.success(`Started studio at ${url}`);
+
       const shouldOpen = await confirm({
         message: "Do you want to open on browser?",
       });
@@ -66,8 +69,8 @@ async function main() {
       }
 
       if (shouldOpen) {
-        log.message(`Opening browser at http://${HOST}:${PORT}`, { spacing: 0 });
-        void open(`http://${HOST}:${PORT}`);
+        log.message(`Opening browser at ${url}`, { spacing: 0 });
+        void open(url);
       }
 
       continue;
