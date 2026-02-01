@@ -78,28 +78,19 @@ export function ModeToolbarButton(props: React.ComponentProps<typeof DropdownMen
             }
           }}
         >
-          <DropdownMenuRadioItem
-            className="pl-2 *:first:[span]:hidden *:[svg]:text-muted-foreground"
-            value="editing"
-          >
+          <DropdownMenuRadioItem className="pl-2 *:[svg]:text-muted-foreground" value="editing">
             <Indicator />
             {item.editing.icon}
             {item.editing.label}
           </DropdownMenuRadioItem>
 
-          <DropdownMenuRadioItem
-            className="pl-2 *:first:[span]:hidden *:[svg]:text-muted-foreground"
-            value="viewing"
-          >
+          <DropdownMenuRadioItem className="pl-2 *:[svg]:text-muted-foreground" value="viewing">
             <Indicator />
             {item.viewing.icon}
             {item.viewing.label}
           </DropdownMenuRadioItem>
 
-          <DropdownMenuRadioItem
-            className="pl-2 *:first:[span]:hidden *:[svg]:text-muted-foreground"
-            value="suggestion"
-          >
+          <DropdownMenuRadioItem className="pl-2 *:[svg]:text-muted-foreground" value="suggestion">
             <Indicator />
             {item.suggestion.icon}
             {item.suggestion.label}

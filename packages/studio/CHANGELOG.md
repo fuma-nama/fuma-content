@@ -1,5 +1,19 @@
 # @fuma-content/studio
 
+## 1.0.2
+
+### Patch Changes
+
+- 7a0fbfb: fix missing react-router-serve command
+
+## 1.0.1
+
+### Patch Changes
+
+- 53f42c9: Improved Content Studio
+- Updated dependencies [53f42c9]
+  - fuma-content@1.1.1
+
 ## 1.0.0
 
 ### Patch Changes

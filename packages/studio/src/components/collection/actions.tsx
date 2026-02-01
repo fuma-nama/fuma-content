@@ -17,7 +17,7 @@ export function CollectionActionsContext({
   collection: CollectionItem;
   children: ReactElement;
 }) {
-  const createDoc = useCreateDocumentDialog(collection.id);
+  const createDoc = useCreateDocumentDialog(collection);
 
   let child = (
     <ContextMenu>

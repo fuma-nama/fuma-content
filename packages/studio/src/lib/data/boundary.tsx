@@ -1,22 +1,22 @@
-import { ReactNode } from "react";
-import { getCollectionItems, getDocumentItems } from "./actions";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { queryClient } from "./query";
-import { BoundaryClient } from "./boundary.client";
+"use client";
+import { Spinner } from "@/components/ui/spinner";
+import { useMounted } from "@/hooks/use-mounted";
+import { Suspense, type ReactNode } from "react";
 
-export async function DataBoundary({ children }: { children: ReactNode }) {
-  await queryClient.prefetchQuery({
-    queryKey: ["collections"],
-    queryFn: () => getCollectionItems(),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["documents"],
-    queryFn: () => getDocumentItems(),
-  });
+export function BoundaryClient({ children }: { children: ReactNode }) {
+  const mounted = useMounted();
+  const fallback = (
+    <div className="fixed flex items-center justify-center inset-0 bg-background z-50 text-sm text-muted-foreground gap-1">
+      <Spinner />
+      Loading
+    </div>
+  );
+
+  if (!mounted) return fallback;
 
   return (
-    <BoundaryClient>
-      <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>
-    </BoundaryClient>
+    <Suspense fallback={fallback} defer>
+      {children}
+    </Suspense>
   );
 }

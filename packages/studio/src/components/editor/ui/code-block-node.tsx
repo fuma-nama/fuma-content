@@ -57,7 +57,10 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
         />
       </div>
 
-      <pre className="hljs rounded-lg border overflow-auto p-3 font-mono text-sm leading-normal [tab-size:2] shadow-sm print:break-inside-avoid">
+      <pre
+        className="hljs rounded-lg border overflow-auto p-3 font-mono text-sm leading-normal [tab-size:2] shadow-sm print:break-inside-avoid"
+        spellCheck={false}
+      >
         <code>{props.children}</code>
       </pre>
     </PlateElement>

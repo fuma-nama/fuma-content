@@ -12,10 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
 import { FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -29,6 +27,7 @@ import {
   type DocumentItem,
 } from "@/lib/data/store";
 import { CollectionActionsContext } from "./collection/actions";
+import { Link, useLocation } from "react-router";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [search, setSearch] = React.useState("");
@@ -50,7 +49,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar variant="floating" {...props}>
       <SidebarHeader>
         <SidebarMenuButton asChild>
-          <Link href="/" className="ps-1 font-semibold text-lg font-mono">
+          <Link to="/" className="ps-1 font-semibold text-lg font-mono">
             <Logo className="size-6!" />
             Fuma Content
           </Link>
@@ -91,7 +90,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 }
 
 function SidebarDocumentItem({ item }: { item: DocumentItem }) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const href = `/collection/${item.collectionId}/${item.id}`;
   return (
     <DocumentActionsContext document={item}>
@@ -102,7 +101,7 @@ function SidebarDocumentItem({ item }: { item: DocumentItem }) {
           className={cn("ps-5", !pathname.startsWith(href + "/") && "text-muted-foreground")}
           asChild
         >
-          <Link href={href}>
+          <Link to={href}>
             <FileIcon className="text-muted-foreground" />
             <span>{item.name}</span>
           </Link>
@@ -113,7 +112,7 @@ function SidebarDocumentItem({ item }: { item: DocumentItem }) {
 }
 
 function SidebarCollectionItem({ item }: { item: CollectionItem }) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const href = `/collection/${item.id}`;
   return (
     <CollectionActionsContext collection={item}>
@@ -124,7 +123,7 @@ function SidebarCollectionItem({ item }: { item: CollectionItem }) {
           className={cn("ps-3", !pathname.startsWith(href + "/") && "text-muted-foreground")}
           asChild
         >
-          <Link href={href}>
+          <Link to={href}>
             <LayersIcon className="text-muted-foreground" />
             <span>{item.name}</span>
             {item.badge && <Badge className="ms-auto">{item.badge}</Badge>}

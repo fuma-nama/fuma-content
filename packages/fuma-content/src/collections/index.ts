@@ -23,11 +23,6 @@ export class Collection {
   readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
   readonly plugins: PluginOption[] = [];
 
-  transform(transformer: (collection: this) => void): this {
-    transformer(this);
-    return this;
-  }
-
   pluginHook<T, Options>(hook: CollectionHook<T, Options>, options: Options): T;
   pluginHook<T>(hook: CollectionHook<T>): T;
 
