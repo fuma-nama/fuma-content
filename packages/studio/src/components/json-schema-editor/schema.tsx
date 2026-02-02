@@ -1,15 +1,12 @@
 import { Ajv2020 } from "ajv/dist/2020";
 import { createContext, ReactNode, use, useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
 import { getDefaultValue } from "./get-default-values";
-import { mergeAllOf } from "./utils/merge-schema";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
+import { mergeAllOf } from "./utils/merge-schema";
+import { FieldKey, useDataEngine } from "@fumari/stf";
 
-export interface SchemaContextType extends EditorContextType {
-  /**
-   * client-side attached state of a specific field
-   */
-  fieldInfoMap: Map<string, FieldInfo>;
+interface SchemaContextType {
+  schema: JSONSchema;
   ajv: Ajv2020;
 }
 
@@ -52,11 +49,8 @@ export const anyFields = {
 
 export function SchemaProvider({
   schema,
-  readOnly,
-  writeOnly,
   children,
-}: EditorContextType & { children: ReactNode }) {
-  const fieldInfoMap = useMemo(() => new Map<string, FieldInfo>(), []);
+}: Omit<SchemaContextType, "ajv"> & { children: ReactNode }) {
   const ajv = useMemo(
     () =>
       new Ajv2020({
@@ -69,19 +63,10 @@ export function SchemaProvider({
   );
 
   return (
-    <SchemaContext
-      value={useMemo(
-        () => ({ schema, fieldInfoMap, ajv, readOnly, writeOnly }),
-        [schema, fieldInfoMap, ajv, readOnly, writeOnly],
-      )}
-    >
+    <SchemaContext.Provider value={useMemo(() => ({ schema, ajv }), [schema, ajv])}>
       {children}
-    </SchemaContext>
+    </SchemaContext.Provider>
   );
-}
-
-export function useSchema(): SchemaContextType {
-  return use(SchemaContext)!;
 }
 
 /**
@@ -92,19 +77,18 @@ export function useSchema(): SchemaContextType {
  * @param depth - The depth to avoid duplicated field name with same schema (e.g. nested `oneOf`).
  */
 export function useFieldInfo(
-  fieldName: string,
+  fieldName: FieldKey,
   schema: Exclude<JSONSchema, boolean>,
-  depth: number,
 ): {
   info: FieldInfo;
   updateInfo: (value: Partial<FieldInfo>) => void;
 } {
-  const { fieldInfoMap, ajv } = use(SchemaContext)!;
-  const form = useFormContext();
-  const keyName = `${fieldName}:${depth}`;
+  const { ajv } = use(SchemaContext)!;
+  const engine = useDataEngine();
+  const attachedData = engine.attachedData<FieldInfo>("field-info");
   const [info, setInfo] = useState<FieldInfo>(() => {
-    const value = form.getValues(fieldName as "body");
-    const initialInfo = fieldInfoMap.get(keyName);
+    const value = engine.get(fieldName);
+    const initialInfo = attachedData.get(fieldName);
     if (initialInfo) return initialInfo;
 
     const out: FieldInfo = {
@@ -144,8 +128,7 @@ export function useFieldInfo(
     return out;
   });
 
-  fieldInfoMap.set(keyName, info);
-
+  attachedData.set(fieldName, info);
   return {
     info,
     updateInfo(value) {
@@ -165,9 +148,13 @@ export function useFieldInfo(
         valueSchema = { ...schema, type: updated.selectedType };
       }
 
-      form.setValue(fieldName, getDefaultValue(valueSchema));
+      engine.update(fieldName, getDefaultValue(valueSchema));
     },
   };
+}
+
+export function useSchemaContext() {
+  return use(SchemaContext);
 }
 
 /**

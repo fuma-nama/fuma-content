@@ -1,21 +1,13 @@
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
-import { dereference, type SchemaContextType } from "../schema";
 
 export enum FormatFlags {
   None = 0,
   UseAlias = 1 << 0,
 }
 
-/**
- * generate text representation of a schema, handle recursive refs.
- */
-export function schemaToString(
-  value: JSONSchema,
-  ctx: SchemaContextType,
-  flags: FormatFlags = FormatFlags.None,
-): string {
+export function schemaToString(value: JSONSchema, flags: FormatFlags = FormatFlags.None): string {
   function union(union: readonly JSONSchema[], sep: string, flags: FormatFlags) {
-    const members = new Set<string>();
+    const members = new Set();
     let nullable = false;
 
     for (const item of union) {
@@ -38,12 +30,6 @@ export function schemaToString(
 
     if ((flags & FormatFlags.UseAlias) === FormatFlags.UseAlias) {
       if (schema.title) return schema.title;
-
-      const ref = schema.$ref?.split("/");
-      if (ref && ref.length > 0) return ref[ref.length - 1];
-    } else if (schema.$ref) {
-      const out = dereference(schema, ctx);
-      if (typeof out !== "boolean") schema = out;
     }
 
     if (Array.isArray(schema.type)) {
@@ -74,10 +60,12 @@ export function schemaToString(
     if (schema.not) return `not ${run(schema.not, flags)}`;
     if (schema.type === "string" && schema.format === "binary") return "file";
 
+    if (schema.type && Array.isArray(schema.type)) {
+      return schema.type.filter((v) => v !== "null").join(" | ");
+    }
+
     if (schema.type) {
-      return Array.isArray(schema.type)
-        ? schema.type.filter((v) => v !== "null").join(" | ")
-        : (schema.type as string);
+      return schema.type as string;
     }
 
     return "unknown";
