@@ -97,6 +97,20 @@ export class MDXCollection<
     this.onServer.hook(this.#onServerHandler.bind(this));
     this.onEmit.pipe(this.#onEmitHandler.bind(this));
 
+    if (this.postprocess?.includeProcessedMarkdown) {
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += " & { /** Processed Markdown */ _markdown: string; }";
+        return code;
+      });
+    }
+
+    if (this.postprocess?.includeMDAST) {
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += " & { /** MDAST (as JSON string) */ _mdast: string; }";
+        return code;
+      });
+    }
+
     if (this.postprocess?.extractLinkReferences) {
       this.storeInitializer.pipe((code, { codegen, environment }) => {
         codegen.addNamedImport(["WithExtractedReferences"], RuntimePaths[environment], true);

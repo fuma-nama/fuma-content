@@ -58,15 +58,6 @@ export interface CompiledMDX<Frontmatter = Record<string, unknown>> extends Reco
 > {
   frontmatter: Frontmatter;
   default: MDXContent;
-
-  /**
-   * Enable from `postprocess` option.
-   */
-  _markdown?: string;
-  /**
-   * Enable from `postprocess` option.
-   */
-  _mdast?: string;
 }
 
 export async function buildMDX(
