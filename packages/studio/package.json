@@ -25,7 +25,7 @@
     "dev": "tsdown --watch",
     "dev:app": "react-router dev",
     "build": "tsdown && react-router build",
-    "preview": "react-router-serve build/server/index.js",
+    "preview": "node dist/bin.mjs",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {

@@ -111,7 +111,7 @@ export function remarkPostprocess(
         // from https://github.com/remarkjs/remark/blob/main/packages/remark-stringify/lib/index.js
         extensions: processor.data("toMarkdownExtensions") || [],
         handlers: {
-          heading: (node: Heading) => {
+          heading(node: Heading) {
             const id = node.data?.hProperties?.id;
             const content = flattenNode(node);
             return headingIds && id ? `${content} [#${id}]` : content;

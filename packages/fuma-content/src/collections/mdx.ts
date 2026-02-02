@@ -13,7 +13,7 @@ import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
 import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
-import { gitHook } from "@/plugins/git";
+import { GitHook, gitHook } from "@/plugins/git";
 import path from "node:path";
 
 interface CompilationContext {
@@ -92,19 +92,10 @@ export class MDXCollection<
     this.getMDXOptions = config.options;
     this.dynamic = config.dynamic ?? false;
     this.lazy = config.lazy ?? false;
-    if (config.frontmatter) {
-      const frontmatter = config.frontmatter;
-      // Store schema for use in studio/editors
-      this.frontmatterSchema = frontmatter;
-      this.frontmatter.pipe((data, { filePath }) => {
-        return validate(
-          frontmatter,
-          data,
-          undefined,
-          `invalid frontmatter in ${filePath}`,
-        ) as Promise<Record<string, unknown>>;
-      });
-    }
+    this.frontmatterSchema = config.frontmatter;
+    this.frontmatter.pipe(this.#onFrontmatter.bind(this));
+    this.onServer.hook(this.#onServerHandler.bind(this));
+    this.onEmit.pipe(this.#onEmitHandler.bind(this));
 
     if (this.postprocess?.extractLinkReferences) {
       this.storeInitializer.pipe((code, { codegen, environment }) => {
@@ -114,65 +105,80 @@ export class MDXCollection<
       });
     }
 
-    this.onEmit.pipe(async (entries, { createCodeGenerator }) => {
+    this.pluginHook(loaderHook).loaders.push(mdxLoader());
+    this.pluginHook(gitHook).onClient.hook(this.#onGitHandler.bind(this));
+  }
+
+  #onFrontmatter: (typeof this.frontmatter)["$inferHandler"] = (data, { filePath }) => {
+    if (!this.frontmatterSchema) return data;
+
+    return validate(
+      this.frontmatterSchema,
+      data,
+      undefined,
+      `invalid frontmatter in ${filePath}`,
+    ) as Promise<Record<string, unknown>>;
+  };
+
+  #onServerHandler: (typeof this.onServer)["$inferHandler"] = ({ server, core }) => {
+    if (!server.watcher) return;
+
+    server.watcher.on("all", async (event, file) => {
+      if (event === "change" && !this.dynamic) return;
+      if (!this.hasFile(file)) return;
+
+      await core.emit({
+        filterCollection: (item) => item === this,
+        filterWorkspace: () => false,
+        write: true,
+      });
+    });
+  };
+
+  #onEmitHandler: (typeof this.onEmit)["$inferHandler"] = async (
+    entries,
+    { createCodeGenerator },
+  ) => {
+    entries.push(
+      await createCodeGenerator(`${this.name}.ts`, this.generateCollectionStoreServer.bind(this)),
+      await createCodeGenerator(
+        `${this.name}.browser.ts`,
+        this.generateCollectionStoreBrowser.bind(this),
+      ),
+    );
+    if (this.dynamic)
       entries.push(
-        await createCodeGenerator(`${this.name}.ts`, (ctx) =>
-          this.generateCollectionStoreServer(ctx),
-        ),
-        await createCodeGenerator(`${this.name}.browser.ts`, (ctx) =>
-          this.generateCollectionStoreBrowser(ctx),
+        await createCodeGenerator(
+          `${this.name}.dynamic.ts`,
+          this.generateCollectionStoreDynamic.bind(this),
         ),
       );
-      if (this.dynamic)
-        entries.push(
-          await createCodeGenerator(`${this.name}.dynamic.ts`, (ctx) =>
-            this.generateCollectionStoreDynamic(ctx),
-          ),
-        );
-      return entries;
-    });
-    this.onServer.hook(({ core, server }) => {
-      if (!server.watcher) return;
+    return entries;
+  };
 
-      server.watcher.on("all", async (event, file) => {
-        if (event === "change" && !this.dynamic) return;
-        if (!this.hasFile(file)) return;
-
-        await core.emit({
-          filterCollection: (item) => item === this,
-          filterWorkspace: () => false,
-          write: true,
-        });
-      });
+  #onGitHandler: GitHook["onClient"]["$inferHandler"] = async ({ client }) => {
+    this.storeInitializer.pipe((code, { codegen, environment }) => {
+      codegen.addNamedImport(["WithGit"], RuntimePaths[environment], true);
+      code.typeParams[2] += " & WithGit";
+      return code;
     });
 
-    const { loaders } = this.pluginHook(loaderHook);
-    loaders.push(mdxLoader());
-
-    this.pluginHook(gitHook).onClient.hook(({ client }) => {
-      this.storeInitializer.pipe((code, { codegen, environment }) => {
-        codegen.addNamedImport(["WithGit"], RuntimePaths[environment], true);
-        code.typeParams[2] += " & WithGit";
-        return code;
-      });
-
-      this.vfile.pipe(async (file) => {
-        const vcData = await client.getFileData({ filePath: file.path });
-        file.data["mdx-export"] ??= [];
-        file.data["mdx-export"].push(
-          {
-            name: "lastModified",
-            value: vcData.lastModified,
-          },
-          {
-            name: "creationDate",
-            value: vcData.creationDate,
-          },
-        );
-        return file;
-      });
+    this.vfile.pipe(async (file) => {
+      const vcData = await client.getFileData({ filePath: file.path });
+      file.data["mdx-export"] ??= [];
+      file.data["mdx-export"].push(
+        {
+          name: "lastModified",
+          value: vcData.lastModified,
+        },
+        {
+          name: "creationDate",
+          value: vcData.creationDate,
+        },
+      );
+      return file;
     });
-  }
+  };
 
   private async generateDocCollectionFrontmatterGlob(
     { workspace, codegen }: EmitCodeGeneratorContext,

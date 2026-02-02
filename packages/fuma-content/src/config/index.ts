@@ -18,13 +18,15 @@ export interface GlobalConfig<
   /**
    * configure code generation
    */
-  emit?: {
-    target?: "default" | "vite";
-    /**
-     * add .js extenstion to imports
-     */
-    jsExtension?: boolean;
-  };
+  emit?: EmitConfig;
+}
+
+export interface EmitConfig {
+  target?: "default" | "vite";
+  /**
+   * add .js extenstion to imports
+   */
+  jsExtension?: boolean;
 }
 
 export interface WorkspaceConfig {

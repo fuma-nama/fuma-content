@@ -37,20 +37,17 @@ export class MapCollectionStore<Id, Data> implements CollectionStore<Id, Data> {
   }
 
   /**
-   * in-place transformation on all data
+   * transform entry and create a new store
    */
-  transform<T>(fn: (input: Data) => T): MapCollectionStore<Id, T> {
-    this.dataList.length = 0;
-    const dataMap = this.dataMap as unknown as Map<Id, T>;
-    const dataList = this.dataList as unknown as T[];
+  transform<$Id, T>(fn: (id: Id, data: Data) => [$Id, T]): MapCollectionStore<$Id, T> {
+    const updated = new Map<$Id, T>();
 
     for (const [k, v] of this.dataMap) {
-      const updated = fn(v);
-      dataMap.set(k, updated);
-      dataList.push(updated);
+      const out = fn(k, v);
+      updated.set(out[0], out[1]);
     }
 
-    return this as unknown as MapCollectionStore<Id, T>;
+    return new MapCollectionStore(updated);
   }
 
   get $inferData(): Data {

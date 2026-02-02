@@ -35,10 +35,6 @@ export class FileCollectionStore<V> extends MapCollectionStore<string, FileInfo 
     super(data);
   }
 
-  transform<T>(fn: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
-    return super.transform(fn);
-  }
-
   castData<T>(_cast: (input: FileInfo & V) => FileInfo & T): FileCollectionStore<T> {
     return super.castData(_cast);
   }

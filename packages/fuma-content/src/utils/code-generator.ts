@@ -1,31 +1,21 @@
+import type { EmitConfig } from "@/config";
 import path from "node:path";
 import { URLSearchParams } from "node:url";
 
-export interface CodeGeneratorOptions {
-  target: "default" | "vite";
+export interface CodeGeneratorOptions extends EmitConfig {
   outDir: string;
-  /**
-   * add .js extenstion to imports
-   */
-  jsExtension: boolean;
 }
 
 interface ImportInfo {
-  // import name -> member name
-  named: Map<string, string>;
-  namespaces: Set<string>;
+  /**
+   * import name -> member name
+   */
+  named?: Map<string, string>;
+  namespaces?: Set<string>;
   /**
    * a set of import names, the import is type-only if its name is missing in this set.
    */
-  isUsed: Set<string>;
-}
-
-function importInfo(): ImportInfo {
-  return {
-    named: new Map(),
-    namespaces: new Set(),
-    isUsed: new Set(),
-  };
+  isUsed?: Set<string>;
 }
 
 /**
@@ -51,19 +41,29 @@ export class CodeGenerator {
   }
 
   addNamespaceImport(namespace: string, specifier: string, typeOnly = false) {
-    const info = this.importInfos.get(specifier) ?? importInfo();
+    const info = this.importInfos.get(specifier) ?? {};
     this.importInfos.set(specifier, info);
-    if (!typeOnly) info.isUsed.add(namespace);
+    if (!typeOnly) {
+      info.isUsed ??= new Set();
+      info.isUsed.add(namespace);
+    }
+
+    info.namespaces ??= new Set();
     info.namespaces.add(namespace);
   }
 
   addNamedImport(names: string[], specifier: string, typeOnly = false) {
-    const info = this.importInfos.get(specifier) ?? importInfo();
+    const info = this.importInfos.get(specifier) ?? {};
     this.importInfos.set(specifier, info);
+    info.named ??= new Map();
+
     for (const name of names) {
       const [memberName, importName = memberName] = name.split(/\s+as\s+/, 2);
       info.named.set(importName, memberName);
-      if (!typeOnly) info.isUsed.add(importName);
+      if (!typeOnly) {
+        info.isUsed ??= new Set();
+        info.isUsed.add(importName);
+      }
     }
   }
 
@@ -103,11 +103,14 @@ export class CodeGenerator {
     const ext = path.extname(file);
     let filename: string;
 
-    if (ext === ".ts" || ext === ".tsx") {
-      filename = file.substring(0, file.length - ext.length);
-      if (this.options.jsExtension) filename += ".js";
-    } else {
-      filename = file;
+    switch (ext) {
+      case ".ts":
+      case ".tsx":
+        filename = file.substring(0, file.length - ext.length);
+        if (this.options.jsExtension) filename += ".js";
+        break;
+      default:
+        filename = file;
     }
 
     const importPath = slash(path.relative(this.options.outDir, filename));
@@ -120,24 +123,25 @@ export class CodeGenerator {
       final.push('/// <reference types="vite/client" />');
     }
 
-    for (const [specifier, info] of this.importInfos) {
-      const { namespaces, named, isUsed } = info;
-      for (const namespace of namespaces) {
-        final.push(
-          isUsed.has(namespace)
-            ? `import * as ${namespace} from "${specifier}";`
-            : `import type * as ${namespace} from "${specifier}";`,
-        );
-      }
+    for (const [specifier, { namespaces, isUsed, named }] of this.importInfos) {
+      if (namespaces)
+        for (const namespace of namespaces) {
+          final.push(
+            isUsed?.has(namespace)
+              ? `import * as ${namespace} from "${specifier}";`
+              : `import type * as ${namespace} from "${specifier}";`,
+          );
+        }
 
-      const namedImports: string[] = [];
-      for (const [importName, memberName] of named) {
-        const item = importName === memberName ? importName : `${memberName} as ${importName}`;
+      if (named && named.size > 0) {
+        const namedImports: string[] = [];
 
-        namedImports.push(isUsed.has(importName) ? item : `type ${item}`);
-      }
+        for (const [importName, memberName] of named) {
+          const item = importName === memberName ? importName : `${memberName} as ${importName}`;
 
-      if (namedImports.length > 0) {
+          namedImports.push(isUsed?.has(importName) ? item : `type ${item}`);
+        }
+
         final.push(`import { ${namedImports.join(", ")} } from "${specifier}";`);
       }
     }

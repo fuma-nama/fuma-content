@@ -28,12 +28,11 @@ export interface PluginContext {
 export interface EmitContext extends PluginContext {
   createCodeGenerator: (
     path: string,
-    content: (ctx: EmitCodeGeneratorContext) => Promise<void>,
+    content: (ctx: EmitCodeGeneratorContext) => Awaitable<void>,
   ) => Promise<EmitEntry>;
 }
 
-export interface EmitCodeGeneratorContext {
-  core: Core;
+export interface EmitCodeGeneratorContext extends PluginContext {
   workspace?: string;
   codegen: CodeGenerator;
 }
@@ -310,16 +309,14 @@ export class Core {
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
     const { workspace, outDir } = this.options;
-    const { target, jsExtension } = this.config.emit ?? {};
     const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const ctx: EmitContext = {
-      ...this.getPluginContext(),
+      core: this,
       createCodeGenerator: async (path, content) => {
         const codegen = new CodeGenerator({
-          target,
+          ...this.config.emit,
           outDir,
-          jsExtension,
         });
         await content({
           core: this,
@@ -333,12 +330,12 @@ export class Core {
       },
     };
 
-    const added = new Set<string>();
     const out: EmitOutput = {
       entries: [],
       workspaces: {},
     };
 
+    const entryMap = new Map<string, EmitEntry>();
     const generated: Awaitable<EmitEntry[]>[] = [];
     for (const collection of this.getCollections()) {
       if (filterCollection && !filterCollection(collection)) continue;
@@ -346,11 +343,10 @@ export class Core {
     }
     for (const entries of await Promise.all(generated)) {
       for (const item of entries) {
-        if (added.has(item.path)) continue;
-        out.entries.push(item);
-        added.add(item.path);
+        entryMap.set(item.path, item);
       }
     }
+    out.entries = Array.from(entryMap.values());
 
     if (write) {
       await Promise.all(

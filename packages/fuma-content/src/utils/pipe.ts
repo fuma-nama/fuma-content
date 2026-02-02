@@ -8,7 +8,7 @@ export interface Pipe<Data, Context = undefined> {
    */
   pipe: (fn: (data: Data, context: Context) => Data) => Pipe<Data, Context>;
   run: (data: Data, context: Context) => Data;
-  clone: () => Pipe<Data, Context>;
+  $inferHandler: (data: Data, context: Context) => Data;
 }
 
 export interface AsyncPipe<Data, Context = undefined> {
@@ -19,7 +19,7 @@ export interface AsyncPipe<Data, Context = undefined> {
    */
   pipe: (fn: (data: Data, context: Context) => Awaitable<Data>) => AsyncPipe<Data, Context>;
   run: (data: Data, context: Context) => Awaitable<Data>;
-  clone: () => AsyncPipe<Data, Context>;
+  $inferHandler: (data: Data, context: Context) => Awaitable<Data>;
 }
 
 export function pipe<Data, Context>(
@@ -36,9 +36,7 @@ export function pipe<Data, Context>(
       steps.push(fn);
       return this;
     },
-    clone() {
-      return pipe([...steps]);
-    },
+    $inferHandler: undefined as never,
   };
 }
 
@@ -56,8 +54,6 @@ export function asyncPipe<Data, Context>(
       steps.push(fn);
       return this;
     },
-    clone() {
-      return asyncPipe([...steps]);
-    },
+    $inferHandler: undefined as never,
   };
 }
