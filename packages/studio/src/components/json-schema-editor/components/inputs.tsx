@@ -12,12 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { getDefaultValue } from "../get-default-values";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { FormatFlags, schemaToString } from "../utils/schema-to-string";
 import { anyFields, useFieldInfo, useResolvedSchema } from "../schema";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import { stringifyFieldKey } from "@fumari/stf/lib/utils";
 import { cva } from "class-variance-authority";
+import { buttonVariants } from "@/components/ui/button";
 
 const labelVariants = cva(
   "text-xs font-medium text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
@@ -68,7 +68,7 @@ export function ObjectInput({
               aria-label="Remove Item"
               className={cn(
                 buttonVariants({
-                  color: "outline",
+                  variant: "outline",
                   size: "icon-xs",
                 }),
               )}
@@ -108,7 +108,7 @@ export function ObjectInput({
           />
           <button
             type="button"
-            className={cn(buttonVariants({ color: "secondary", size: "sm" }), "px-4")}
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "px-4")}
             onClick={() => {
               onAppend(nextName);
               setNextName("");
@@ -239,7 +239,7 @@ export function FieldInput({
           htmlFor={id}
           className={cn(
             buttonVariants({
-              color: "secondary",
+              variant: "secondary",
               className: "w-full h-9 gap-2 truncate",
             }),
           )}
@@ -500,7 +500,7 @@ function ArrayInput({
               aria-label="Remove Item"
               className={cn(
                 buttonVariants({
-                  color: "outline",
+                  variant: "outline",
                   size: "icon-xs",
                 }),
               )}
@@ -515,7 +515,7 @@ function ArrayInput({
         type="button"
         className={cn(
           buttonVariants({
-            color: "secondary",
+            variant: "secondary",
             className: "gap-1.5 py-2",
             size: "sm",
           }),
