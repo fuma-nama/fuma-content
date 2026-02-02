@@ -32,11 +32,11 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
       {...props}
     >
       <div
-        className="flex items-center select-none px-3 pb-1 contain-layout"
+        className="flex items-center select-none pb-1 contain-layout gap-1"
         contentEditable={false}
       >
         <CodeBlockCombobox />
-
+        <CodeBlockMeta />
         {isLangSupported(element.lang) && (
           <Button
             size="xs"
@@ -72,6 +72,28 @@ interface Item {
   value: string;
 }
 
+function CodeBlockMeta() {
+  const editor = useEditorRef();
+  const readOnly = useReadOnly();
+  const element = useElement<TCodeBlockElement>();
+  const [value, setValue] = React.useState(element.meta as string);
+
+  if (readOnly)
+    return <p className="px-2 flex-1 font-mono text-sm text-muted-foreground">{value}</p>;
+
+  return (
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={() => {
+        editor.transforms.setNodes({ meta: value }, { at: element });
+      }}
+      placeholder="custom meta"
+      className="px-2 rounded-lg flex-1 min-w-0 w-fit font-mono text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none not-focus-visible:text-muted-foreground placeholder:text-muted-foreground"
+    />
+  );
+}
+
 function CodeBlockCombobox() {
   const editor = useEditorRef();
   const element = useElement<TCodeBlockElement>();
@@ -93,7 +115,7 @@ function CodeBlockCombobox() {
   }, [element.lang]);
 
   if (readOnly) {
-    return <p className="font-mono text-sm text-muted-foreground me-auto">{value?.label}</p>;
+    return <p className="px-2 font-mono text-sm text-muted-foreground">{value?.label}</p>;
   }
 
   return (
@@ -112,7 +134,7 @@ function CodeBlockCombobox() {
     >
       <ComboboxChipsInput
         placeholder="Select Language"
-        className="flex-1 font-mono text-sm not-data-popup-open:text-muted-foreground"
+        className="px-2 rounded-lg font-mono text-sm not-data-popup-open:text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       />
       <ComboboxContent className="max-w-[200px]">
         <ComboboxList>

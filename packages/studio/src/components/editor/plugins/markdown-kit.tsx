@@ -8,6 +8,33 @@ export const MarkdownKit = [
     options: {
       plainMarks: [KEYS.suggestion, KEYS.comment],
       remarkPlugins: [remarkMath, remarkGfm, remarkMdx],
+      rules: {
+        code_block: {
+          // Override the default code block deserialization
+          deserialize(mdastNode) {
+            return {
+              type: "code_block",
+              lang: mdastNode.lang || "",
+              // Capture the meta string here
+              meta: mdastNode.meta || "",
+              children: [{ text: mdastNode.value }],
+            };
+          },
+          serialize(node) {
+            // Flatten code-line children back into a single string for Markdown
+            const value = node.children
+              .map((line: any) => line.children?.[0]?.text ?? "")
+              .join("\n");
+
+            return {
+              type: "code",
+              lang: node.lang ?? "",
+              meta: String(node.meta ?? ""),
+              value: value,
+            };
+          },
+        },
+      },
     },
   }),
 ];
