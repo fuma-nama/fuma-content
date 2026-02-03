@@ -1,6 +1,6 @@
 {
   "name": "fuma-content",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "The content processing layer for your app.",
   "keywords": [
     "Content",

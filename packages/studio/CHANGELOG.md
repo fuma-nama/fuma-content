@@ -1,5 +1,13 @@
 # @fuma-content/studio
 
+## 1.0.3
+
+### Patch Changes
+
+- 4f3de24: support meta string
+- Updated dependencies [500e5f2]
+  - fuma-content@1.1.2
+
 ## 1.0.2
 
 ### Patch Changes

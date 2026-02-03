@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.1.2
+
+### Patch Changes
+
+- 500e5f2: return new collection store on `.transform()`
+
 ## 1.1.1
 
 ### Patch Changes
