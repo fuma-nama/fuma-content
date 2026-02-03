@@ -1,8 +1,7 @@
 "use client";
 
 import { PlaceholderPlugin } from "@platejs/media/react";
-
-import { FilmIcon, ImageIcon, LinkIcon } from "lucide-react";
+import { ImageIcon, LinkIcon } from "lucide-react";
 import { isUrl, KEYS } from "platejs";
 import { useEditorRef } from "platejs/react";
 import * as React from "react";
@@ -33,35 +32,7 @@ import {
   ToolbarSplitButtonSecondary,
 } from "../../ui/toolbar";
 
-export const MEDIA_CONFIG: Record<
-  string,
-  {
-    accept: string[];
-    icon: React.ReactNode;
-    title: string;
-    tooltip: string;
-  }
-> = {
-  [KEYS.img]: {
-    accept: ["image/*"],
-    icon: <ImageIcon className="size-4" />,
-    title: "Insert Image",
-    tooltip: "Image",
-  },
-  [KEYS.video]: {
-    accept: ["video/*"],
-    icon: <FilmIcon className="size-4" />,
-    title: "Insert Video",
-    tooltip: "Video",
-  },
-};
-
-export function MediaToolbarButton({
-  nodeType,
-  ...props
-}: React.ComponentProps<typeof DropdownMenu> & { nodeType: string }) {
-  const currentConfig = MEDIA_CONFIG[nodeType];
-
+export function MediaToolbarButton(props: React.ComponentProps<typeof DropdownMenu>) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -79,26 +50,31 @@ export function MediaToolbarButton({
         pressed={open}
       >
         <label htmlFor={inputId}>
-          <ToolbarSplitButtonPrimary>{currentConfig.icon}</ToolbarSplitButtonPrimary>
+          <ToolbarSplitButtonPrimary>
+            <ImageIcon className="size-4" />
+          </ToolbarSplitButtonPrimary>
         </label>
         <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
           <DropdownMenuTrigger asChild>
             <ToolbarSplitButtonSecondary />
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="start" alignOffset={-32}>
-            <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild>
-                <label htmlFor={inputId}>
-                  {currentConfig.icon}
-                  Upload from computer
-                </label>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
-                <LinkIcon />
-                Insert via URL
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+          <DropdownMenuContent
+            onClick={(e) => e.stopPropagation()}
+            align="start"
+            alignOffset={-32}
+            className="min-w-54"
+          >
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} asChild>
+              <label htmlFor={inputId}>
+                <ImageIcon className="size-4" />
+                Upload from computer
+              </label>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
+              <LinkIcon />
+              Insert via URL
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ToolbarSplitButton>
@@ -107,7 +83,7 @@ export function MediaToolbarButton({
         type="file"
         hidden
         multiple
-        accept={currentConfig.accept.join(", ")}
+        accept="video/*, image/*"
         onChange={(e) => {
           const files = e.target.files;
           if (!files) return;
@@ -124,45 +100,39 @@ export function MediaToolbarButton({
         }}
       >
         <AlertDialogContent className="gap-6">
-          <MediaUrlDialogContent
-            currentConfig={currentConfig}
-            nodeType={nodeType}
-            setOpen={setDialogOpen}
-          />
+          <MediaUrlDialogContent setOpen={setDialogOpen} />
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
 }
 
-function MediaUrlDialogContent({
-  currentConfig,
-  nodeType,
-  setOpen,
-}: {
-  currentConfig: (typeof MEDIA_CONFIG)[string];
-  nodeType: string;
-  setOpen: (value: boolean) => void;
-}) {
+function MediaUrlDialogContent({ setOpen }: { setOpen: (value: boolean) => void }) {
   const editor = useEditorRef();
   const [url, setUrl] = React.useState("");
 
   const embedMedia = React.useCallback(() => {
     if (!isUrl(url)) return toast.error("Invalid URL");
+    const parsed = new URL(url);
+    const mediaType = getMediaTypeFromExtension(parsed);
 
     setOpen(false);
     editor.tf.insertNodes({
       children: [{ text: "" }],
-      name: nodeType === KEYS.file ? url.split("/").pop() : undefined,
-      type: nodeType,
+      name: parsed.pathname,
+      type: mediaType?.startsWith("video/")
+        ? KEYS.video
+        : mediaType?.startsWith("image/")
+          ? KEYS.img
+          : KEYS.file,
       url,
     });
-  }, [url, editor, nodeType, setOpen]);
+  }, [url, editor, setOpen]);
 
   return (
     <>
       <AlertDialogHeader>
-        <AlertDialogTitle>{currentConfig.title}</AlertDialogTitle>
+        <AlertDialogTitle>Insert Image & Video</AlertDialogTitle>
       </AlertDialogHeader>
 
       <AlertDialogDescription className="group relative w-full">
@@ -199,4 +169,27 @@ function MediaUrlDialogContent({
       </AlertDialogFooter>
     </>
   );
+}
+
+function getMediaTypeFromExtension(url: URL) {
+  const idx = url.pathname.lastIndexOf(".");
+  if (idx === -1) return;
+  const extension = url.pathname.slice(idx + 1);
+
+  // A basic mapping of common extensions to MIME types
+  const mimeTypes: Record<string, string> = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    pdf: "application/pdf",
+    json: "application/json",
+  };
+
+  return mimeTypes[extension];
 }

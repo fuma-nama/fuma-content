@@ -31,7 +31,7 @@ import {
   TodoListToolbarButton,
 } from "./list-toolbar-button";
 import { MarkToolbarButton } from "./mark-toolbar-button";
-import { MEDIA_CONFIG, MediaToolbarButton } from "./media-toolbar-button";
+import { MediaToolbarButton } from "./media-toolbar-button";
 import { ModeToolbarButton } from "./mode-toolbar-button";
 import { TableToolbarButton } from "./table-toolbar-button";
 import { TurnIntoToolbarButton } from "./turn-into-toolbar-button";
@@ -102,12 +102,7 @@ export function FixedToolbarButtons() {
             <LinkToolbarButton />
             <TableToolbarButton />
             <EmojiToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            {Object.keys(MEDIA_CONFIG).map((nodeType) => (
-              <MediaToolbarButton key={nodeType} nodeType={nodeType} />
-            ))}
+            <MediaToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>

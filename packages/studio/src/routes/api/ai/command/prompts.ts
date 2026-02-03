@@ -211,7 +211,7 @@ export function getGeneratePrompt(editor: SlateEditor, { messages }: { messages:
       - <Selection> is the text highlighted by the user.
       - backgroundData represents the user's current Markdown context.
       - You may only use backgroundData and <Selection> as input; never ask for more data.
-      - CRITICAL: DO NOT remove or alter custom MDX tags such as <u>, <callout>, <kbd>, <toc>, <sub>, <sup>, <mark>, <del>, <date>, <span>, <column>, <column_group>, <file>, <audio>, <video> unless explicitly requested.
+      - CRITICAL: DO NOT remove or alter custom MDX tags such as <u>, <callout>, <kbd>, <toc>, <sub>, <sup>, <mark>, <del>, <date>, <span>, <file>, <audio>, <video> unless explicitly requested.
       - CRITICAL: when writing Markdown or MDX, do NOT wrap output in code fences.
       - Preserve indentation and line breaks when editing within columns or structured layouts.
     `,
