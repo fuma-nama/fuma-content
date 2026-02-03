@@ -1,5 +1,5 @@
 import { MarkdownPlugin, remarkMdx } from "@platejs/markdown";
-import { KEYS } from "platejs";
+import { getPluginType, KEYS, TText } from "platejs";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
@@ -10,29 +10,27 @@ export const MarkdownKit = [
       remarkPlugins: [remarkMath, remarkGfm, remarkMdx],
       rules: {
         code_block: {
-          // Override the default code block deserialization
-          deserialize(mdastNode) {
-            return {
-              type: "code_block",
-              lang: mdastNode.lang || "",
-              // Capture the meta string here
-              meta: mdastNode.meta || "",
-              children: [{ text: mdastNode.value }],
-            };
-          },
-          serialize(node) {
-            // Flatten code-line children back into a single string for Markdown
-            const value = node.children
-              .map((line: any) => line.children?.[0]?.text ?? "")
-              .join("\n");
-
-            return {
-              type: "code",
-              lang: node.lang ?? "",
-              meta: String(node.meta ?? ""),
-              value: value,
-            };
-          },
+          deserialize: (mdastNode, _deco, options) => ({
+            children: (mdastNode.value || "").split("\n").map((line) => ({
+              children: [{ text: line } as TText],
+              type: getPluginType(options.editor!, KEYS.codeLine),
+            })),
+            lang: mdastNode.lang ?? undefined,
+            meta: mdastNode.meta,
+            type: getPluginType(options.editor!, KEYS.codeBlock),
+          }),
+          serialize: (node) => ({
+            lang: node.lang,
+            type: "code",
+            meta: node.meta as string,
+            value: node.children
+              .map((child: any) =>
+                child?.children === undefined
+                  ? child.text
+                  : child.children.map((c: any) => c.text).join(""),
+              )
+              .join("\n"),
+          }),
         },
       },
     },

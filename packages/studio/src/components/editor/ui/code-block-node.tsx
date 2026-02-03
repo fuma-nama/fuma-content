@@ -94,25 +94,38 @@ function CodeBlockMeta() {
   );
 }
 
+const languageItems = lowlight.listLanguages().map((lang) => {
+  const info = highlight.getLanguage(lang)!;
+
+  return {
+    label: info.name ?? lang,
+    value: lang,
+  };
+});
+
 function CodeBlockCombobox() {
   const editor = useEditorRef();
   const element = useElement<TCodeBlockElement>();
   const readOnly = useReadOnly();
-  const items = React.useMemo(() => {
-    return lowlight.listLanguages().map((lang) => {
-      const info = highlight.getLanguage(lang)!;
-
-      return {
-        label: info.name ?? lang,
-        value: lang,
-      };
-    });
-  }, []);
+  const [open, setOpen] = React.useState(false);
+  // needed to support setting a custom language
+  const selectOnCloseRef = React.useRef<string | null>(null);
   const value = React.useMemo(() => {
     if (!element.lang) return null;
-    const name = highlight.getLanguage(element.lang)?.name ?? element.lang;
-    return items.find((item) => item.label === name) ?? null;
+    const info = highlight.getLanguage(element.lang);
+    if (info) return languageItems.find((item) => item.label === info.name);
+
+    return {
+      label: element.lang,
+      value: element.lang,
+    };
   }, [element.lang]);
+
+  function setLang(lang: string) {
+    editor.tf.setNodes<TCodeBlockElement>({ lang }, { at: element });
+    // force re-highlight
+    editor.tf.replaceNodes(element.children, { at: element, children: true });
+  }
 
   if (readOnly) {
     return <p className="px-2 font-mono text-sm text-muted-foreground">{value?.label}</p>;
@@ -120,16 +133,20 @@ function CodeBlockCombobox() {
 
   return (
     <Combobox
-      items={items}
+      items={languageItems}
       value={value}
+      onInputValueChange={(v) => {
+        selectOnCloseRef.current = v;
+      }}
       onValueChange={(item) => {
-        if (item) {
-          // had to use `replaceNodes` to enforce re-highlight
-          editor.tf.replaceNodes<TCodeBlockElement>(
-            { ...element, lang: item.value },
-            { at: element, select: true },
-          );
-        }
+        if (item === null) return;
+        setLang(item.value);
+        selectOnCloseRef.current = null;
+      }}
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && selectOnCloseRef.current) setLang(selectOnCloseRef.current);
+        setOpen(v);
       }}
     >
       <ComboboxChipsInput
