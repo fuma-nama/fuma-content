@@ -94,7 +94,12 @@ function CodeBlockMeta() {
   );
 }
 
-const languageItems = lowlight.listLanguages().map((lang) => {
+interface LanguageItem {
+  label: string;
+  value: string;
+}
+
+const languageItems = lowlight.listLanguages().map<LanguageItem>((lang) => {
   const info = highlight.getLanguage(lang)!;
 
   return {
@@ -110,15 +115,23 @@ function CodeBlockCombobox() {
   const [open, setOpen] = React.useState(false);
   // needed to support setting a custom language
   const selectOnCloseRef = React.useRef<string | null>(null);
-  const value = React.useMemo(() => {
-    if (!element.lang) return null;
-    const info = highlight.getLanguage(element.lang);
-    if (info) return languageItems.find((item) => item.label === info.name);
+  const [items, value] = React.useMemo(() => {
+    let items = languageItems;
+    let value: LanguageItem | null = null;
+    if (element.lang) {
+      const info = highlight.getLanguage(element.lang);
+      if (info) {
+        value = languageItems.find((item) => item.label === info.name) ?? null;
+      } else {
+        value = {
+          label: element.lang,
+          value: element.lang,
+        };
+        items = [...items, value];
+      }
+    }
 
-    return {
-      label: element.lang,
-      value: element.lang,
-    };
+    return [items, value];
   }, [element.lang]);
 
   function setLang(lang: string) {
@@ -133,7 +146,7 @@ function CodeBlockCombobox() {
 
   return (
     <Combobox
-      items={languageItems}
+      items={items}
       value={value}
       onInputValueChange={(v) => {
         selectOnCloseRef.current = v;

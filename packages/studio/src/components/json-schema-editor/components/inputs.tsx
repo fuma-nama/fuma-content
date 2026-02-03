@@ -431,7 +431,7 @@ export function FieldSet({
           <ObjectInput
             field={schema}
             fieldName={fieldName}
-            className="rounded-lg border border-primary/20 bg-background/50 p-2 shadow-sm"
+            className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
           />
         )}
       </fieldset>
@@ -450,7 +450,7 @@ export function FieldSet({
           <ArrayInput
             fieldName={fieldName}
             items={field.items ?? anyFields}
-            className="rounded-lg border border-primary/20 bg-background/50 p-2 shadow-sm"
+            className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
           />
         )}
       </fieldset>
