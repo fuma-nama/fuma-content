@@ -28,13 +28,8 @@ export interface PluginContext {
 export interface EmitContext extends PluginContext {
   createCodeGenerator: (
     path: string,
-    content: (ctx: EmitCodeGeneratorContext) => Awaitable<void>,
+    content: (ctx: { codegen: CodeGenerator }) => Awaitable<void>,
   ) => Promise<EmitEntry>;
-}
-
-export interface EmitCodeGeneratorContext extends PluginContext {
-  workspace?: string;
-  codegen: CodeGenerator;
 }
 
 export interface Plugin {
@@ -245,6 +240,9 @@ export class Core {
     }
   }
 
+  getWorkspace() {
+    return this.options.workspace;
+  }
   getWorkspaces() {
     return this.workspaces;
   }
@@ -308,20 +306,19 @@ export class Core {
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
+    const emitConfig = this.config.emit;
     const { workspace, outDir } = this.options;
     const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const ctx: EmitContext = {
       core: this,
-      createCodeGenerator: async (path, content) => {
+      async createCodeGenerator(path, content) {
         const codegen = new CodeGenerator({
-          ...this.config.emit,
+          ...emitConfig,
           outDir,
         });
         await content({
-          core: this,
           codegen,
-          workspace: workspace?.name,
         });
         return {
           path,

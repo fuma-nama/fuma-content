@@ -1,4 +1,3 @@
-import type { EmitCodeGeneratorContext } from "@/core";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { Configuration } from "webpack";
 import { LoaderConfig, loaderHook } from "@/plugins/loader";
@@ -67,42 +66,44 @@ export class DataCollection<
         });
       });
     });
-    this.onEmit.pipe(async (entries, { createCodeGenerator }) => {
-      entries.push(
-        await createCodeGenerator(`${this.name}.ts`, (ctx) => this.generateCollectionStore(ctx)),
-      );
-      return entries;
-    });
-
+    this.onEmit.pipe(this.#onEmitHandler.bind(this));
     this.pluginHook(loaderHook).loaders.push(...Object.values(loadersConfig));
   }
 
-  private async generateCollectionStore(context: EmitCodeGeneratorContext) {
-    const { codegen, core, workspace } = context;
-    codegen.addNamedImport(["dataStore"], "fuma-content/collections/data/runtime");
-    codegen.addNamespaceImport(
-      "Config",
-      codegen.formatImportPath(core.getOptions().configPath),
-      true,
+  #onEmitHandler: (typeof this)["onEmit"]["$inferHandler"] = async (
+    entries,
+    { core, createCodeGenerator },
+  ) => {
+    entries.push(
+      await createCodeGenerator(`${this.name}.ts`, async ({ codegen }) => {
+        codegen.addNamedImport(["dataStore"], "fuma-content/collections/data/runtime");
+        codegen.addNamespaceImport(
+          "Config",
+          codegen.formatImportPath(core.getOptions().configPath),
+          true,
+        );
+        const base = slash(core._toRuntimePath(this.dir));
+        let records = "{";
+        const query = codegen.formatQuery({
+          collection: this.name,
+          workspace: core.getWorkspace()?.name,
+        });
+
+        for (const file of await this.getFiles()) {
+          const fullPath = path.join(this.dir, file);
+          const specifier = `${codegen.formatImportPath(fullPath)}?${query}`;
+          const name = codegen.generateImportName();
+          codegen.addNamedImport([`default as ${name}`], specifier);
+          records += `"${slash(file)}": ${name},`;
+        }
+        records += "}";
+        codegen.push(
+          `export const ${this.name} = dataStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${records});`,
+        );
+      }),
     );
-    const base = slash(core._toRuntimePath(this.dir));
-    let records = "{";
-    const query = codegen.formatQuery({
-      collection: this.name,
-      workspace,
-    });
-    for (const file of await this.getFiles()) {
-      const fullPath = path.join(this.dir, file);
-      const specifier = `${codegen.formatImportPath(fullPath)}?${query}`;
-      const name = codegen.generateImportName();
-      codegen.addNamedImport([`default as ${name}`], specifier);
-      records += `"${slash(file)}": ${name},`;
-    }
-    records += "}";
-    codegen.push(
-      `export const ${this.name} = dataStore<typeof Config, "${this.name}">("${this.name}", "${base}", ${records});`,
-    );
-  }
+    return entries;
+  };
 }
 
 export function dataCollection<Schema extends StandardSchemaV1 | undefined = undefined>(
@@ -158,8 +159,9 @@ export function yamlLoader(): LoaderConfig {
     },
     async createLoader() {
       const { createYamlLoader } = await import("./yaml/loader");
+      const core = this.core;
       return createYamlLoader({
-        getCore: () => this.core,
+        getCore: () => core,
       });
     },
   };
@@ -212,9 +214,10 @@ export function jsonLoader(): LoaderConfig {
     },
     async createLoader(environment) {
       const { createJsonLoader } = await import("./json/loader");
+      const core = this.core;
       return createJsonLoader(
         {
-          getCore: () => this.core,
+          getCore: () => core,
         },
         environment === "vite" ? "json" : "js",
       );

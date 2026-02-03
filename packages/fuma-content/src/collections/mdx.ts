@@ -1,6 +1,6 @@
 import type { Collection } from "@/collections";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
-import type { CoreOptions, EmitCodeGeneratorContext } from "@/core";
+import type { Core, CoreOptions } from "@/core";
 import type { ProcessorOptions } from "@mdx-js/mdx";
 import type { VFile } from "vfile";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
@@ -8,7 +8,7 @@ import type { Configuration } from "webpack";
 import { LoaderConfig, loaderHook } from "@/plugins/loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
-import { slash } from "@/utils/code-generator";
+import { CodeGenerator, slash } from "@/utils/code-generator";
 import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
 import { asyncPipe, pipe } from "@/utils/pipe";
@@ -73,7 +73,8 @@ export class MDXCollection<
    */
   storeInitializer = pipe<
     InitializerCode,
-    EmitCodeGeneratorContext & {
+    {
+      codegen: CodeGenerator;
       environment: "browser" | "server" | "dynamic";
     }
   >();
@@ -151,21 +152,111 @@ export class MDXCollection<
 
   #onEmitHandler: (typeof this.onEmit)["$inferHandler"] = async (
     entries,
-    { createCodeGenerator },
+    { core, createCodeGenerator },
   ) => {
     entries.push(
-      await createCodeGenerator(`${this.name}.ts`, this.generateCollectionStoreServer.bind(this)),
-      await createCodeGenerator(
-        `${this.name}.browser.ts`,
-        this.generateCollectionStoreBrowser.bind(this),
-      ),
+      await createCodeGenerator(`${this.name}.ts`, async ({ codegen }) => {
+        const runtimePath = RuntimePaths.server;
+        const base = slash(core._toRuntimePath(this.dir));
+        let code: InitializerCode;
+        codegen.addNamespaceImport(
+          "Config",
+          codegen.formatImportPath(core.getOptions().configPath),
+          true,
+        );
+
+        if (this.lazy) {
+          codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
+          const headGlob = await this.generateDocCollectionFrontmatterGlob(core, codegen, true);
+          const bodyGlob = await this.generateDocCollectionGlob(core, codegen);
+
+          code = {
+            fn: "mdxStoreLazy",
+            typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+            params: [`"${this.name}"`, `"${base}"`, `{ head: ${headGlob}, body: ${bodyGlob} }`],
+          };
+        } else {
+          codegen.addNamedImport(["mdxStore"], runtimePath);
+          code = {
+            fn: "mdxStore",
+            typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+            params: [
+              `"${this.name}"`,
+              `"${base}"`,
+              await this.generateDocCollectionGlob(core, codegen, true),
+            ],
+          };
+        }
+
+        code = this.storeInitializer.run(code, {
+          codegen,
+          environment: "server",
+        });
+        codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
+      }),
+      await createCodeGenerator(`${this.name}.browser.ts`, async ({ codegen }) => {
+        const runtimePath = RuntimePaths.browser;
+        codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
+        codegen.addNamespaceImport(
+          "Config",
+          codegen.formatImportPath(core.getOptions().configPath),
+          true,
+        );
+
+        let code: InitializerCode = {
+          fn: `mdxStoreBrowser`,
+          typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+          params: [`"${this.name}"`, await this.generateDocCollectionGlob(core, codegen)],
+        };
+        code = this.storeInitializer.run(code, {
+          codegen,
+          environment: "browser",
+        });
+        codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
+      }),
     );
     if (this.dynamic)
       entries.push(
-        await createCodeGenerator(
-          `${this.name}.dynamic.ts`,
-          this.generateCollectionStoreDynamic.bind(this),
-        ),
+        await createCodeGenerator(`${this.name}.dynamic.ts`, async ({ codegen }) => {
+          const coreOptions = core.getOptions();
+          const runtimePath = RuntimePaths.dynamic;
+          const base = slash(core._toRuntimePath(this.dir));
+          codegen.addNamespaceImport("Config", codegen.formatImportPath(coreOptions.configPath));
+          codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
+
+          const serializableCoreOptions: CoreOptions = {
+            configPath: core._toRuntimePath(coreOptions.configPath),
+            outDir: core._toRuntimePath(coreOptions.outDir),
+            cwd: core._toRuntimePath(coreOptions.cwd),
+          };
+
+          const jsxImportSource =
+            (await this.getMDXOptions?.("runtime"))?.jsxImportSource ?? "react";
+          if (!jsxImportSource)
+            throw new Error(
+              `[Fuma Content] "jsxImportSource" is required for dynamic MDX collection "${this.name}".`,
+            );
+          codegen.addNamespaceImport("_jsx_runtime", `${jsxImportSource}/jsx-runtime`);
+
+          let code: InitializerCode = {
+            fn: "mdxStoreDynamic",
+            typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
+            params: [
+              "Config",
+              JSON.stringify(serializableCoreOptions),
+              `"${this.name}"`,
+              `"${base}"`,
+              await this.generateDocCollectionFrontmatterGlob(core, codegen, true),
+              "_jsx_runtime",
+            ],
+          };
+
+          code = this.storeInitializer.run(code, {
+            codegen,
+            environment: "dynamic",
+          });
+          codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
+        }),
       );
     return entries;
   };
@@ -195,7 +286,8 @@ export class MDXCollection<
   };
 
   private async generateDocCollectionFrontmatterGlob(
-    { workspace, codegen }: EmitCodeGeneratorContext,
+    core: Core,
+    codegen: CodeGenerator,
     eager = false,
   ) {
     let s = `{`;
@@ -203,7 +295,7 @@ export class MDXCollection<
     const query = codegen.formatQuery({
       collection: this.name,
       only: "frontmatter",
-      workspace,
+      workspace: core.getWorkspace()?.name,
     });
     for (const file of files) {
       const fullPath = path.join(this.dir, file);
@@ -220,15 +312,12 @@ export class MDXCollection<
     return s;
   }
 
-  private async generateDocCollectionGlob(
-    { codegen, workspace }: EmitCodeGeneratorContext,
-    eager = false,
-  ) {
+  private async generateDocCollectionGlob(core: Core, codegen: CodeGenerator, eager = false) {
     let s = `{`;
     const files = await this.getFiles();
     const query = codegen.formatQuery({
       collection: this.name,
-      workspace,
+      workspace: core.getWorkspace()?.name,
     });
     for (const file of files) {
       const fullPath = path.join(this.dir, file);
@@ -243,110 +332,6 @@ export class MDXCollection<
     }
     s += "}";
     return s;
-  }
-
-  private async generateCollectionStoreServer(context: EmitCodeGeneratorContext) {
-    const { core, codegen } = context;
-    const runtimePath = RuntimePaths.server;
-    const base = slash(core._toRuntimePath(this.dir));
-    let code: InitializerCode;
-    codegen.addNamespaceImport(
-      "Config",
-      codegen.formatImportPath(core.getOptions().configPath),
-      true,
-    );
-
-    if (this.lazy) {
-      codegen.addNamedImport(["mdxStoreLazy"], runtimePath);
-      const headGlob = await this.generateDocCollectionFrontmatterGlob(context, true);
-      const bodyGlob = await this.generateDocCollectionGlob(context);
-
-      code = {
-        fn: "mdxStoreLazy",
-        typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
-        params: [`"${this.name}"`, `"${base}"`, `{ head: ${headGlob}, body: ${bodyGlob} }`],
-      };
-    } else {
-      codegen.addNamedImport(["mdxStore"], runtimePath);
-      code = {
-        fn: "mdxStore",
-        typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
-        params: [
-          `"${this.name}"`,
-          `"${base}"`,
-          await this.generateDocCollectionGlob(context, true),
-        ],
-      };
-    }
-
-    code = this.storeInitializer.run(code, {
-      ...context,
-      environment: "server",
-    });
-    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
-  }
-
-  private async generateCollectionStoreBrowser(context: EmitCodeGeneratorContext) {
-    const { core, codegen } = context;
-    const runtimePath = RuntimePaths.browser;
-    codegen.addNamedImport(["mdxStoreBrowser"], runtimePath);
-    codegen.addNamespaceImport(
-      "Config",
-      codegen.formatImportPath(core.getOptions().configPath),
-      true,
-    );
-
-    let code: InitializerCode = {
-      fn: `mdxStoreBrowser`,
-      typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
-      params: [`"${this.name}"`, await this.generateDocCollectionGlob(context)],
-    };
-    code = this.storeInitializer.run(code, {
-      ...context,
-      environment: "browser",
-    });
-    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
-  }
-
-  private async generateCollectionStoreDynamic(context: EmitCodeGeneratorContext) {
-    const { core, codegen } = context;
-    const coreOptions = core.getOptions();
-    const runtimePath = RuntimePaths.dynamic;
-    const base = slash(core._toRuntimePath(this.dir));
-    codegen.addNamespaceImport("Config", codegen.formatImportPath(coreOptions.configPath));
-    codegen.addNamedImport(["mdxStoreDynamic"], runtimePath);
-
-    const serializableCoreOptions: CoreOptions = {
-      configPath: core._toRuntimePath(coreOptions.configPath),
-      outDir: core._toRuntimePath(coreOptions.outDir),
-      cwd: core._toRuntimePath(coreOptions.cwd),
-    };
-
-    const jsxImportSource = (await this.getMDXOptions?.("runtime"))?.jsxImportSource ?? "react";
-    if (!jsxImportSource)
-      throw new Error(
-        `[Fuma Content] "jsxImportSource" is required for dynamic MDX collection "${this.name}".`,
-      );
-    codegen.addNamespaceImport("_jsx_runtime", `${jsxImportSource}/jsx-runtime`);
-
-    let code: InitializerCode = {
-      fn: "mdxStoreDynamic",
-      typeParams: ["typeof Config", `"${this.name}"`, "unknown"],
-      params: [
-        "Config",
-        JSON.stringify(serializableCoreOptions),
-        `"${this.name}"`,
-        `"${base}"`,
-        await this.generateDocCollectionFrontmatterGlob(context, true),
-        "_jsx_runtime",
-      ],
-    };
-
-    code = this.storeInitializer.run(code, {
-      ...context,
-      environment: "dynamic",
-    });
-    codegen.push(`export const ${this.name} = ${formatInitializer(code)};`);
   }
 }
 
