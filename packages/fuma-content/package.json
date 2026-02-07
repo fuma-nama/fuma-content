@@ -80,7 +80,6 @@
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
     "@standard-schema/spec": "^1.1.0",
-    "@types/mdx": "^2.0.13",
     "chokidar": "^5.0.0",
     "esbuild": "^0.27.3",
     "estree-util-value-to-estree": "^3.5.0",
@@ -101,6 +100,7 @@
     "@types/bun": "^1.3.8",
     "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
+    "@types/mdx": "^2.0.13",
     "@types/node": "^25.2.1",
     "@types/picomatch": "^4.0.2",
     "@types/react": "^19.2.13",
@@ -113,18 +113,26 @@
     "remark-directive": "^4.0.0",
     "remark-stringify": "^11.0.0",
     "rollup": "^4.57.1",
-    "tsdown": "^0.18.2",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-config": "workspace:*",
     "vite": "^7.3.1",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {
+    "@types/mdast": "*",
+    "@types/mdx": "*",
     "next": "^15.3.0 || ^16.0.0",
     "react": "*",
     "vite": "6.x.x || 7.x.x"
   },
   "peerDependenciesMeta": {
+    "@types/mdx": {
+      "optional": true
+    },
+    "@types/mdast": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
