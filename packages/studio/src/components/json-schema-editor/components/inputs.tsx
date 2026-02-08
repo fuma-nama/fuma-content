@@ -348,6 +348,7 @@ export function FieldSet({
         field={union[info.oneOf]}
         depth={depth + 1}
         slotType={showSelect ? false : slotType}
+        collapsible={collapsible}
         toolbar={
           <>
             {showSelect && (
@@ -389,6 +390,7 @@ export function FieldSet({
         }}
         depth={depth + 1}
         slotType={showSelect ? false : slotType}
+        collapsible={collapsible}
         toolbar={
           <>
             {showSelect && (

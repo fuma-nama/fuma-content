@@ -131,7 +131,14 @@ export interface RichText extends TBasicMarks, TCommentText, TFontMarks, TText {
   kbd?: boolean;
 }
 
+export interface MdxComponentElement extends TElement {
+  type: "mdx-component";
+  element: string | null;
+  customProps: Record<string, unknown>;
+}
+
 export type MyValue = (
+  | MdxComponentElement
   | MyBlockquoteElement
   | MyCodeBlockElement
   | MyH1Element

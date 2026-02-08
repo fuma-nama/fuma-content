@@ -32,6 +32,7 @@ import { MediaKit } from "@/components/editor/plugins/media-kit";
 import { SlashKit } from "@/components/editor/plugins/slash-kit";
 import { SuggestionKit } from "@/components/editor/plugins/suggestion-kit";
 import { TableKit } from "@/components/editor/plugins/table-kit";
+import { MdxComponentKit } from "./plugins/mdx-component-kit";
 
 export const EditorKit = [
   ...CopilotKit,
@@ -46,6 +47,7 @@ export const EditorKit = [
   ...MathKit,
   ...DateKit,
   ...LinkKit,
+  MdxComponentKit,
 
   // Marks
   ...BasicMarksKit,

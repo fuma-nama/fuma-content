@@ -107,13 +107,7 @@ export function useFieldInfo(
       const types = schema.type;
 
       out.selectedType =
-        types.find((type) => {
-          schema.type = type;
-          const match = ajv.validate(schema, value);
-          schema.type = types;
-
-          return match;
-        }) ?? types.at(0);
+        types.find((type) => ajv.validate({ ...schema, type }, value)) ?? types.at(0);
     }
 
     if (schema.allOf) {

@@ -11,6 +11,7 @@ import { BaseLinkKit } from "./plugins/link-base-kit";
 import { BaseListKit } from "./plugins/list-base-kit";
 import { MarkdownKit } from "./plugins/markdown-kit";
 import { BaseMathKit } from "./plugins/math-base-kit";
+import { MdxComponentKit } from "./plugins/mdx-component-kit";
 import { BaseMediaKit } from "./plugins/media-base-kit";
 import { BaseSuggestionKit } from "./plugins/suggestion-base-kit";
 import { BaseTableKit } from "./plugins/table-base-kit";
@@ -32,4 +33,5 @@ export const BaseEditorKit = [
   ...BaseCommentKit,
   ...BaseSuggestionKit,
   ...MarkdownKit,
+  MdxComponentKit,
 ];
