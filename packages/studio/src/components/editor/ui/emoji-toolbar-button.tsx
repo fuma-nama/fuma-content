@@ -27,7 +27,7 @@ import {
   StarIcon,
   XIcon,
 } from "lucide-react";
-import { Popover } from "radix-ui";
+import * as Popover from "@radix-ui/react-popover";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";

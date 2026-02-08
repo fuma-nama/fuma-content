@@ -50,7 +50,7 @@ import {
   useSelected,
   withHOC,
 } from "platejs/react";
-import { Popover as PopoverPrimitive } from "radix-ui";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
