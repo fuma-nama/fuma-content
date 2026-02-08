@@ -1,5 +1,11 @@
 # @fuma-content/studio
 
+## 1.0.4
+
+### Patch Changes
+
+- f5bebca: Support custom MDX component
+
 ## 1.0.3
 
 ### Patch Changes
