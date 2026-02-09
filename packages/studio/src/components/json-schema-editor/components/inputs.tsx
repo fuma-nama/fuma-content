@@ -58,7 +58,7 @@ export function ObjectInput({
 
   const isDynamic = field.patternProperties ?? field.additionalProperties;
   return (
-    <div {...props} className={cn("grid grid-cols-1 gap-4 @md:grid-cols-2", props.className)}>
+    <div {...props} className={cn("flex flex-col gap-4", props.className)}>
       {properties.map((child) => {
         let toolbar: ReactNode = null;
         if (child.kind === "pattern" || child.kind === "fallback") {
@@ -93,7 +93,7 @@ export function ObjectInput({
         );
       })}
       {isDynamic && (
-        <div className="flex gap-2 col-span-full">
+        <div className="flex gap-2">
           <Input
             value={nextName}
             placeholder="Enter Property Name"
@@ -420,10 +420,7 @@ export function FieldSet({
   if (field.type === "object" || info.intersection) {
     const schema = info.intersection?.merged ?? field;
     return (
-      <fieldset
-        {...props}
-        className={cn("flex flex-col gap-1.5 col-span-full @container", props.className)}
-      >
+      <fieldset {...props} className={cn("flex flex-col gap-1.5 @container", props.className)}>
         <FieldLabel htmlFor={id}>
           {renderLabelTrigger(schema)}
           {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
@@ -442,7 +439,7 @@ export function FieldSet({
 
   if (field.type === "array") {
     return (
-      <fieldset {...props} className={cn("flex flex-col gap-1.5 col-span-full", props.className)}>
+      <fieldset {...props} className={cn("flex flex-col gap-1.5", props.className)}>
         <FieldLabel htmlFor={id}>
           {renderLabelTrigger()}
           {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}

@@ -1,6 +1,11 @@
 "use client";
 
-import { MDXEditor, MDXEditorContainer, MDXEditorView } from "@/components/editor/md";
+import {
+  MDXEditor,
+  MDXEditorContainer,
+  MDXEditorSuspense,
+  MDXEditorView,
+} from "@/components/editor/md";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import {
   JSONSchemaEditorContent,
@@ -120,7 +125,7 @@ function MDXDocEditor({
           <TabsContent value="visual" className="-mt-6">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
-              defaultValue={defaultFrontmatter}
+              defaultValue={currentValue.current.frontmatter}
               onValueChange={(value) => {
                 onSync(() => {
                   currentValue.current.frontmatter = value as Record<string, unknown>;
@@ -135,7 +140,7 @@ function MDXDocEditor({
         )}
         <TabsContent value="code">
           <YamlEditorLazy
-            defaultValue={defaultFrontmatter}
+            defaultValue={currentValue.current.frontmatter}
             onValueChange={(value) => {
               onSync(() => {
                 currentValue.current.frontmatter = value as Record<string, unknown>;
@@ -150,21 +155,30 @@ function MDXDocEditor({
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
         <TabsContent value="visual">
-          <MDXEditor
-            defaultValue={defaultContent}
-            onUpdate={(options) => {
-              onSync(() => {
-                currentValue.current.content = options.getMarkdown();
-              });
-            }}
-          >
-            <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
-              <MDXEditorView />
-            </MDXEditorContainer>
-          </MDXEditor>
+          <MDXEditorSuspense>
+            <MDXEditor
+              defaultValue={currentValue.current.content}
+              onUpdate={(options) => {
+                onSync(() => {
+                  currentValue.current.content = options.getMarkdown();
+                });
+              }}
+            >
+              <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
+                <MDXEditorView />
+              </MDXEditorContainer>
+            </MDXEditor>
+          </MDXEditorSuspense>
         </TabsContent>
         <TabsContent value="code" className="size-full">
-          <MDXCodeEditorLazy defaultValue={defaultContent} onValueChange={() => null} />
+          <MDXCodeEditorLazy
+            defaultValue={currentValue.current.content}
+            onValueChange={(v) => {
+              onSync(() => {
+                currentValue.current.content = v;
+              });
+            }}
+          />
         </TabsContent>
       </Tabs>
       <StatusBar status={status} />

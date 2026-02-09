@@ -3,9 +3,10 @@
 import { MarkdownPlugin } from "@platejs/markdown";
 import type { Value } from "platejs";
 import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
-import { type ReactNode, use, useRef } from "react";
+import { type ReactNode, Suspense, use, useRef } from "react";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
+import { Spinner } from "../ui/spinner";
 
 const mdMap: Record<string, Promise<Value>> = {};
 
@@ -23,14 +24,14 @@ export function MDXEditor({
     plugins: EditorKit,
     skipInitialization: true,
   });
-  const deserializedDefault = use(
-    (mdMap[defaultValue] ??= new Promise((res) => {
-      res(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
-    })),
-  );
+
   if (!initializedRef.current) {
     editor.tf.init({
-      value: deserializedDefault,
+      value: use(
+        (mdMap[defaultValue] ??= new Promise((res) => {
+          res(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
+        })),
+      ),
     });
     initializedRef.current = true;
   }
@@ -53,6 +54,21 @@ export function MDXEditor({
         </MDXEditorContainer>
       )}
     </Plate>
+  );
+}
+
+export function MDXEditorSuspense({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2 text-muted-foreground bg-muted border p-3 rounded-xl">
+          <Spinner />
+          Loading Editor
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
   );
 }
 

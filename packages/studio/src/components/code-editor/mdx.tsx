@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import "./monaco";
 
 export function MDXCodeEditor({
   defaultValue,
