@@ -600,6 +600,9 @@ importers:
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
+      mdast-util-mdx:
+        specifier: ^3.0.0
+        version: 3.0.0
       shadcn:
         specifier: ^3.8.4
         version: 3.8.4(@types/node@25.2.2)(babel-plugin-macros@3.1.0)(typescript@5.9.3)

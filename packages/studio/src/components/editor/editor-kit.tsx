@@ -47,7 +47,7 @@ export const EditorKit = [
   ...MathKit,
   ...DateKit,
   ...LinkKit,
-  MdxComponentKit,
+  ...MdxComponentKit,
 
   // Marks
   ...BasicMarksKit,

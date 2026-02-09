@@ -2,18 +2,26 @@ import {
   convertChildrenDeserialize,
   convertNodesSerialize,
   MarkdownPlugin,
-  MdMdxJsxFlowElement,
-  MdMdxJsxTextElement,
   remarkMdx,
 } from "@platejs/markdown";
 import { getPluginType, KEYS, TText } from "platejs";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { ELEMENT_MDX_COMPONENT } from "./mdx-component-kit";
+import {
+  ELEMENT_MDX_COMPONENT,
+  ELEMENT_UNKNOWN_NODE,
+  isPropValueSupported,
+} from "./mdx-component-kit";
 import { visit } from "unist-util-visit";
-import type { MdxComponentElement } from "../types";
+import type { MdxComponentElement, UnknownNode } from "../types";
 import type { Transformer } from "unified";
-import type { Root } from "mdast";
+import type { BlockContent, Root } from "mdast";
+import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx";
+
+interface UnknownNodeElement {
+  type: typeof ELEMENT_UNKNOWN_NODE;
+  raw: BlockContent;
+}
 
 export const MarkdownKit = [
   MarkdownPlugin.configure({
@@ -44,30 +52,52 @@ export const MarkdownKit = [
               .join("\n"),
           }),
         },
+        [ELEMENT_UNKNOWN_NODE]: {
+          deserialize: (mdastNode: UnknownNodeElement): UnknownNode => ({
+            type: ELEMENT_UNKNOWN_NODE,
+            raw: mdastNode.raw,
+            md: "value" in mdastNode && typeof mdastNode.value === "string" ? mdastNode.value : "",
+            children: [],
+          }),
+          serialize: (node: UnknownNode) => node.raw,
+        },
 
-        // TODO: support non-primitive attributes
         [ELEMENT_MDX_COMPONENT]: {
-          deserialize: (mdastNode: MdMdxJsxTextElement, deco, options): MdxComponentElement => ({
-            children: convertChildrenDeserialize(mdastNode.children, deco, options),
-            element: mdastNode.name,
-            customProps: Object.fromEntries(
-              mdastNode.attributes.map((attr) => {
-                if (attr.type === "mdxJsxAttribute") return [attr.name, attr.value];
-                return ["_", attr.value];
-              }),
-            ),
-            type: ELEMENT_MDX_COMPONENT,
-          }),
-          serialize: (node: MdxComponentElement, options): MdMdxJsxFlowElement => ({
-            type: "mdxJsxFlowElement",
-            attributes: Object.entries(node.customProps).map(([k, v]) => ({
-              type: "mdxJsxAttribute",
-              name: k,
-              value: v as string,
-            })),
-            name: node.element,
-            children: convertNodesSerialize(node.children, options) as never[],
-          }),
+          deserialize(mdastNode: MdxJsxTextElement, deco, options): MdxComponentElement {
+            const element: MdxComponentElement = {
+              children: convertChildrenDeserialize(mdastNode.children, deco, options),
+              element: mdastNode.name,
+              customProps: {},
+              unserializableProps: [],
+              type: ELEMENT_MDX_COMPONENT,
+            };
+            for (const attr of mdastNode.attributes) {
+              if (attr.type === "mdxJsxAttribute" && isPropValueSupported(attr.value)) {
+                element.customProps[attr.name] = attr.value;
+              } else {
+                element.unserializableProps.push(attr);
+              }
+            }
+
+            return element;
+          },
+          serialize(node: MdxComponentElement, options): MdxJsxFlowElement {
+            const element: MdxJsxFlowElement = {
+              type: "mdxJsxFlowElement",
+              attributes: [],
+              name: node.element,
+              children: convertNodesSerialize(node.children, options) as never[],
+            };
+            for (const [k, v] of Object.entries(node.customProps)) {
+              element.attributes.push({
+                type: "mdxJsxAttribute",
+                name: k,
+                value: v as string,
+              });
+            }
+            element.attributes.push(...node.unserializableProps);
+            return element;
+          },
         },
       },
     },
@@ -109,10 +139,29 @@ function remarkRefactorCustomElements(): Transformer<Root, Root> {
     "video",
   ]);
   return (tree) => {
-    visit(tree, ["mdxJsxFlowElement", "mdxJsxTextElement"], (_node) => {
-      const node = _node as MdMdxJsxFlowElement | MdMdxJsxFlowElement;
-      if (node.name && supportedNodeTypes.has(node.name)) return;
-      node.type = ELEMENT_MDX_COMPONENT as never;
-    });
+    visit(
+      tree,
+      [
+        "mdxJsxFlowElement",
+        "mdxJsxTextElement",
+        "mdxjsEsm",
+        "mdxFlowExpression",
+        "mdxTextExpression",
+      ],
+      (node) => {
+        switch (node.type) {
+          case "mdxFlowExpression":
+          case "mdxTextExpression":
+          case "mdxjsEsm": {
+            Object.assign(node, { type: ELEMENT_UNKNOWN_NODE, raw: { ...node } });
+            return "skip";
+          }
+          case "mdxJsxFlowElement":
+          case "mdxJsxTextElement":
+            if (node.name && supportedNodeTypes.has(node.name)) return;
+            node.type = ELEMENT_MDX_COMPONENT as never;
+        }
+      },
+    );
   };
 }

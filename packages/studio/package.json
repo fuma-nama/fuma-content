@@ -136,6 +136,7 @@
     "dedent": "^1.7.1",
     "fuma-content": "workspace:^",
     "json-schema-typed": "^8.0.2",
+    "mdast-util-mdx": "^3.0.0",
     "shadcn": "^3.8.4",
     "tailwindcss": "^4",
     "tsdown": "^0.20.3",

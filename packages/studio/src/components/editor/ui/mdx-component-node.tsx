@@ -1,5 +1,5 @@
 import { useSelected } from "slate-react";
-import { MdxComponentElement } from "../types";
+import { MdxComponentElement, UnknownNode } from "../types";
 import { PlateElement, PlateElementProps } from "platejs/react";
 import {
   JSONSchemaEditorContent,
@@ -15,12 +15,6 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
   const { editor, element } = props;
   const [isEdit, setEdit] = useState(false);
   const valueRef = useRef<unknown>(null);
-  const handlePropChange = (newProps: unknown) => {
-    editor.tf.setNodes<MdxComponentElement>(
-      { customProps: { ...(newProps as object) } },
-      { at: element },
-    );
-  };
 
   return (
     <PlateElement
@@ -72,6 +66,23 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
         </Popover>
       </div>
       {props.children}
+    </PlateElement>
+  );
+}
+
+export function UnknownNodeComponent(props: PlateElementProps<UnknownNode>) {
+  const element = props.element;
+  return (
+    <PlateElement {...props}>
+      <div
+        contentEditable={false}
+        className="text-xs text-muted-foreground border p-1.5 rounded-md"
+      >
+        <p>
+          <code>{element.raw.type}</code> (Unknown)
+        </p>
+        {element.md && <code className="truncate text-xs">{element.md}</code>}
+      </div>
     </PlateElement>
   );
 }
