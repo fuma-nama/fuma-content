@@ -76,7 +76,7 @@ export function UnknownNodeComponent(props: PlateElementProps<UnknownNode>) {
     <PlateElement {...props}>
       <div
         contentEditable={false}
-        className="text-xs text-muted-foreground border p-1.5 rounded-md"
+        className="text-xs text-muted-foreground border my-1 p-1.5 rounded-md"
       >
         <p>
           <code>{element.raw.type}</code> (Unknown)
