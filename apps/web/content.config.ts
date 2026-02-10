@@ -4,12 +4,16 @@ import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
 import git from "fuma-content/plugins/git";
 import { mdxPreset } from "fumadocs-core/content/mdx/preset-bundler";
 import { dataCollection } from "fuma-content/collections/data";
+import { remarkHeading } from "fumadocs-core/mdx-plugins/remark-heading";
 
 export const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: pageSchema,
   postprocess: {
     processedMarkdown: true,
+  },
+  preprocess: {
+    remarkPlugins: [remarkHeading],
   },
   options: () =>
     mdxPreset({
