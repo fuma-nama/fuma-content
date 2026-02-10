@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.1.3
+
+### Patch Changes
+
+- e74b61a: support dynamic name for postprocess properties
+
 ## 1.1.2
 
 ### Patch Changes
