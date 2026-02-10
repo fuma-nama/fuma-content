@@ -66,4 +66,4 @@ export function mdxStoreBrowser<Config, Name extends string, Attached>(
   return new MapCollectionStore(merged);
 }
 
-export type { WithExtractedReferences, WithGit } from "./runtime";
+export type { WithGit } from "./runtime";

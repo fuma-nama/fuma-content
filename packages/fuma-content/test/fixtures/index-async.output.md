@@ -17,15 +17,17 @@ export const docs = mdxStoreBrowser<typeof Config,"docs",unknown>("docs",{"index
 ```ts title="blogs.ts"
 // @ts-nocheck
 import type * as Config from "./config";
-import { mdxStoreLazy, type WithExtractedReferences } from "fuma-content/collections/mdx/runtime";
+import { mdxStoreLazy } from "fuma-content/collections/mdx/runtime";
 import { frontmatter as __0 } from "./generate-index/index.mdx?collection=blogs&only=frontmatter";
 import { frontmatter as __1 } from "./generate-index/folder/test.mdx?collection=blogs&only=frontmatter";
-export const blogs = mdxStoreLazy<typeof Config,"blogs",unknown & WithExtractedReferences>("blogs","packages/fuma-content/test/fixtures/generate-index",{ head: {"index.mdx": __0,"folder/test.mdx": __1,}, body: {"index.mdx": () => import("./generate-index/index.mdx?collection=blogs"),"folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=blogs"),} });
+import { type LinkReference } from "fuma-content/collections/mdx";
+export const blogs = mdxStoreLazy<typeof Config,"blogs",unknown & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ _linkReferences: LinkReference[] }>("blogs","packages/fuma-content/test/fixtures/generate-index",{ head: {"index.mdx": __0,"folder/test.mdx": __1,}, body: {"index.mdx": () => import("./generate-index/index.mdx?collection=blogs"),"folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=blogs"),} });
 ```
 
 ```ts title="blogs.browser.ts"
 // @ts-nocheck
-import { mdxStoreBrowser, type WithExtractedReferences } from "fuma-content/collections/mdx/runtime-browser";
+import { mdxStoreBrowser } from "fuma-content/collections/mdx/runtime-browser";
 import type * as Config from "./config";
-export const blogs = mdxStoreBrowser<typeof Config,"blogs",unknown & WithExtractedReferences>("blogs",{"index.mdx": () => import("./generate-index/index.mdx?collection=blogs"),"folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=blogs"),});
+import { type LinkReference } from "fuma-content/collections/mdx";
+export const blogs = mdxStoreBrowser<typeof Config,"blogs",unknown & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ _linkReferences: LinkReference[] }>("blogs",{"index.mdx": () => import("./generate-index/index.mdx?collection=blogs"),"folder/test.mdx": () => import("./generate-index/folder/test.mdx?collection=blogs"),});
 ```

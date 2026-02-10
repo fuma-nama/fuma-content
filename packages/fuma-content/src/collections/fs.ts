@@ -20,22 +20,18 @@ export class FileSystemCollection extends Collection {
     this.dir = config.dir;
     this.patterns = files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
     this.supportedFileFormats = supportedFormats;
-    this.onInit.hook(this.#onInitHandler.bind(this));
-    this.onServer.hook(this.#onServerHandler.bind(this));
-  }
-
-  #onInitHandler: (typeof this.onInit)["$inferHandler"] = ({ core }) => {
-    this.dir = path.resolve(core.getOptions().cwd, this.dir);
-  };
-
-  #onServerHandler: (typeof this.onServer)["$inferHandler"] = ({ server }) => {
-    if (!server.watcher) return;
-    server.watcher.add(this.dir);
-    server.watcher.on("all", (event, file) => {
-      if (event === "change" || !this.hasFile(file)) return;
-      this.filesCache.invalidate("");
+    this.onInit.hook(({ core }) => {
+      this.dir = path.resolve(core.getOptions().cwd, this.dir);
     });
-  };
+    this.onServer.hook(({ server }) => {
+      if (!server.watcher) return;
+      server.watcher.add(this.dir);
+      server.watcher.on("all", (event, file) => {
+        if (event === "change" || !this.hasFile(file)) return;
+        this.filesCache.invalidate("");
+      });
+    });
+  }
 
   isFileSupported(filePath: string) {
     if (!this.supportedFileFormats) return true;

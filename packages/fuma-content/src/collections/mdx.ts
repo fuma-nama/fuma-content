@@ -7,7 +7,6 @@ import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { Configuration } from "webpack";
 import { LoaderConfig, loaderHook } from "@/plugins/loader";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { PreprocessOptions } from "@/collections/mdx/remark-preprocess";
 import { CodeGenerator, slash } from "@/utils/code-generator";
 import { validate } from "@/utils/validation";
 import type { Awaitable } from "@/types";
@@ -15,6 +14,7 @@ import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 import { GitHook, gitHook } from "@/plugins/git";
 import path from "node:path";
+import type { PluggableList } from "unified";
 
 interface CompilationContext {
   collection: Collection;
@@ -26,10 +26,15 @@ export interface MDXCollectionConfig<
   FrontmatterSchema extends StandardSchemaV1 | undefined,
 > extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
   postprocess?: Partial<PostprocessOptions>;
+  preprocess?: PreprocessOptions;
   frontmatter?: FrontmatterSchema;
   options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
   lazy?: boolean;
   dynamic?: boolean;
+}
+
+interface PreprocessOptions {
+  remarkPlugins?: PluggableList;
 }
 
 const RuntimePaths = {
@@ -90,6 +95,7 @@ export class MDXCollection<
       supportedFormats: ["md", "mdx"],
     });
     this.postprocess = config.postprocess;
+    this.preprocess = config.preprocess;
     this.getMDXOptions = config.options;
     this.dynamic = config.dynamic ?? false;
     this.lazy = config.lazy ?? false;
@@ -97,31 +103,40 @@ export class MDXCollection<
     this.frontmatter.pipe(this.#onFrontmatter.bind(this));
     this.onServer.hook(this.#onServerHandler.bind(this));
     this.onEmit.pipe(this.#onEmitHandler.bind(this));
-
-    if (this.postprocess?.includeProcessedMarkdown) {
-      this.storeInitializer.pipe((code) => {
-        code.typeParams[2] += " & { /** Processed Markdown */ _markdown: string; }";
-        return code;
-      });
-    }
-
-    if (this.postprocess?.includeMDAST) {
-      this.storeInitializer.pipe((code) => {
-        code.typeParams[2] += " & { /** MDAST (as JSON string) */ _mdast: string; }";
-        return code;
-      });
-    }
-
-    if (this.postprocess?.extractLinkReferences) {
-      this.storeInitializer.pipe((code, { codegen, environment }) => {
-        codegen.addNamedImport(["WithExtractedReferences"], RuntimePaths[environment], true);
-        code.typeParams[2] += " & WithExtractedReferences";
-        return code;
-      });
-    }
-
     this.pluginHook(loaderHook).loaders.push(mdxLoader());
     this.pluginHook(gitHook).onClient.hook(this.#onGitHandler.bind(this));
+
+    if (this.postprocess) {
+      const { processedMarkdown, linkReferences, mdast } = this.postprocess;
+
+      if (processedMarkdown) {
+        const { as = "_markdown" } = processedMarkdown === true ? {} : processedMarkdown;
+
+        this.storeInitializer.pipe((code) => {
+          code.typeParams[2] += ` & { /** Processed Markdown */ ${as}: string; }`;
+          return code;
+        });
+      }
+
+      if (mdast) {
+        const { as = "_mdast" } = mdast === true ? {} : mdast;
+
+        this.storeInitializer.pipe((code) => {
+          code.typeParams[2] += ` & { /** MDAST (as JSON string) */ ${as}: string; }`;
+          return code;
+        });
+      }
+
+      if (linkReferences) {
+        const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
+
+        this.storeInitializer.pipe((code, { codegen }) => {
+          codegen.addNamedImport(["LinkReference"], "fuma-content/collections/mdx", true);
+          code.typeParams[2] += ` & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ ${as}: LinkReference[] }`;
+          return code;
+        });
+      }
+    }
   }
 
   #onFrontmatter: (typeof this.frontmatter)["$inferHandler"] = (data, { filePath }) => {
@@ -396,5 +411,5 @@ function mdxLoader(): LoaderConfig {
   };
 }
 
-export type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
+export type { LinkReference } from "@/collections/mdx/remark-postprocess";
 export type { CompiledMDX } from "@/collections/mdx/build-mdx";

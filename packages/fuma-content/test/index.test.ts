@@ -55,7 +55,7 @@ const cases: {
         blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
-            extractLinkReferences: true,
+            linkReferences: true,
           },
         }),
       },
@@ -82,7 +82,7 @@ const cases: {
         blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
-            extractLinkReferences: true,
+            linkReferences: true,
           },
           lazy: true,
         }),
@@ -100,7 +100,7 @@ const cases: {
         blogs: mdxCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
           postprocess: {
-            extractLinkReferences: true,
+            linkReferences: true,
           },
           dynamic: true,
         }),

@@ -105,4 +105,4 @@ async function executeMdx(compiled: string, options: Options = {}) {
   };
 }
 
-export type { WithExtractedReferences, WithGit } from "./runtime";
+export type { WithGit } from "./runtime";

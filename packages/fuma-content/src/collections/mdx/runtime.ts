@@ -1,7 +1,7 @@
 import type { GetCollectionConfig } from "@/types";
 import type { MDXCollection } from "@/collections/mdx";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
-import type { ExtractedReference } from "@/collections/mdx/remark-postprocess";
+import type { LinkReference } from "@/collections/mdx/remark-postprocess";
 import type { GitFileData } from "@/plugins/git";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
@@ -62,13 +62,6 @@ export function mdxStoreLazy<Config, Name extends string, Attached>(
   }
 
   return new FileCollectionStore(base, merged);
-}
-
-export interface WithExtractedReferences {
-  /**
-   * extracted references (e.g. hrefs, paths), useful for analyzing relationships between pages.
-   */
-  extractedReferences: ExtractedReference[];
 }
 
 export type WithGit = GitFileData;
