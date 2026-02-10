@@ -6,4 +6,5 @@ export default defineConfig({
   dts: true,
   target: "es2023",
   unbundle: true,
+  inlineOnly: [],
 });

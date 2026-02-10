@@ -32,11 +32,11 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
       {...props}
     >
       <div
-        className="flex items-center select-none px-3 pb-1 contain-layout"
+        className="flex items-center select-none pb-1 contain-layout gap-1"
         contentEditable={false}
       >
         <CodeBlockCombobox />
-
+        <CodeBlockMeta />
         {isLangSupported(element.lang) && (
           <Button
             size="xs"
@@ -72,47 +72,99 @@ interface Item {
   value: string;
 }
 
+function CodeBlockMeta() {
+  const editor = useEditorRef();
+  const readOnly = useReadOnly();
+  const element = useElement<TCodeBlockElement>();
+  const [value, setValue] = React.useState(element.meta as string);
+
+  if (readOnly)
+    return <p className="px-2 flex-1 font-mono text-sm text-muted-foreground">{value}</p>;
+
+  return (
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={() => {
+        editor.transforms.setNodes({ meta: value }, { at: element });
+      }}
+      placeholder="custom meta"
+      className="px-2 rounded-lg flex-1 min-w-0 w-fit font-mono text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none not-focus-visible:text-muted-foreground placeholder:text-muted-foreground"
+    />
+  );
+}
+
+interface LanguageItem {
+  label: string;
+  value: string;
+}
+
+const languageItems = lowlight.listLanguages().map<LanguageItem>((lang) => {
+  const info = highlight.getLanguage(lang)!;
+
+  return {
+    label: info.name ?? lang,
+    value: lang,
+  };
+});
+
 function CodeBlockCombobox() {
   const editor = useEditorRef();
   const element = useElement<TCodeBlockElement>();
   const readOnly = useReadOnly();
-  const items = React.useMemo(() => {
-    return lowlight.listLanguages().map((lang) => {
-      const info = highlight.getLanguage(lang)!;
+  const [open, setOpen] = React.useState(false);
+  // needed to support setting a custom language
+  const selectOnCloseRef = React.useRef<string | null>(null);
+  const [items, value] = React.useMemo(() => {
+    let items = languageItems;
+    let value: LanguageItem | null = null;
+    if (element.lang) {
+      const info = highlight.getLanguage(element.lang);
+      if (info) {
+        value = languageItems.find((item) => item.label === info.name) ?? null;
+      } else {
+        value = {
+          label: element.lang,
+          value: element.lang,
+        };
+        items = [...items, value];
+      }
+    }
 
-      return {
-        label: info.name ?? lang,
-        value: lang,
-      };
-    });
-  }, []);
-  const value = React.useMemo(() => {
-    if (!element.lang) return null;
-    const name = highlight.getLanguage(element.lang)?.name ?? element.lang;
-    return items.find((item) => item.label === name) ?? null;
+    return [items, value];
   }, [element.lang]);
 
+  function setLang(lang: string) {
+    editor.tf.setNodes<TCodeBlockElement>({ lang }, { at: element });
+    // force re-highlight
+    editor.tf.replaceNodes(element.children, { at: element, children: true });
+  }
+
   if (readOnly) {
-    return <p className="font-mono text-sm text-muted-foreground me-auto">{value?.label}</p>;
+    return <p className="px-2 font-mono text-sm text-muted-foreground">{value?.label}</p>;
   }
 
   return (
     <Combobox
       items={items}
       value={value}
+      onInputValueChange={(v) => {
+        selectOnCloseRef.current = v;
+      }}
       onValueChange={(item) => {
-        if (item) {
-          // had to use `replaceNodes` to enforce re-highlight
-          editor.tf.replaceNodes<TCodeBlockElement>(
-            { ...element, lang: item.value },
-            { at: element, select: true },
-          );
-        }
+        if (item === null) return;
+        setLang(item.value);
+        selectOnCloseRef.current = null;
+      }}
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && selectOnCloseRef.current) setLang(selectOnCloseRef.current);
+        setOpen(v);
       }}
     >
       <ComboboxChipsInput
         placeholder="Select Language"
-        className="flex-1 font-mono text-sm not-data-popup-open:text-muted-foreground"
+        className="px-2 rounded-lg font-mono text-sm not-data-popup-open:text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       />
       <ComboboxContent className="max-w-[200px]">
         <ComboboxList>

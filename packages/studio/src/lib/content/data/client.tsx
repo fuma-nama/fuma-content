@@ -134,7 +134,7 @@ function DocEditor({
           <TabsContent value="visual" className="-mt-6">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
-              defaultValue={defaultData}
+              defaultValue={currentValue.current.data}
               onValueChange={(value) => {
                 onSync(() => {
                   currentValue.current.data = value;
@@ -149,7 +149,7 @@ function DocEditor({
         )}
         <TabsContent value="code">
           <YamlEditorLazy
-            defaultValue={defaultData}
+            defaultValue={currentValue.current.data}
             onValueChange={(value) => {
               onSync(() => {
                 currentValue.current.data = value;

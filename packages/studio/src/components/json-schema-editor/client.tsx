@@ -1,12 +1,8 @@
 "use client";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode } from "react";
 import { FieldSet } from "./components/inputs";
-import { SchemaProvider, EditorContextType, useResolvedSchema, useSchema } from "./schema";
-import { FormProvider, useForm } from "react-hook-form";
-
-interface FormValues {
-  value: unknown;
-}
+import { SchemaProvider, EditorContextType, useResolvedSchema, useSchemaContext } from "./schema";
+import { StfProvider, useListener, useStf } from "@fumari/stf";
 
 export interface JSONSchemaProviderProps extends EditorContextType {
   children: ReactNode;
@@ -20,36 +16,28 @@ export function JSONSchemaEditorProvider({
   onValueChange,
   ...props
 }: JSONSchemaProviderProps) {
-  const form = useForm<FormValues>({
-    defaultValues: { value: defaultValue },
+  const stf = useStf({
+    defaultValues: defaultValue as never,
   });
-  const onValueChangeRef = useRef(onValueChange);
-  onValueChangeRef.current = onValueChange;
 
-  useEffect(() => {
-    return form.subscribe({
-      formState: {
-        values: true,
-      },
-      callback(data) {
-        onValueChangeRef.current(data.values.value);
-      },
-    });
-  }, []);
+  useListener({
+    stf,
+    onUpdate() {
+      onValueChange(stf.dataEngine.getData());
+    },
+  });
 
   return (
-    <FormProvider {...form}>
+    <StfProvider value={stf}>
       <SchemaProvider {...props}>{children}</SchemaProvider>
-    </FormProvider>
+    </StfProvider>
   );
 }
 
 export function JSONSchemaEditorContent() {
-  const { schema } = useSchema();
+  const { schema } = useSchemaContext()!;
   const field = useResolvedSchema(schema);
-  const fieldName = "value";
 
-  if (field.format === "binary") return <FieldSet field={field} fieldName={fieldName} />;
-
-  return <FieldSet field={field} fieldName={fieldName} collapsible={false} />;
+  if (field.format === "binary") return <FieldSet field={field} fieldName={[]} />;
+  return <FieldSet field={field} fieldName={[]} collapsible={false} />;
 }

@@ -21,6 +21,9 @@ import type {
   TText,
   TTextAlignProps,
 } from "platejs";
+import type { MdxJsxAttribute, MdxJsxExpressionAttribute } from "mdast-util-mdx";
+import type { ELEMENT_UNKNOWN_NODE, ELEMENT_MDX_COMPONENT } from "./plugins/mdx-component-kit";
+import type { BlockContent } from "mdast";
 
 export interface MyBlockElement extends TElement, TListProps {
   id?: string;
@@ -131,7 +134,22 @@ export interface RichText extends TBasicMarks, TCommentText, TFontMarks, TText {
   kbd?: boolean;
 }
 
+export interface MdxComponentElement extends TElement {
+  type: typeof ELEMENT_MDX_COMPONENT;
+  element: string | null;
+  customProps: Record<string, unknown>;
+  unserializableProps: (MdxJsxAttribute | MdxJsxExpressionAttribute)[];
+}
+
+export interface UnknownNode extends TElement {
+  type: typeof ELEMENT_UNKNOWN_NODE;
+  /** original mdast node */
+  raw: BlockContent;
+  md?: string;
+}
+
 export type MyValue = (
+  | MdxComponentElement
   | MyBlockquoteElement
   | MyCodeBlockElement
   | MyH1Element

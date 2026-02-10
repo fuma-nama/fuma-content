@@ -28,14 +28,8 @@ export interface PluginContext {
 export interface EmitContext extends PluginContext {
   createCodeGenerator: (
     path: string,
-    content: (ctx: EmitCodeGeneratorContext) => Promise<void>,
+    content: (ctx: { codegen: CodeGenerator }) => Awaitable<void>,
   ) => Promise<EmitEntry>;
-}
-
-export interface EmitCodeGeneratorContext {
-  core: Core;
-  workspace?: string;
-  codegen: CodeGenerator;
 }
 
 export interface Plugin {
@@ -246,6 +240,9 @@ export class Core {
     }
   }
 
+  getWorkspace() {
+    return this.options.workspace;
+  }
   getWorkspaces() {
     return this.workspaces;
   }
@@ -309,22 +306,19 @@ export class Core {
   }
 
   async emit(emitOptions: EmitOptions = {}): Promise<EmitOutput> {
+    const emitConfig = this.config.emit;
     const { workspace, outDir } = this.options;
-    const { target, jsExtension } = this.config.emit ?? {};
     const { filterCollection, filterWorkspace, write = false } = emitOptions;
     const start = performance.now();
     const ctx: EmitContext = {
-      ...this.getPluginContext(),
-      createCodeGenerator: async (path, content) => {
+      core: this,
+      async createCodeGenerator(path, content) {
         const codegen = new CodeGenerator({
-          target,
+          ...emitConfig,
           outDir,
-          jsExtension,
         });
         await content({
-          core: this,
           codegen,
-          workspace: workspace?.name,
         });
         return {
           path,
@@ -333,12 +327,12 @@ export class Core {
       },
     };
 
-    const added = new Set<string>();
     const out: EmitOutput = {
       entries: [],
       workspaces: {},
     };
 
+    const entryMap = new Map<string, EmitEntry>();
     const generated: Awaitable<EmitEntry[]>[] = [];
     for (const collection of this.getCollections()) {
       if (filterCollection && !filterCollection(collection)) continue;
@@ -346,11 +340,10 @@ export class Core {
     }
     for (const entries of await Promise.all(generated)) {
       for (const item of entries) {
-        if (added.has(item.path)) continue;
-        out.entries.push(item);
-        added.add(item.path);
+        entryMap.set(item.path, item);
       }
     }
+    out.entries = Array.from(entryMap.values());
 
     if (write) {
       await Promise.all(

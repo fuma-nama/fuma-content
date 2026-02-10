@@ -8,6 +8,7 @@ export interface Hook<Context = undefined> {
    */
   hook: (fn: (context: Context) => void) => Hook<Context>;
   run: (context: Context) => void;
+  $inferHandler: (context: Context) => Awaitable<void>;
 }
 
 export interface AsyncHook<Context = undefined> {
@@ -18,6 +19,7 @@ export interface AsyncHook<Context = undefined> {
    */
   hook: (fn: (context: Context) => Awaitable<void>) => AsyncHook<Context>;
   run: (context: Context) => Awaitable<void>;
+  $inferHandler: (context: Context) => Awaitable<void>;
 }
 
 export function hook<Context>(steps: ((ctx: Context) => void)[] = []): Hook<Context> {
@@ -29,6 +31,7 @@ export function hook<Context>(steps: ((ctx: Context) => void)[] = []): Hook<Cont
       steps.push(fn);
       return this;
     },
+    $inferHandler: undefined as never,
   };
 }
 
@@ -43,5 +46,6 @@ export function asyncHook<Context>(
       steps.push(fn);
       return this;
     },
+    $inferHandler: undefined as never,
   };
 }

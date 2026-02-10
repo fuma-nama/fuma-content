@@ -1,5 +1,17 @@
 # fuma-content
 
+## 1.1.3
+
+### Patch Changes
+
+- e74b61a: support dynamic name for postprocess properties
+
+## 1.1.2
+
+### Patch Changes
+
+- 500e5f2: return new collection store on `.transform()`
+
 ## 1.1.1
 
 ### Patch Changes

@@ -3,7 +3,6 @@ import { BaseBasicBlocksKit } from "./plugins/basic-blocks-base-kit";
 import { BaseBasicMarksKit } from "./plugins/basic-marks-base-kit";
 import { BaseCalloutKit } from "./plugins/callout-base-kit";
 import { BaseCodeBlockKit } from "./plugins/code-block-base-kit";
-import { BaseColumnKit } from "./plugins/column-base-kit";
 import { BaseCommentKit } from "./plugins/comment-base-kit";
 import { BaseDateKit } from "./plugins/date-base-kit";
 import { BaseFontKit } from "./plugins/font-base-kit";
@@ -12,6 +11,7 @@ import { BaseLinkKit } from "./plugins/link-base-kit";
 import { BaseListKit } from "./plugins/list-base-kit";
 import { MarkdownKit } from "./plugins/markdown-kit";
 import { BaseMathKit } from "./plugins/math-base-kit";
+import { MdxComponentKit } from "./plugins/mdx-component-kit";
 import { BaseMediaKit } from "./plugins/media-base-kit";
 import { BaseSuggestionKit } from "./plugins/suggestion-base-kit";
 import { BaseTableKit } from "./plugins/table-base-kit";
@@ -22,7 +22,6 @@ export const BaseEditorKit = [
   ...BaseTableKit,
   ...BaseMediaKit,
   ...BaseCalloutKit,
-  ...BaseColumnKit,
   ...BaseMathKit,
   ...BaseDateKit,
   ...BaseLinkKit,
@@ -34,4 +33,5 @@ export const BaseEditorKit = [
   ...BaseCommentKit,
   ...BaseSuggestionKit,
   ...MarkdownKit,
+  ...MdxComponentKit,
 ];

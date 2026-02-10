@@ -1,5 +1,27 @@
 # @fuma-content/studio
 
+## 1.0.5
+
+### Patch Changes
+
+- 0163801: support unknown node types
+- Updated dependencies [e74b61a]
+  - fuma-content@1.1.3
+
+## 1.0.4
+
+### Patch Changes
+
+- f5bebca: Support custom MDX component
+
+## 1.0.3
+
+### Patch Changes
+
+- 4f3de24: support meta string
+- Updated dependencies [500e5f2]
+  - fuma-content@1.1.2
+
 ## 1.0.2
 
 ### Patch Changes

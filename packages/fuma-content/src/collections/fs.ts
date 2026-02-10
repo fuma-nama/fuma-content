@@ -8,7 +8,7 @@ export class FileSystemCollection extends Collection {
   /**
    * content directory (absolute)
    */
-  dir = null as unknown as string;
+  dir: string;
   private readonly filesCache = createCache<string[]>();
   /** the glob patterns to match files in collection, this doesn't take `supportedFormats` into account. */
   private readonly patterns: string[];
@@ -17,14 +17,16 @@ export class FileSystemCollection extends Collection {
   constructor(config: FileSystemCollectionConfig) {
     super();
     const { files, supportedFormats } = config;
+    this.dir = config.dir;
     this.patterns = files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
     this.supportedFileFormats = supportedFormats;
     this.onInit.hook(({ core }) => {
-      this.dir = path.resolve(core.getOptions().cwd, config.dir);
+      this.dir = path.resolve(core.getOptions().cwd, this.dir);
     });
     this.onServer.hook(({ server }) => {
-      server.watcher?.add(this.dir);
-      server.watcher?.on("all", (event, file) => {
+      if (!server.watcher) return;
+      server.watcher.add(this.dir);
+      server.watcher.on("all", (event, file) => {
         if (event === "change" || !this.hasFile(file)) return;
         this.filesCache.invalidate("");
       });

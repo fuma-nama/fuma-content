@@ -3,8 +3,6 @@ import { VFile } from "vfile";
 import { remarkInclude, type RemarkIncludeOptions } from "@/collections/mdx/remark-include";
 import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
-import { remarkPreprocess } from "@/collections/mdx/remark-preprocess";
-import type { Pluggable } from "unified";
 import { createCache } from "@/utils/async-cache";
 import type { CompilerOptions } from "@/plugins/loader";
 import type { MDXContent } from "mdx/types";
@@ -58,15 +56,6 @@ export interface CompiledMDX<Frontmatter = Record<string, unknown>> extends Reco
 > {
   frontmatter: Frontmatter;
   default: MDXContent;
-
-  /**
-   * Enable from `postprocess` option.
-   */
-  _markdown?: string;
-  /**
-   * Enable from `postprocess` option.
-   */
-  _mdast?: string;
 }
 
 export async function buildMDX(
@@ -81,13 +70,12 @@ export async function buildMDX(
 
     return processorCache.cached(key, async () => {
       const mdxOptions = await collection?.getMDXOptions?.(environment);
-      const preprocessPlugin = [remarkPreprocess, collection?.preprocess] satisfies Pluggable;
       const postprocessOptions: PostprocessOptions = {
         _format: format,
         ...collection?.postprocess,
       };
       const remarkIncludeOptions: RemarkIncludeOptions = {
-        preprocess: [preprocessPlugin],
+        preprocess: collection?.preprocess?.remarkPlugins,
       };
 
       return createProcessor({
@@ -95,7 +83,6 @@ export async function buildMDX(
         development: isDevelopment,
         ...mdxOptions,
         remarkPlugins: [
-          preprocessPlugin,
           [remarkInclude, remarkIncludeOptions],
           ...(mdxOptions?.remarkPlugins ?? []),
           [remarkPostprocess, postprocessOptions],

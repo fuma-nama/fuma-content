@@ -3,7 +3,6 @@
 import {
   CheckIcon,
   ChevronRightIcon,
-  Columns3Icon,
   FileCodeIcon,
   Heading1Icon,
   Heading2Icon,
@@ -110,11 +109,6 @@ export const turnIntoItems = [
     keywords: ["citation", "blockquote", ">"],
     label: "Quote",
     value: KEYS.blockquote,
-  },
-  {
-    icon: <Columns3Icon />,
-    label: "3 columns",
-    value: "action_three_columns",
   },
 ];
 

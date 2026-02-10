@@ -1,6 +1,6 @@
 import { defineConfig } from "tsdown";
 
-const external = ["next", "typescript", "bun"];
+const external = ["next", "bun", "webpack", "mdx/types"];
 
 export default defineConfig({
   entry: [
@@ -22,4 +22,5 @@ export default defineConfig({
   external,
   dts: true,
   target: "node22",
+  inlineOnly: [],
 });

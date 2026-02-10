@@ -3,7 +3,6 @@
 import {
   CalendarIcon,
   ChevronRightIcon,
-  Columns3Icon,
   FileCodeIcon,
   FilmIcon,
   Heading1Icon,
@@ -156,11 +155,6 @@ const groups: Group[] = [
         icon: <TableOfContentsIcon />,
         label: "Table of contents",
         value: KEYS.toc,
-      },
-      {
-        icon: <Columns3Icon />,
-        label: "3 columns",
-        value: "action_three_columns",
       },
       {
         focusEditor: false,

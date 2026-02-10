@@ -4,10 +4,10 @@ import { visit } from "unist-util-visit";
 import { toMarkdown } from "mdast-util-to-markdown";
 import { valueToEstree } from "estree-util-value-to-estree";
 import { removePosition } from "unist-util-remove-position";
-import remarkMdx from "remark-mdx";
 import { flattenNode } from "./mdast-utils";
+import { mdxToMarkdown } from "mdast-util-mdx";
 
-export interface ExtractedReference {
+export interface LinkReference {
   href: string;
 }
 
@@ -22,9 +22,10 @@ export interface PostprocessOptions {
   /**
    * stringify MDAST and export via `_markdown`.
    */
-  includeProcessedMarkdown?:
+  processedMarkdown?:
     | boolean
     | {
+        as?: string;
         /**
          * include heading IDs into the processed markdown.
          */
@@ -32,16 +33,21 @@ export interface PostprocessOptions {
       };
 
   /**
-   * extract link references, export via `extractedReferences`.
+   * extract link references, export via `_linkReferences`.
    */
-  extractLinkReferences?: boolean;
+  linkReferences?:
+    | boolean
+    | {
+        as?: string;
+      };
 
   /**
    * store MDAST and export via `_mdast`.
    */
-  includeMDAST?:
+  mdast?:
     | boolean
     | {
+        as?: string;
         removePosition?: boolean;
       };
 }
@@ -54,21 +60,12 @@ export function remarkPostprocess(
   this: Processor,
   {
     _format,
-    includeProcessedMarkdown = false,
-    includeMDAST = false,
-    extractLinkReferences = false,
+    processedMarkdown = false,
+    mdast = false,
+    linkReferences = false,
     valueToExport = [],
   }: PostprocessOptions,
 ): Transformer<Root, Root> {
-  let _stringifyProcessor: Processor | undefined;
-  const getStringifyProcessor = () => {
-    return (_stringifyProcessor ??=
-      _format === "mdx"
-        ? this
-        : // force Markdown processor to stringify MDX nodes
-          this().use(remarkMdx).freeze());
-  };
-
   return (tree, file) => {
     const frontmatter = (file.data.frontmatter ??= {});
     if (!frontmatter.title) {
@@ -86,8 +83,9 @@ export function remarkPostprocess(
       value: frontmatter,
     });
 
-    if (extractLinkReferences) {
-      const urls: ExtractedReference[] = [];
+    if (linkReferences) {
+      const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
+      const urls: LinkReference[] = [];
 
       visit(tree, "link", (node) => {
         urls.push({
@@ -97,21 +95,21 @@ export function remarkPostprocess(
       });
 
       file.data["mdx-export"].push({
-        name: "extractedReferences",
+        name: as,
         value: urls,
       });
     }
 
-    if (includeProcessedMarkdown) {
-      const { headingIds = true } =
-        typeof includeProcessedMarkdown === "object" ? includeProcessedMarkdown : {};
-      const processor = getStringifyProcessor();
+    if (processedMarkdown) {
+      const { as = "_markdown", headingIds = true } =
+        processedMarkdown === true ? {} : processedMarkdown;
+      const extensions = this.data("toMarkdownExtensions") ?? [];
+
       const markdown = toMarkdown(tree, {
-        ...processor.data("settings"),
-        // from https://github.com/remarkjs/remark/blob/main/packages/remark-stringify/lib/index.js
-        extensions: processor.data("toMarkdownExtensions") || [],
+        ...this.data("settings"),
+        extensions: _format === "md" ? [...extensions, mdxToMarkdown()] : extensions,
         handlers: {
-          heading: (node: Heading) => {
+          heading(node: Heading) {
             const id = node.data?.hProperties?.id;
             const content = flattenNode(node);
             return headingIds && id ? `${content} [#${id}]` : content;
@@ -120,20 +118,21 @@ export function remarkPostprocess(
       });
 
       file.data["mdx-export"].push({
-        name: "_markdown",
+        name: as,
         value: markdown,
       });
     }
 
-    if (includeMDAST) {
-      const options = includeMDAST === true ? {} : includeMDAST;
-      const mdast = JSON.stringify(
-        options.removePosition ? removePosition(structuredClone(tree)) : tree,
+    if (mdast) {
+      const { as = "_mdast", removePosition: shouldRemovePosition = false } =
+        mdast === true ? {} : mdast;
+      const stringified = JSON.stringify(
+        shouldRemovePosition ? removePosition(structuredClone(tree)) : tree,
       );
 
       file.data["mdx-export"].push({
-        name: "_mdast",
-        value: mdast,
+        name: as,
+        value: stringified,
       });
     }
 

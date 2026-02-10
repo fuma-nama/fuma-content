@@ -62,11 +62,9 @@ export function getPageImage(page: InferPageType<typeof source>) {
 }
 
 export async function getLLMText(page: InferPageType<typeof source>) {
-  const processed = page.data.compiled._markdown;
-
   return `# ${page.data.title}
 
-${processed}`;
+${page.data.compiled._markdown}`;
 }
 
 export function getNodesUnderDirectory(dir: string) {

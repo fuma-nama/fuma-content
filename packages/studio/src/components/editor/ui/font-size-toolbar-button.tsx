@@ -26,7 +26,7 @@ export function FontSizeToolbarButton() {
   const { editor, tf } = useEditorPlugin(FontSizePlugin);
 
   const cursorFontSize = useEditorSelector((editor) => {
-    const fontSize = editor.api.marks()?.[KEYS.fontSize];
+    const fontSize = editor.api.mark(KEYS.fontSize);
 
     if (fontSize) {
       return toUnitLess(fontSize as string);
