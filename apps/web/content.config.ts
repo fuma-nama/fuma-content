@@ -9,8 +9,7 @@ export const docs = mdxCollection({
   dir: "content/docs",
   frontmatter: pageSchema,
   postprocess: {
-    extractLinkReferences: true,
-    includeProcessedMarkdown: true,
+    processedMarkdown: true,
   },
   options: () =>
     mdxPreset({

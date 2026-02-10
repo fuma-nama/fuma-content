@@ -80,3 +80,36 @@ function Page({ id }: { id: string }) {
   return <div className="prose">{children}</div>;
 }
 ```
+
+### Post Process
+
+You can store build-time properties and access them at runtime.
+
+- `processedMarkdown`: the processed Markdown content, useful for generating content for LLM.
+- `mdast`: the processed MDAST, useful for runtime AST analysis.
+- `linkReferences`: extract link references (e.g. href), useful for reference analysis.
+
+```ts
+import { defineConfig } from "fuma-content/config";
+import { mdxCollection } from "fuma-content/collections/mdx";
+import { z } from "zod";
+
+const docs = mdxCollection({
+  dir: "content",
+  postprocess: {
+    processedMarkdown: true,
+    // or
+    processedMarkdown: { as: "markdownContent" },
+
+    mdast: true,
+    // or
+    mdast: { as: "ast" },
+
+    linkReferences: true,
+    // or
+    linkReferences: { as: "links" },
+  },
+});
+```
+
+Fuma Content will generate types automatically.
