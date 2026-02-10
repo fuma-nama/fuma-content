@@ -1,12 +1,10 @@
-import { useSelected } from "slate-react";
 import { MdxComponentElement, UnknownNode } from "../types";
-import { PlateElement, PlateElementProps } from "platejs/react";
+import { PlateElement, PlateElementProps, useSelected } from "platejs/react";
 import {
   JSONSchemaEditorContent,
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { cn } from "@/lib/utils";
-import { anyFields } from "@/components/json-schema-editor/schema";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRef, useState } from "react";
@@ -23,8 +21,8 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
       attributes={{
         ...props.attributes,
         className: cn(
-          "border rounded-sm p-1.5 shadow-sm",
-          isEdit && "ring-2 ring-primary",
+          "border rounded-md my-1 p-1.5 shadow-sm",
+          isEdit && "border-primary",
           props.attributes.className,
         ),
       }}
@@ -33,7 +31,9 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
         contentEditable={false}
         className="flex items-center -mt-1.5 -mx-1.5 p-1.5 gap-2 bg-background rounded-t-[inherit]"
       >
-        <p className="text-xs text-muted-foreground">{element.element} (MDX Component)</p>
+        <p className="text-xs">
+          <code>{element.element}</code> (MDX Component)
+        </p>
         <Popover open={isEdit} onOpenChange={setEdit}>
           <PopoverTrigger asChild>
             <Button variant="secondary" size="xs">
@@ -55,7 +55,7 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
               defaultValue={element.customProps}
               writeOnly
               readOnly={false}
-              schema={anyFields}
+              schema={{ type: "object", additionalProperties: true }}
               onValueChange={(v) => {
                 valueRef.current = v;
               }}
@@ -72,16 +72,22 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
 
 export function UnknownNodeComponent(props: PlateElementProps<UnknownNode>) {
   const element = props.element;
+  const selected = useSelected();
+
   return (
     <PlateElement {...props}>
       <div
         contentEditable={false}
-        className="text-xs text-muted-foreground border my-1 p-1.5 rounded-md"
+        className={cn("text-xs border my-1 rounded-md", selected && "border-primary")}
       >
-        <p>
+        <p className="mb-1 bg-background p-1.5 rounded-t-[inherit]">
           <code>{element.raw.type}</code> (Unknown)
         </p>
-        {element.md && <code className="truncate text-xs">{element.md}</code>}
+        {element.md && (
+          <pre className="overflow-auto text-muted-foreground p-1.5 rounded-b-[inherit]">
+            <code>{element.md}</code>
+          </pre>
+        )}
       </div>
     </PlateElement>
   );

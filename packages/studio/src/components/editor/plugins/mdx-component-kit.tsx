@@ -13,6 +13,11 @@ const MdxComponentPlugin = createPlatePlugin({
   render: {
     node: MdxComponent,
   },
+  rules: {
+    break: {
+      default: "lineBreak",
+    },
+  },
 });
 
 const UnknownNodePlugin = createPlatePlugin({
@@ -23,6 +28,11 @@ const UnknownNodePlugin = createPlatePlugin({
   },
   render: {
     node: UnknownNodeComponent,
+  },
+  rules: {
+    break: {
+      default: "exit",
+    },
   },
 });
 
