@@ -1,0 +1,52 @@
+---
+title: Transform Collections
+description: Transform the data of collections.
+---
+
+## Runtime Transformation
+
+You can transform data at runtime. It is useful for dynamic properties that is fast to compute, or if you want to modify based on the generated entry.
+
+```ts
+import { docs } from "content/docs";
+
+export const transformedDocs = docs.transform((id, entry) => [
+  id,
+  {
+    ...entry,
+    customProperty: "hello world",
+  },
+]);
+```
+
+## Build-time Transformation
+
+For collections that are compiled during build-time, they can also expose hooks to add custom properties.
+
+This depends on the collection type, as it is not mandatory to expose build-time hooks for collections.
+
+For example, with MDX collection:
+
+```ts
+import { defineConfig } from "fuma-content/config";
+import { mdxCollection } from "fuma-content/collections/mdx";
+import { z } from "zod";
+
+const docs = mdxCollection({
+  dir: "content",
+  options: () => ({
+    // you can transform AST with remark/rehype plugins:
+    remarkPlugins: [myPlugin],
+  }),
+});
+
+// or add custom property to module export:
+docs.vfile.pipe((vfile) => {
+  vfile.data["mdx-export"] ??= [];
+  vfile.data["mdx-export"].push({
+    name: "customProperty",
+    value: "hello world",
+  });
+  return vfile;
+});
+```
