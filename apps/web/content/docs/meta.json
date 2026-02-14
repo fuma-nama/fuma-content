@@ -4,9 +4,9 @@
     "...",
     "---Collections---",
     "...collections",
-    "---Plugins---",
-    "...plugins",
     "---Features---",
-    "standalone"
+    "standalone",
+    "transform",
+    "plugins"
   ]
 }
