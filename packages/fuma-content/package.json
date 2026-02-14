@@ -117,7 +117,10 @@
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-config": "workspace:*",
+    "unplugin-vue": "^7.1.1",
     "vite": "^7.3.1",
+    "vue": "^3.5.28",
+    "vue-tsc": "^3.2.4",
     "webpack": "^5.105.1"
   },
   "peerDependencies": {
@@ -125,9 +128,13 @@
     "@types/mdx": "*",
     "next": "^15.3.0 || ^16.0.0",
     "react": "*",
-    "vite": "6.x.x || 7.x.x"
+    "vite": "6.x.x || 7.x.x",
+    "vue": "3.x.x"
   },
   "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
     "@types/mdx": {
       "optional": true
     },

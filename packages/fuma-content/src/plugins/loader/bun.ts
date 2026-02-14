@@ -1,6 +1,7 @@
 import { parse } from "node:querystring";
 import { readFileSync } from "node:fs";
 import type { LoaderInput, Loader, LoaderOutput } from "@/plugins/loader";
+import { isPromiseLike } from "@/utils/is-promise-like";
 
 export function toBun(test: RegExp = /.+/, loader: Loader) {
   function toResult(output: LoaderOutput | null): Bun.OnLoadResult {
@@ -34,7 +35,7 @@ export function toBun(test: RegExp = /.+/, loader: Loader) {
       }
 
       const result = loader.load(input);
-      if (result instanceof Promise) {
+      if (isPromiseLike(result)) {
         return result.then(toResult);
       }
       return toResult(result);

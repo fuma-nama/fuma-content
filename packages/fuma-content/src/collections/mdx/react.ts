@@ -1,6 +1,7 @@
 import { ReactNode, lazy, createElement } from "react";
 import { CompiledMDX } from "./build-mdx";
 import { MDXStoreBrowserData } from "./runtime-browser";
+import { isPromiseLike } from "@/utils/is-promise-like";
 
 const renderMap = new Map<
   string,
@@ -33,7 +34,7 @@ export function useRenderer<Frontmatter, Attached>(
       forceOnDemand: false,
       renderJSX() {
         const v = entry.preload();
-        if (!("then" in v) && !this.forceOnDemand) {
+        if (!isPromiseLike(v) && !this.forceOnDemand) {
           return renderFn(v);
         }
 
