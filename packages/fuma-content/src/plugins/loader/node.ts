@@ -19,9 +19,7 @@ export function toNode(loaders: { test: RegExp | undefined; loader: Loader }[]):
           return (await fs.readFile(filePath)).toString();
         },
         development: false,
-        compiler: {
-          addDependency() {},
-        },
+        addDependency() {},
       });
 
       if (result) {

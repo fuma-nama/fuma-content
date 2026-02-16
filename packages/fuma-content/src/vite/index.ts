@@ -45,20 +45,8 @@ function createViteCore({ configPath, outDir, cwd }: PluginOptions) {
     cwd,
     configPath,
     outDir,
-    plugins: [vitePlugin(), loaderPlugin()],
+    plugins: [loaderPlugin()],
   });
-}
-
-function vitePlugin(): Plugin {
-  return {
-    name: "vite",
-    config(config) {
-      config.emit ??= {
-        target: "vite",
-        jsExtension: false,
-      };
-    },
-  };
 }
 
 export async function createStandaloneCore(pluginOptions: PluginOptions = {}) {

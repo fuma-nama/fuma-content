@@ -4,11 +4,16 @@ import { remarkInclude, type RemarkIncludeOptions } from "@/collections/mdx/rema
 import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
 import { createCache } from "@/utils/async-cache";
-import type { CompilerOptions } from "@/plugins/loader";
 import type { MDXContent } from "mdx/types";
 import { MDXCollection } from "../mdx";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
+
+interface MDXCompilerContext {
+  addDependency: (file: string) => void;
+  collection: MDXCollection | undefined;
+  core: Core;
+}
 
 interface BuildMDXOptions {
   /**
@@ -20,7 +25,7 @@ interface BuildMDXOptions {
 
   environment: "bundler" | "runtime";
   isDevelopment: boolean;
-  _compiler?: CompilerOptions;
+  compiler: MDXCompilerContext;
 }
 
 export interface FumaContentDataMap {
@@ -35,9 +40,9 @@ export interface FumaContentDataMap {
   "mdx-export"?: { name: string; value: unknown }[];
 
   /**
-   * [Fuma Content] The compiler object from loader
+   * [Fuma Content] The internal compiler info
    */
-  _compiler?: CompilerOptions;
+  _compiler?: MDXCompilerContext;
 
   /**
    * [Fuma Content] get internal processor, do not use this on user land.
@@ -61,7 +66,7 @@ export interface CompiledMDX<Frontmatter = Record<string, unknown>> extends Reco
 export async function buildMDX(
   core: Core,
   collection: MDXCollection | undefined,
-  { filePath, frontmatter, source, _compiler, environment, isDevelopment }: BuildMDXOptions,
+  { filePath, frontmatter, source, compiler, environment, isDevelopment }: BuildMDXOptions,
 ): Promise<VFile> {
   const processorCache = createCache(core.cache).$value<MDXProcessor>();
 
@@ -98,7 +103,7 @@ export async function buildMDX(
     cwd: core.getOptions().cwd,
     data: {
       frontmatter,
-      _compiler,
+      _compiler: compiler,
       _getProcessor: getProcessor,
     },
   });

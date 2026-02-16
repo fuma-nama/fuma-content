@@ -106,36 +106,34 @@ export class MDXCollection<
     this.pluginHook(loaderHook).loaders.push(mdxLoader());
     this.pluginHook(gitHook).onClient.hook(this.#onGitHandler.bind(this));
 
-    if (this.postprocess) {
-      const { processedMarkdown, linkReferences, mdast } = this.postprocess;
+    const { processedMarkdown, linkReferences, mdast } = this.postprocess ?? {};
 
-      if (processedMarkdown) {
-        const { as = "_markdown" } = processedMarkdown === true ? {} : processedMarkdown;
+    if (processedMarkdown) {
+      const { as = "_markdown" } = processedMarkdown === true ? {} : processedMarkdown;
 
-        this.storeInitializer.pipe((code) => {
-          code.typeParams[2] += ` & { /** Processed Markdown */ ${as}: string; }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += ` & { /** Processed Markdown */ ${as}: string; }`;
+        return code;
+      });
+    }
 
-      if (mdast) {
-        const { as = "_mdast" } = mdast === true ? {} : mdast;
+    if (mdast) {
+      const { as = "_mdast" } = mdast === true ? {} : mdast;
 
-        this.storeInitializer.pipe((code) => {
-          code.typeParams[2] += ` & { /** MDAST (as JSON string) */ ${as}: string; }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += ` & { /** MDAST (as JSON string) */ ${as}: string; }`;
+        return code;
+      });
+    }
 
-      if (linkReferences) {
-        const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
+    if (linkReferences) {
+      const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
 
-        this.storeInitializer.pipe((code, { codegen }) => {
-          codegen.addNamedImport(["LinkReference"], "fuma-content/collections/mdx", true);
-          code.typeParams[2] += ` & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ ${as}: LinkReference[] }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code, { codegen }) => {
+        codegen.addNamedImport(["LinkReference"], "fuma-content/collections/mdx", true);
+        code.typeParams[2] += ` & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ ${as}: LinkReference[] }`;
+        return code;
+      });
     }
   }
 

@@ -28,13 +28,8 @@ export class CodeGenerator {
   private eagerImportId = 0;
 
   readonly options: CodeGeneratorOptions;
-  constructor({
-    target = "default",
-    jsExtension = false,
-    outDir = "",
-  }: Partial<CodeGeneratorOptions>) {
+  constructor({ jsExtension = false, outDir = "" }: Partial<CodeGeneratorOptions>) {
     this.options = {
-      target,
       jsExtension,
       outDir,
     };
@@ -119,9 +114,6 @@ export class CodeGenerator {
 
   toString() {
     const final: string[] = ["// @ts-nocheck"];
-    if (this.options.target === "vite") {
-      final.push('/// <reference types="vite/client" />');
-    }
 
     for (const [specifier, { namespaces, isUsed, named }] of this.importInfos) {
       if (namespaces)

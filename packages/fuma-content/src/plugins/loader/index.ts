@@ -7,10 +7,6 @@ import path from "node:path";
 
 type Awaitable<T> = T | Promise<T>;
 
-export interface CompilerOptions {
-  addDependency: (file: string) => void;
-}
-
 type LoaderEnvironment = "vite" | "bun" | "node";
 
 export interface Loader {
@@ -34,11 +30,11 @@ export interface Loader {
 
 export interface LoaderInput {
   development: boolean;
-  compiler: CompilerOptions;
 
   filePath: string;
   query: Record<string, string | string[] | undefined>;
   getSource: () => string | Promise<string>;
+  addDependency: (file: string) => void;
 }
 
 export interface LoaderOutput {
@@ -89,11 +85,12 @@ export function loaderPlugin(): Plugin {
   const cachedLoaders = createCache<ResolvedLoader[]>();
 
   function initLoaders(ctx: PluginContext, env: LoaderEnvironment) {
+    const { core } = ctx;
     return cachedLoaders.cached(env, async () => {
       const usedIds = new Set<string>();
       const out: ResolvedLoader[] = [];
 
-      for (const collection of ctx.core.getCollections()) {
+      for (const collection of core.getCollections()) {
         const hook = collection.getPluginHook(loaderHook);
         if (!hook) continue;
 

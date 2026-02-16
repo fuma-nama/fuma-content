@@ -25,9 +25,7 @@ export function toBun(test: RegExp = /.+/, loader: Loader) {
         query: parse(query),
         filePath,
         development: false,
-        compiler: {
-          addDependency() {},
-        },
+        addDependency() {},
       };
 
       if (loader.bun?.load) {

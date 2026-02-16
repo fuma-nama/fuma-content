@@ -63,6 +63,11 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
             frontmatter: v as unknown as Record<string, unknown>,
             isDevelopment: false,
             environment: "runtime",
+            compiler: {
+              collection,
+              core,
+              addDependency() {},
+            },
           });
 
           return (await executeMdx(String(compiled.value), {

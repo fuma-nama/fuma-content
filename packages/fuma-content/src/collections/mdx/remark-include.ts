@@ -8,7 +8,7 @@ import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 import { VFile } from "vfile";
 import type { Directives } from "mdast-util-directive";
 import { remarkMarkAndUnravel } from "@/collections/mdx/remark-unravel";
-import { flattenNode } from "./mdast-utils";
+import { flattenNode } from "@/utils/mdast/flatten";
 
 export interface Params {
   lang?: string;

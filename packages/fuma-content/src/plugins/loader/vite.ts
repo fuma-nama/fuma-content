@@ -17,10 +17,8 @@ export function toVite(name: string, test: RegExp | undefined, loader: Loader): 
           return value;
         },
         development: this.environment.mode === "dev",
-        compiler: {
-          addDependency: (file) => {
-            this.addWatchFile(file);
-          },
+        addDependency: (file) => {
+          this.addWatchFile(file);
         },
       });
 
