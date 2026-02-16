@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.1.4
+
+### Patch Changes
+
+- d454534: Support Obsidian format Markdown
+
 ## 1.1.3
 
 ### Patch Changes
