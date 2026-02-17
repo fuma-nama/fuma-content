@@ -1,0 +1,36 @@
+---
+title: Obsidian
+description: Support Obsidian-style Markdown.
+---
+
+## Usage
+
+It is same as [MDX Collection](/docs/collections/mdx), for example:
+
+```ts title="content.config.ts"
+import { defineConfig } from "fuma-content/config";
+import { mdxObsidianCollection } from "fuma-content/collections/mdx";
+import { z } from "zod";
+
+const docs = mdxCollection({
+  dir: "content",
+  frontmatter: z.object({
+    title: z.string().optional(),
+  }),
+
+  // optional: MDX options
+  options: () => ({
+    jsxImportSource: "react",
+  }),
+});
+
+export default defineConfig({
+  collections: { docs },
+});
+```
+
+It requires the following MDX component to be defined:
+
+- `ObsidianCallout`: container for callout, receive a `type` prop for the type of callout.
+- `ObsidianCalloutTitle`: container for callout title.
+- `ObsidianCalloutBody`: main body of callout.
