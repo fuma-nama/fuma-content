@@ -6,7 +6,8 @@
     },
     "noUncheckedIndexedAccess": false,
     "lib": ["esnext", "DOM", "DOM.Iterable"],
-    "types": ["remark-stringify", "@types/node", "bun"]
+    "types": ["remark-stringify", "@types/node", "bun"],
+    "incremental": false
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", "dist"]

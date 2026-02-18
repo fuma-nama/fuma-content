@@ -1,7 +1,6 @@
 import type { Collection } from "@/collections";
 import type { PostprocessOptions } from "@/collections/mdx/remark-postprocess";
 import type { Core, CoreOptions } from "@/core";
-import type { ProcessorOptions } from "@mdx-js/mdx";
 import type { VFile } from "vfile";
 import type { TurbopackLoaderOptions } from "next/dist/server/config-shared";
 import type { Configuration } from "webpack";
@@ -14,7 +13,8 @@ import { asyncPipe, pipe } from "@/utils/pipe";
 import { FileSystemCollection, FileSystemCollectionConfig } from "./fs";
 import { GitHook, gitHook } from "@/plugins/git";
 import path from "node:path";
-import type { PluggableList } from "unified";
+import type { FumaContentProcessorOptions } from "@/collections/mdx/build-mdx";
+import { type AsyncCache, createCache } from "@/utils/async-cache";
 
 interface CompilationContext {
   collection: Collection;
@@ -23,18 +23,15 @@ interface CompilationContext {
 }
 
 export interface MDXCollectionConfig<
-  FrontmatterSchema extends StandardSchemaV1 | undefined,
+  FrontmatterSchema extends StandardSchemaV1 | undefined = StandardSchemaV1 | undefined,
 > extends Omit<FileSystemCollectionConfig, "supportedFormats"> {
   postprocess?: Partial<PostprocessOptions>;
-  preprocess?: PreprocessOptions;
   frontmatter?: FrontmatterSchema;
-  options?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
+  options?:
+    | FumaContentProcessorOptions
+    | ((environment: "bundler" | "runtime") => Awaitable<FumaContentProcessorOptions>);
   lazy?: boolean;
   dynamic?: boolean;
-}
-
-interface PreprocessOptions {
-  remarkPlugins?: PluggableList;
 }
 
 const RuntimePaths = {
@@ -58,9 +55,18 @@ export class MDXCollection<
 > extends FileSystemCollection {
   readonly dynamic: boolean;
   readonly lazy: boolean;
-  readonly preprocess?: PreprocessOptions;
   readonly postprocess?: Partial<PostprocessOptions>;
-  readonly getMDXOptions?: (environment: "bundler" | "runtime") => Awaitable<ProcessorOptions>;
+
+  #mdxOptions?: MDXCollectionConfig["options"];
+  #mdxOptionsCache?: AsyncCache<FumaContentProcessorOptions>;
+  async getMDXOptions(environment: "bundler" | "runtime"): Promise<FumaContentProcessorOptions> {
+    const options = this.#mdxOptions;
+    if (!options) return {};
+    if (typeof options !== "function") return options;
+
+    this.#mdxOptionsCache ??= createCache();
+    return this.#mdxOptionsCache.cached(environment, () => options(environment));
+  }
   /**
    * Frontmatter schema
    */
@@ -95,8 +101,7 @@ export class MDXCollection<
       supportedFormats: ["md", "mdx"],
     });
     this.postprocess = config.postprocess;
-    this.preprocess = config.preprocess;
-    this.getMDXOptions = config.options;
+    this.#mdxOptions = config.options;
     this.dynamic = config.dynamic ?? false;
     this.lazy = config.lazy ?? false;
     this.frontmatterSchema = config.frontmatter;
@@ -106,36 +111,34 @@ export class MDXCollection<
     this.pluginHook(loaderHook).loaders.push(mdxLoader());
     this.pluginHook(gitHook).onClient.hook(this.#onGitHandler.bind(this));
 
-    if (this.postprocess) {
-      const { processedMarkdown, linkReferences, mdast } = this.postprocess;
+    const { processedMarkdown, linkReferences, mdast } = this.postprocess ?? {};
 
-      if (processedMarkdown) {
-        const { as = "_markdown" } = processedMarkdown === true ? {} : processedMarkdown;
+    if (processedMarkdown) {
+      const { as = "_markdown" } = processedMarkdown === true ? {} : processedMarkdown;
 
-        this.storeInitializer.pipe((code) => {
-          code.typeParams[2] += ` & { /** Processed Markdown */ ${as}: string; }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += ` & { /** Processed Markdown */ ${as}: string; }`;
+        return code;
+      });
+    }
 
-      if (mdast) {
-        const { as = "_mdast" } = mdast === true ? {} : mdast;
+    if (mdast) {
+      const { as = "_mdast" } = mdast === true ? {} : mdast;
 
-        this.storeInitializer.pipe((code) => {
-          code.typeParams[2] += ` & { /** MDAST (as JSON string) */ ${as}: string; }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code) => {
+        code.typeParams[2] += ` & { /** MDAST (as JSON string) */ ${as}: string; }`;
+        return code;
+      });
+    }
 
-      if (linkReferences) {
-        const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
+    if (linkReferences) {
+      const { as = "_linkReferences" } = linkReferences === true ? {} : linkReferences;
 
-        this.storeInitializer.pipe((code, { codegen }) => {
-          codegen.addNamedImport(["LinkReference"], "fuma-content/collections/mdx", true);
-          code.typeParams[2] += ` & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ ${as}: LinkReference[] }`;
-          return code;
-        });
-      }
+      this.storeInitializer.pipe((code, { codegen }) => {
+        codegen.addNamedImport(["LinkReference"], "fuma-content/collections/mdx", true);
+        code.typeParams[2] += ` & { /** extracted link references (e.g. hrefs, paths), useful for analyzing relationships between pages. */ ${as}: LinkReference[] }`;
+        return code;
+      });
     }
   }
 

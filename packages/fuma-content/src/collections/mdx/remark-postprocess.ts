@@ -4,7 +4,7 @@ import { visit } from "unist-util-visit";
 import { toMarkdown } from "mdast-util-to-markdown";
 import { valueToEstree } from "estree-util-value-to-estree";
 import { removePosition } from "unist-util-remove-position";
-import { flattenNode } from "./mdast-utils";
+import { flattenNode } from "@/utils/mdast/flatten";
 import { mdxToMarkdown } from "mdast-util-mdx";
 
 export interface LinkReference {

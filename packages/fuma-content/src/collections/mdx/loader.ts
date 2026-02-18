@@ -26,7 +26,7 @@ type CacheEntry = z.infer<typeof cacheEntry>;
 
 export function createMdxLoader({ getCore }: DynamicCore): Loader {
   return {
-    async load({ getSource, development: isDevelopment, query, compiler, filePath }) {
+    async load({ getSource, development: isDevelopment, query, addDependency, filePath }) {
       let core = await getCore();
       const value = await getSource();
       const matter = fumaMatter(value);
@@ -82,12 +82,18 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
       const lineOffset = isDevelopment ? countLines(matter.matter) : 0;
 
       const { buildMDX } = await import("@/collections/mdx/build-mdx");
-      const compiled = await buildMDX(core, collection, {
+      const compiled = await buildMDX({
+        core,
+        collection,
         isDevelopment,
         source: "\n".repeat(lineOffset) + matter.content,
         filePath,
         frontmatter: matter.data as Record<string, unknown>,
-        _compiler: compiler,
+        compiler: {
+          addDependency,
+          collection,
+          core,
+        },
         environment: "bundler",
       });
 

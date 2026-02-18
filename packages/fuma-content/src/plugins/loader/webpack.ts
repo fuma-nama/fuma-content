@@ -59,7 +59,9 @@ export function createWebpackLoader(loaderFactory: (core: DynamicCore) => Loader
           return source;
         },
         development: this.mode === "development",
-        compiler: this,
+        addDependency: (file) => {
+          this.addDependency(file);
+        },
       });
 
       if (result === null) {

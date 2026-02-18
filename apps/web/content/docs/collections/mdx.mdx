@@ -32,7 +32,7 @@ export default defineConfig({
 It generates:
 
 - `<name>.ts`: server-side access to compiled properties.
-- `<name>.browser.ts`: client-side access, with framework integrations for React.js.
+- `<name>.browser.ts`: client-side access, with framework integrations for React.
 
 ```tsx tab="Server"
 import { docs } from "content/docs";
@@ -43,6 +43,11 @@ for (const file of docs.list()) {
   const { frontmatter, ...rest } = file.compiled;
 }
 
+// or from ID:
+console.log(docs.get("index.mdx"));
+```
+
+```tsx tab="Server (React)"
 function Page({ id }: { id: string }) {
   const file = docs.get(id);
   if (!file) return;
@@ -64,7 +69,7 @@ function Page({ id }: { id: string }) {
 }
 ```
 
-```tsx tab="Browser"
+```tsx tab="Browser (React)"
 import { docs } from "content/docs.browser";
 import { useRenderer } from "fuma-content/collections/mdx/react";
 
@@ -80,6 +85,59 @@ function Page({ id }: { id: string }) {
   return <div className="prose">{children}</div>;
 }
 ```
+
+### Lazy Mode
+
+It leverages async imports to support lazy loading, or lazy compilation (Vite only).
+
+```ts title="content.config.ts"
+import { defineConfig } from "fuma-content/config";
+import { mdxCollection } from "fuma-content/collections/mdx";
+
+const docs = mdxCollection({
+  dir: "content",
+  // [!code ++]
+  lazy: true,
+});
+```
+
+The compiled properties now require calling `load()` to access.
+
+```tsx tab="Server"
+import { docs } from "content/docs";
+
+for (const file of docs.list()) {
+  const id = file.id;
+  // typed frontmatter
+  console.log(file.frontmatter);
+  // compiled properties
+  console.log(await file.load());
+}
+```
+
+```tsx tab="Server (React)"
+function Page({ id }: { id: string }) {
+  const file = docs.get(id);
+  if (!file) return;
+
+  // default refers to the content body renderer
+  // you can render it directly in React Server Component
+  const { default: MDX } = await file.load();
+
+  return (
+    <div className="prose">
+      <MDX
+        // MDX Components
+        components={{
+          h1: (props) => <h1 {...props} className="text-4xl" />,
+        }}
+      />
+    </div>
+  );
+}
+```
+
+Lazy mode only effects the server-side integration, client-side usage is not changed.
 
 ### Post Process
 

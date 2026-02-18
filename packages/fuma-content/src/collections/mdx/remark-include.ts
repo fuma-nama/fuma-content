@@ -1,4 +1,4 @@
-import { type PluggableList, type Processor, type Transformer, unified } from "unified";
+import type { Processor, Transformer } from "unified";
 import { visit } from "unist-util-visit";
 import type { Code, Node, Root, RootContent } from "mdast";
 import * as path from "node:path";
@@ -7,8 +7,7 @@ import { fumaMatter } from "@/collections/mdx/fuma-matter";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 import { VFile } from "vfile";
 import type { Directives } from "mdast-util-directive";
-import { remarkMarkAndUnravel } from "@/collections/mdx/remark-unravel";
-import { flattenNode } from "./mdast-utils";
+import { flattenNode } from "@/utils/mdast/flatten";
 
 export interface Params {
   lang?: string;
@@ -185,21 +184,20 @@ function extractCodeRegion(content: string, regionName: string): string {
 }
 
 export interface RemarkIncludeOptions {
-  /**
-   * remark plugins to preprocess the MDAST tree before scanning headings/sections.
-   *
-   * e.g. parse headings before extraction.
-   */
-  preprocess?: PluggableList;
+  tagName?: string;
+}
+
+declare module "vfile" {
+  interface DataMap {
+    /** [Fuma Content: remark-include] whether the content is getting parsed from a `<include />` */
+    _in_include?: boolean;
+  }
 }
 
 export function remarkInclude(
   this: Processor,
-  { preprocess = [] }: RemarkIncludeOptions = {},
+  { tagName = "include" }: RemarkIncludeOptions = {},
 ): Transformer<Root, Root> {
-  const TagName = "include";
-  const preprocessor = unified().use(remarkMarkAndUnravel).use(preprocess);
-
   const embedContent = async (
     targetPath: string,
     heading: string | undefined,
@@ -231,7 +229,11 @@ export function remarkInclude(
       } satisfies Code;
     }
 
-    const parser = await _getProcessor(ext === ".mdx" ? "mdx" : "md");
+    const processor = (await _getProcessor(ext === ".mdx" ? "mdx" : "md")) as unknown as Processor<
+      Root,
+      Root,
+      Root
+    >;
     const parsed = fumaMatter(content);
     const targetFile = new VFile({
       path: targetPath,
@@ -239,10 +241,17 @@ export function remarkInclude(
       data: {
         ...parent.data,
         frontmatter: parsed.data as Record<string, unknown>,
+        _in_include: true,
       },
     });
 
-    let mdast = await preprocessor.run(parser.parse(targetFile) as Root, targetFile);
+    let mdast: Root;
+    try {
+      mdast = await processor.run(processor.parse(targetFile), targetFile);
+    } catch (e) {
+      if (e instanceof Terminated) mdast = e.value;
+      else throw e;
+    }
 
     if (heading) {
       const extracted = extractSection(mdast, heading);
@@ -263,7 +272,7 @@ export function remarkInclude(
 
     visit(tree, ElementLikeTypes, (_node, _, parent) => {
       const node = _node as ElementLikeContent;
-      if (node.name !== TagName) return;
+      if (node.name !== tagName) return;
 
       const specifier = flattenNode(node);
       if (specifier.length === 0) return "skip";
@@ -286,8 +295,13 @@ export function remarkInclude(
 
     await Promise.all(queue);
   }
-
   return async (tree, file) => {
+    if (file.data._in_include) throw new Terminated(tree);
+
     await update(tree, file);
   };
+}
+
+class Terminated {
+  constructor(readonly value: Root) {}
 }

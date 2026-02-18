@@ -22,7 +22,6 @@ export interface GlobalConfig<
 }
 
 export interface EmitConfig {
-  target?: "default" | "vite";
   /**
    * add .js extenstion to imports
    */

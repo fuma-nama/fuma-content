@@ -57,12 +57,19 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
           let content = (await fs.readFile(filePath)).toString();
           content = fumaMatter(content).content;
 
-          const compiled = await buildMDX(core, collection, {
+          const compiled = await buildMDX({
+            core,
+            collection,
             filePath,
             source: content,
             frontmatter: v as unknown as Record<string, unknown>,
             isDevelopment: false,
             environment: "runtime",
+            compiler: {
+              collection,
+              core,
+              addDependency() {},
+            },
           });
 
           return (await executeMdx(String(compiled.value), {
