@@ -9,10 +9,10 @@ It is same as [MDX Collection](/docs/collections/mdx), for example:
 
 ```ts title="content.config.ts"
 import { defineConfig } from "fuma-content/config";
-import { mdxObsidianCollection } from "fuma-content/collections/mdx";
+import { mdxObsidianCollection } from "fuma-content/collections/obsidian";
 import { z } from "zod";
 
-const docs = mdxCollection({
+const docs = mdxObsidianCollection({
   dir: "content",
   frontmatter: z.object({
     title: z.string().optional(),
