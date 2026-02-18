@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.1.5
+
+### Patch Changes
+
+- 22f17c0: improve remark-include preprocessor handling, remove deprecated `preprocess`
+
 ## 1.1.4
 
 ### Patch Changes
