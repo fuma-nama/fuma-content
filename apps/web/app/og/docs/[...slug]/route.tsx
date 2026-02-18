@@ -1,7 +1,7 @@
 import { getPageImage, source } from "@/lib/source";
 import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
-import { generate as DefaultImage } from "fumadocs-ui/og";
+import { generate as DefaultImage } from "@/lib/mono";
 
 export const revalidate = false;
 
@@ -11,7 +11,11 @@ export async function GET(_req: Request, { params }: RouteContext<"/og/docs/[...
   if (!page) notFound();
 
   return new ImageResponse(
-    <DefaultImage title={page.data.title} description={page.data.description} site="My App" />,
+    <DefaultImage
+      title={page.data.title}
+      description={page.data.description}
+      site="Fuma Content"
+    />,
     {
       width: 1200,
       height: 630,
