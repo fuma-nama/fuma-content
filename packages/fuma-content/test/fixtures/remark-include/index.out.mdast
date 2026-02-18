@@ -8,6 +8,11 @@
           "value": "Using JSX",
         },
       ],
+      "data": {
+        "hProperties": {
+          "id": "using-jsx",
+        },
+      },
       "depth": 2,
       "position": undefined,
       "type": "heading",
@@ -429,6 +434,11 @@
           "value": "Using Directives",
         },
       ],
+      "data": {
+        "hProperties": {
+          "id": "using-directives",
+        },
+      },
       "depth": 2,
       "position": undefined,
       "type": "heading",
@@ -547,6 +557,11 @@
           "value": "Code",
         },
       ],
+      "data": {
+        "hProperties": {
+          "id": "code",
+        },
+      },
       "depth": 2,
       "position": undefined,
       "type": "heading",

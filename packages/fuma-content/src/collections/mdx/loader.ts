@@ -82,7 +82,9 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
       const lineOffset = isDevelopment ? countLines(matter.matter) : 0;
 
       const { buildMDX } = await import("@/collections/mdx/build-mdx");
-      const compiled = await buildMDX(core, collection, {
+      const compiled = await buildMDX({
+        core,
+        collection,
         isDevelopment,
         source: "\n".repeat(lineOffset) + matter.content,
         filePath,

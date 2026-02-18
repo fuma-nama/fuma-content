@@ -13,7 +13,8 @@ import { remarkHeading } from "fumadocs-core/mdx-plugins/remark-heading";
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const processor = remark()
   .use(remarkMdx)
-  .use(remarkInclude, { preprocess: [remarkHeading] })
+  .use(remarkHeading)
+  .use(remarkInclude)
   .use(remarkDirective);
 
 test("remark include", async () => {
