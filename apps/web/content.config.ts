@@ -14,7 +14,6 @@ export const docs = mdxCollection({
   },
   async options() {
     const base = await mdxPreset({
-      remarkHeadingOptions: false,
       rehypeCodeOptions: {
         themes: {
           light: "catppuccin-latte",
