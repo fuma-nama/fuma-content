@@ -1,6 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar, SidebarProvider } from "@/components/app-sidebar";
 import { ClientContextProvider } from "@/components/collection/context";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { getCore } from "@/lib/config";
 import { ClientContext, studioHook } from "@/lib/content";
@@ -45,11 +44,10 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
       <ClientBoundary>
         <HydrationBoundary state={loaderData.queryState as DehydratedState}>
           <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
+            <AppSidebar>
               <Outlet />
-              <Toaster />
-            </SidebarInset>
+            </AppSidebar>
+            <Toaster />
           </SidebarProvider>
         </HydrationBoundary>
       </ClientBoundary>

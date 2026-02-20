@@ -1,18 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun } from "lucide-react";
+import { DotIcon, FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun, XIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -28,8 +17,50 @@ import {
 } from "@/lib/data/store";
 import { CollectionActionsContext } from "./collection/actions";
 import { Link, useLocation } from "react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cva } from "class-variance-authority";
+import { Sheet, SheetClose, SheetContent } from "./ui/sheet";
+import { buttonVariants } from "./ui/button";
 
-export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+const SidebarContext = React.createContext<{
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  isMobile: boolean | undefined;
+} | null>(null);
+
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = React.useState<boolean | null>(null);
+  const isMobile = useIsMobile();
+
+  if (isMobile !== undefined && open === null) setOpen(!isMobile);
+
+  return (
+    <SidebarContext
+      value={React.useMemo(() => ({ open: open ?? false, isMobile, setOpen }), [open, isMobile])}
+    >
+      {children}
+    </SidebarContext>
+  );
+}
+
+export function useSidebar() {
+  return React.use(SidebarContext)!;
+}
+
+export const sidebarItemVariants = cva(
+  "flex items-center px-4 py-1.5 gap-2 text-sm font-mono transition-colors border-s-2 border-transparent [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      active: {
+        true: "text-accent-foreground bg-accent border-brand",
+        false: "text-muted-foreground hover:text-accent-foreground",
+      },
+    },
+  },
+);
+
+export function AppSidebar(props: React.ComponentProps<"aside">) {
+  const sidebar = useSidebar();
   const [search, setSearch] = React.useState("");
   const { data: items = [] } = useLiveQuery(
     (q) => {
@@ -45,68 +76,103 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     [search],
   );
 
-  return (
-    <Sidebar variant="floating" {...props}>
-      <SidebarHeader>
-        <SidebarMenuButton asChild>
-          <Link to="/" className="ps-1 font-semibold text-lg font-mono">
-            <Logo className="size-6!" />
-            Fuma Content
-          </Link>
-        </SidebarMenuButton>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 border rounded-full bg-secondary text-secondary-foreground px-3 transition-colors focus-within:ring-2 focus-within:ring-ring">
-              <SearchIcon className="size-4 text-muted-foreground" />
-              <input
-                placeholder="Search..."
-                className="py-1.5 focus-visible:outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <SidebarMenu className="gap-0">
-              {items.map((item, i) => {
-                const subsequence = i > 0 && items[i - 1].collection.id === item.collection.id;
+  const content = (
+    <>
+      <div className="flex p-4 pb-2">
+        <Link to="/" className="flex items-center gap-2 font-semibold text-sm font-mono">
+          <Logo className="size-6" />
+          Fuma Content
+        </Link>
+        {sidebar.isMobile && (
+          <SheetClose
+            className={cn(
+              buttonVariants({
+                variant: "ghost",
+                size: "icon-sm",
+                className: "ms-auto text-muted-foreground md:hidden",
+              }),
+            )}
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        )}
+      </div>
+      <div className="inline-flex mx-4 items-center border rounded-md bg-secondary text-secondary-foreground transition-colors focus-within:ring-2 focus-within:ring-ring">
+        <SearchIcon className="size-4 ms-2 text-muted-foreground" />
+        <input
+          placeholder="Search..."
+          className="text-sm flex-1 px-2 py-1.5 focus-visible:outline-none"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      <ul>
+        {items.map((item, i) => {
+          const subsequence = i > 0 && items[i - 1].collection.id === item.collection.id;
 
-                return (
-                  <React.Fragment key={`${item.collection.id}-${item.docs?.id}`}>
-                    {!subsequence && <SidebarCollectionItem item={item.collection} />}
-                    {item.docs && <SidebarDocumentItem item={item.docs} />}
-                  </React.Fragment>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
+          return (
+            <React.Fragment key={`${item.collection.id}-${item.docs?.id}`}>
+              {!subsequence && <SidebarCollectionItem item={item.collection} />}
+              {item.docs && <SidebarDocumentItem item={item.docs} />}
+            </React.Fragment>
+          );
+        })}
+      </ul>
+
+      <div className="mt-auto flex items-center gap-2 px-2.5 h-10 border-t">
         <ThemeToggle />
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </>
+  );
+
+  return (
+    <Sheet open={sidebar.open} onOpenChange={sidebar.setOpen}>
+      {sidebar.isMobile ? (
+        <SheetContent
+          side="left"
+          {...(props as object)}
+          className={cn("flex flex-col gap-2", props.className)}
+        >
+          {content}
+        </SheetContent>
+      ) : (
+        <aside
+          {...props}
+          className={cn(
+            "fixed flex flex-col gap-2 w-[300px] start-0 inset-y-0 transition-transform border-e max-md:hidden",
+            !sidebar.open && "-translate-x-full",
+            props.className,
+          )}
+        >
+          {content}
+        </aside>
+      )}
+      <div
+        className={cn(
+          "flex flex-col transition-[padding] min-h-screen",
+          sidebar.open && "md:ps-[300px]",
+        )}
+      >
+        {props.children}
+      </div>
+    </Sheet>
   );
 }
 
 function SidebarDocumentItem({ item }: { item: DocumentItem }) {
   const pathname = useLocation().pathname;
   const href = `/collection/${item.collectionId}/${item.id}`;
+  const active = pathname === href;
+
   return (
     <DocumentActionsContext document={item}>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={item.name}
-          isActive={pathname === href}
-          className={cn("ps-5", !pathname.startsWith(href + "/") && "text-muted-foreground")}
-          asChild
-        >
-          <Link to={href}>
-            <FileIcon className="text-muted-foreground" />
-            <span>{item.name}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      <li>
+        <Link to={href} className={cn(sidebarItemVariants({ active }), "ps-6")}>
+          <FileIcon />
+          {item.name}
+        </Link>
+      </li>
     </DocumentActionsContext>
   );
 }
@@ -114,22 +180,22 @@ function SidebarDocumentItem({ item }: { item: DocumentItem }) {
 function SidebarCollectionItem({ item }: { item: CollectionItem }) {
   const pathname = useLocation().pathname;
   const href = `/collection/${item.id}`;
+  const active = pathname === href;
+  const opened = pathname.startsWith(href + "/");
+
   return (
     <CollectionActionsContext collection={item}>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={item.name}
-          isActive={pathname === href}
-          className={cn("ps-3", !pathname.startsWith(href + "/") && "text-muted-foreground")}
-          asChild
-        >
-          <Link to={href}>
-            <LayersIcon className="text-muted-foreground" />
-            <span>{item.name}</span>
-            {item.badge && <Badge className="ms-auto">{item.badge}</Badge>}
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      <li>
+        <Link to={href} className={cn(sidebarItemVariants({ active }))}>
+          <LayersIcon />
+          {item.name}
+          {item.badge && (
+            <Badge variant={active || opened ? "default" : "outline"} className="ms-auto font-mono">
+              {item.badge}
+            </Badge>
+          )}
+        </Link>
+      </li>
     </CollectionActionsContext>
   );
 }
@@ -139,7 +205,10 @@ function ThemeToggle() {
 
   return (
     <Select value={theme} onValueChange={setTheme}>
-      <SelectTrigger className="text-muted-foreground">
+      <SelectTrigger
+        className="px-1.5 text-xs h-6 rounded-lg text-muted-foreground"
+        variant="ghost"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="text-muted-foreground">

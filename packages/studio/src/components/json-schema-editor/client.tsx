@@ -1,5 +1,5 @@
 "use client";
-import { type ReactNode } from "react";
+import { ComponentProps, type ReactNode } from "react";
 import { FieldSet } from "./components/inputs";
 import { SchemaProvider, EditorContextType, useResolvedSchema, useSchemaContext } from "./schema";
 import { StfProvider, useListener, useStf } from "@fumari/stf";
@@ -34,10 +34,10 @@ export function JSONSchemaEditorProvider({
   );
 }
 
-export function JSONSchemaEditorContent() {
+export function JSONSchemaEditorContent(props: Partial<ComponentProps<typeof FieldSet>>) {
   const { schema } = useSchemaContext()!;
   const field = useResolvedSchema(schema);
 
-  if (field.format === "binary") return <FieldSet field={field} fieldName={[]} />;
-  return <FieldSet field={field} fieldName={[]} collapsible={false} />;
+  if (field.format === "binary") return <FieldSet field={field} fieldName={[]} {...props} />;
+  return <FieldSet field={field} fieldName={[]} collapsible={false} {...props} />;
 }

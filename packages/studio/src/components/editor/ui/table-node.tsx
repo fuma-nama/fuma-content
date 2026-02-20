@@ -496,8 +496,8 @@ export function TableCellElement({
       {...props}
       as={isHeader ? "th" : "td"}
       className={cn(
-        "h-full overflow-visible border-none bg-background p-0",
-        element.background ? "bg-(--cellBackground)" : "bg-background",
+        "h-full overflow-visible border-none bg-card text-card-foreground p-0",
+        element.background && "bg-(--cellBackground)",
         isHeader && "text-left *:m-0",
         "before:size-full",
         selected && "before:z-10 before:bg-brand/5",

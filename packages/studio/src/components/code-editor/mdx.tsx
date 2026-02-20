@@ -3,12 +3,15 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import "./monaco";
+import { cn } from "@/lib/utils";
 
 export function MDXCodeEditor({
   defaultValue,
+  className,
   onValueChange,
 }: {
   defaultValue: string;
+  className?: string;
   onValueChange: (value: string) => void;
 }) {
   const { resolvedTheme } = useTheme();
@@ -28,7 +31,10 @@ export function MDXCodeEditor({
           <code>{value}</code>
         </pre>
       }
-      className="bg-secondary text-secondary-foreground overflow-hidden border rounded-lg"
+      className={cn(
+        "bg-secondary text-secondary-foreground overflow-hidden border rounded-lg",
+        className,
+      )}
       options={{
         minimap: { enabled: false },
         padding: {

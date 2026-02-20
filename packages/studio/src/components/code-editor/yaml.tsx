@@ -4,11 +4,14 @@ import Editor from "@monaco-editor/react";
 import { load, dump } from "js-yaml";
 import { useTheme } from "next-themes";
 import "./monaco";
+import { cn } from "@/lib/utils";
 
 export function YamlEditor({
+  className,
   defaultValue,
   onValueChange,
 }: {
+  className?: string;
   defaultValue: unknown;
   onValueChange: (v: unknown) => void;
 }) {
@@ -23,7 +26,12 @@ export function YamlEditor({
   });
 
   return (
-    <div className="flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg">
+    <div
+      className={cn(
+        "flex flex-col bg-secondary text-secondary-foreground overflow-hidden border rounded-lg",
+        className,
+      )}
+    >
       <Editor
         height="240px"
         language="yaml"

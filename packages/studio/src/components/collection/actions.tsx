@@ -8,7 +8,7 @@ import {
 } from "../ui/context-menu";
 import type { ReactElement } from "react";
 import { useCreateDocumentDialog } from "./client";
-import { FilePlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 
 export function CollectionActionsContext({
   collection,
@@ -26,7 +26,7 @@ export function CollectionActionsContext({
         {createDoc && (
           <createDoc.trigger asChild>
             <ContextMenuItem>
-              <FilePlusIcon />
+              <PlusIcon />
               Create Document
             </ContextMenuItem>
           </createDoc.trigger>

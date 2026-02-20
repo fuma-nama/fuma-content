@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  MDXEditor,
-  MDXEditorContainer,
-  MDXEditorSuspense,
-  MDXEditorView,
-} from "@/components/editor/md";
+import { MDXEditor, MDXEditorContainer, MDXEditorView } from "./md-editor";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import {
   JSONSchemaEditorContent,
@@ -13,7 +8,7 @@ import {
 } from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
 import { MDXCodeEditorLazy } from "@/components/code-editor/mdx.lazy";
 import { createMDXDocument, saveMDXDocument } from "./actions";
 import { useForm } from "react-hook-form";
@@ -23,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
 import { StatusBar } from "@/components/edit/status-bar";
 import { useSync } from "@/components/edit/use-sync";
+import { Spinner } from "@/components/ui/spinner";
 
 interface MDXDocUpdateEditorProps {
   collectionId: string;
@@ -98,13 +94,13 @@ export function MDXDocUpdateEditor({
 
   return (
     <>
-      <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
-        <TabsList>
+      <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4">
+        <TabsList className="mx-1.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
         {jsonSchema && (
-          <TabsContent value="visual" className="-mt-6">
+          <TabsContent value="visual">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
               defaultValue={currentValue.current.frontmatter}
@@ -116,13 +112,14 @@ export function MDXDocUpdateEditor({
               writeOnly
               readOnly={false}
             >
-              <JSONSchemaEditorContent />
+              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:px-4" />
             </JSONSchemaEditorProvider>
           </TabsContent>
         )}
         <TabsContent value="code">
           <YamlEditorLazy
             defaultValue={currentValue.current.frontmatter}
+            className="rounded-none border-l-0 border-r-0"
             onValueChange={(value) => {
               onSync(() => {
                 currentValue.current.frontmatter = value as Record<string, unknown>;
@@ -131,13 +128,20 @@ export function MDXDocUpdateEditor({
           />
         </TabsContent>
       </Tabs>
-      <Tabs defaultValue="visual" className="flex-1">
-        <TabsList>
+      <Tabs defaultValue="visual" className="mt-4 flex-1">
+        <TabsList className="mx-1.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
-        <TabsContent value="visual">
-          <MDXEditorSuspense>
+        <TabsContent value="visual" className="flex flex-col size-full">
+          <Suspense
+            fallback={
+              <div className="flex items-center gap-2 text-muted-foreground bg-muted border-y p-3">
+                <Spinner />
+                Loading Editor
+              </div>
+            }
+          >
             <MDXEditor
               documentId={documentId}
               defaultValue={currentValue.current.content}
@@ -147,15 +151,16 @@ export function MDXDocUpdateEditor({
                 });
               }}
             >
-              <MDXEditorContainer className="[--toolbar-offset:--spacing(12)]">
+              <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
                 <MDXEditorView />
               </MDXEditorContainer>
             </MDXEditor>
-          </MDXEditorSuspense>
+          </Suspense>
         </TabsContent>
-        <TabsContent value="code" className="size-full">
+        <TabsContent value="code" className="flex flex-col size-full">
           <MDXCodeEditorLazy
             defaultValue={currentValue.current.content}
+            className="rounded-none border-0 border-t flex-1"
             onValueChange={(v) => {
               onSync(() => {
                 currentValue.current.content = v;

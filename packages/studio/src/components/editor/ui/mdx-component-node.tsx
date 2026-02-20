@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
   const { editor, element } = props;
@@ -21,7 +22,7 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
       attributes={{
         ...props.attributes,
         className: cn(
-          "border rounded-md my-1 p-1.5 shadow-sm",
+          "border rounded-md my-1 shadow-sm",
           isEdit && "border-primary",
           props.attributes.className,
         ),
@@ -29,11 +30,12 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
     >
       <div
         contentEditable={false}
-        className="flex items-center -mt-1.5 -mx-1.5 p-1.5 gap-2 bg-background rounded-t-[inherit]"
+        className="flex items-center px-3 py-1 gap-2 bg-background rounded-t-[inherit]"
       >
-        <p className="text-xs">
-          <code>{element.element}</code> (MDX Component)
-        </p>
+        <code className="text-sm text-muted-foreground">{element.element}</code>
+        <Badge variant="outline" className="font-mono">
+          MDX Component
+        </Badge>
         <Popover open={isEdit} onOpenChange={setEdit}>
           <PopoverTrigger asChild>
             <Button variant="secondary" size="xs">
@@ -65,7 +67,7 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
           </PopoverContent>
         </Popover>
       </div>
-      {props.children}
+      <div className="px-3 py-1.5">{props.children}</div>
     </PlateElement>
   );
 }
@@ -78,13 +80,16 @@ export function UnknownNodeComponent(props: PlateElementProps<UnknownNode>) {
     <PlateElement {...props}>
       <div
         contentEditable={false}
-        className={cn("text-xs border my-1 rounded-md", selected && "border-primary")}
+        className={cn("text-sm border my-1 rounded-md", selected && "border-primary")}
       >
-        <p className="mb-1 bg-background p-1.5 rounded-t-[inherit]">
-          <code>{element.raw.type}</code> (Unknown)
-        </p>
+        <div className="flex items-center gap-2 px-3 py-1 bg-muted text-muted-foreground rounded-t-[inherit]">
+          <code>{element.raw.type}</code>
+          <Badge variant="outline" className="font-mono">
+            Unknown
+          </Badge>
+        </div>
         {element.md && (
-          <pre className="overflow-auto text-muted-foreground p-1.5 rounded-b-[inherit]">
+          <pre className="overflow-auto px-3 py-1.5 rounded-b-[inherit]">
             <code>{element.md}</code>
           </pre>
         )}

@@ -28,7 +28,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
 
   return (
     <PlateElement
-      className="bg-secondary text-secondary-foreground border p-1 rounded-lg my-1 has-data-popup-open:ring-2 has-data-popup-open:ring-ring"
+      className="bg-muted text-muted-foreground border p-1 rounded-lg my-1 has-data-popup-open:ring-2 has-data-popup-open:ring-ring"
       {...props}
     >
       <div
@@ -38,12 +38,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
         <CodeBlockCombobox />
         <CodeBlockMeta />
         {isLangSupported(element.lang) && (
-          <Button
-            size="xs"
-            variant="ghost"
-            className="text-muted-foreground"
-            onClick={() => formatCodeBlock(editor, { element })}
-          >
+          <Button size="xs" variant="ghost" onClick={() => formatCodeBlock(editor, { element })}>
             <BracesIcon />
             Format
           </Button>
@@ -52,7 +47,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
         <CopyButton
           size="icon-xs"
           variant="ghost"
-          className="gap-1 text-muted-foreground"
+          className="gap-1"
           value={() => NodeApi.string(element)}
         />
       </div>
