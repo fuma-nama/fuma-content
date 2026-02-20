@@ -75,43 +75,25 @@ export const clientContext: ClientContext = {
   },
 };
 
-export function MDXDocUpdateEditor({ collectionId, documentId, ...rest }: MDXDocUpdateEditorProps) {
-  return (
-    <MDXDocEditor
-      {...rest}
-      onSync={(frontmatter, content) => {
-        return saveMDXDocument({
-          collectionId,
-          documentId,
-          frontmatter,
-          content,
-        });
-      }}
-    />
-  );
-}
-
-/**
- * Combined MDX editor with frontmatter form using JSON Schema
- */
-function MDXDocEditor({
-  jsonSchema,
+export function MDXDocUpdateEditor({
+  collectionId,
+  documentId,
   content: defaultContent,
   frontmatter: defaultFrontmatter = {},
-  onSync: onSyncCallback,
-}: {
-  jsonSchema?: JSONSchema;
-  content: string;
-  frontmatter?: Record<string, unknown>;
-  onSync: (frontmatter: Record<string, unknown>, content: string) => void | Promise<void>;
-}) {
+  jsonSchema,
+}: MDXDocUpdateEditorProps) {
   const currentValue = useRef<{ frontmatter: Record<string, unknown>; content: string }>({
     frontmatter: defaultFrontmatter,
     content: defaultContent,
   });
   const { onSync, status } = useSync(() => {
     const { frontmatter, content } = currentValue.current;
-    return onSyncCallback(frontmatter, content);
+    return saveMDXDocument({
+      collectionId,
+      documentId,
+      frontmatter,
+      content,
+    });
   });
 
   return (
@@ -157,6 +139,7 @@ function MDXDocEditor({
         <TabsContent value="visual">
           <MDXEditorSuspense>
             <MDXEditor
+              documentId={documentId}
               defaultValue={currentValue.current.content}
               onUpdate={(options) => {
                 onSync(() => {

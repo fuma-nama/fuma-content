@@ -1,13 +1,13 @@
 /**
  * cloned from https://github.com/remix-run/react-router/blob/main/packages/react-router-serve/cli.ts as it is not exported from their package
  */
-import os from "node:os";
 import path from "node:path";
 import url from "node:url";
 import type { ServerBuild } from "react-router";
 import { createRequestHandler } from "@react-router/express";
 import { createRequestListener } from "@mjackson/node-fetch-server";
 import express from "express";
+import { Server } from "@hocuspocus/server";
 
 Object.assign(process.env, {
   NODE_ENV: process.env.NODE_ENV ?? "production",
@@ -51,23 +51,13 @@ function parseNumber(raw?: string) {
 }
 
 async function run() {
-  let port = parseNumber(process.env.PORT) ?? 3000;
-
-  let buildPathArg = process.argv[2];
-
-  if (!buildPathArg) {
-    console.error(`
-  Usage: react-router-serve <server-build-path> - e.g. react-router-serve build/server/index.js`);
-    process.exit(1);
-  }
-
-  let buildPath = path.resolve(buildPathArg);
-
-  let buildModule = await import(url.pathToFileURL(buildPath).href);
+  const port = parseNumber(process.env.PORT) ?? 3000;
+  const buildPath = path.resolve(process.argv[2]);
+  const buildModule = await import(url.pathToFileURL(buildPath).href);
+  const isRSCBuild = isRSCServerBuild(buildModule);
   let build: NormalizedBuild;
-  let isRSCBuild = false;
 
-  if ((isRSCBuild = isRSCServerBuild(buildModule))) {
+  if (isRSCBuild) {
     const config = {
       publicPath: "/",
       assetsBuildDirectory: "../client",
@@ -82,21 +72,16 @@ async function run() {
     build = buildModule as ServerBuild;
   }
 
-  let onListen = () => {
-    let address =
-      process.env.HOST ||
-      Object.values(os.networkInterfaces())
-        .flat()
-        .find((ip) => String(ip?.family).includes("4") && !ip?.internal)?.address;
-
-    if (!address) {
-      console.log(`[react-router-serve] http://localhost:${port}`);
-    } else {
-      console.log(`[react-router-serve] http://localhost:${port} (http://${address}:${port})`);
-    }
-  };
-
   let app = express();
+  const hocuspocus =
+    process.env.VITE_STUDIO_YJS === "1"
+      ? new Server({
+          name: "hocuspocus",
+          quiet: true,
+          port: 8888, // TODO: allow custom port option
+        })
+      : null;
+
   app.disable("x-powered-by");
 
   app.use(
@@ -121,11 +106,18 @@ async function run() {
     );
   }
 
-  let server = process.env.HOST
+  function onListen() {
+    console.log(`[started]`);
+  }
+
+  await hocuspocus?.listen();
+  const server = process.env.HOST
     ? app.listen(port, process.env.HOST, onListen)
     : app.listen(port, onListen);
 
-  ["SIGTERM", "SIGINT"].forEach((signal) => {
-    process.once(signal, () => server?.close(console.error));
-  });
+  for (const signal of ["SIGTERM", "SIGINT"])
+    process.once(signal, () => {
+      server.close(console.error);
+      void hocuspocus?.destroy();
+    });
 }

@@ -56,7 +56,7 @@ async function main() {
   });
 
   for await (const message of serverProcess) {
-    if (message.includes(`[react-router-serve]`) && !isCI) {
+    if (message === "[started]" && !isCI) {
       const url = `http://${HOST}:${PORT}`;
       log.success(`Started studio at ${url}`);
 

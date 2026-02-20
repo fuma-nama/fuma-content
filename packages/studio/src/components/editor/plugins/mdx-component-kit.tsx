@@ -17,6 +17,9 @@ const MdxComponentPlugin = createPlatePlugin({
     break: {
       default: "lineBreak",
     },
+    delete: {
+      empty: "reset",
+    },
   },
 });
 

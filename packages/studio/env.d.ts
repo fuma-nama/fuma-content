@@ -6,6 +6,8 @@ declare module "process" {
         readonly STUDIO_DIST?: string;
         readonly STUDIO_CONFIG?: string;
         readonly STUDIO_VERSION?: string;
+
+        readonly VITE_STUDIO_YJS?: "1";
       }
     }
   }

@@ -1,8 +1,7 @@
 "use client";
 
 import { TrailingBlockPlugin, type Value } from "platejs";
-import { type TPlateEditor, useEditorRef } from "platejs/react";
-
+import { type PlatePlugin, type TPlateEditor, useEditorRef } from "platejs/react";
 import { AIKit } from "@/components/editor/plugins/ai-kit";
 import { AlignKit } from "@/components/editor/plugins/align-kit";
 import { AutoformatKit } from "@/components/editor/plugins/autoformat-kit";
@@ -34,7 +33,7 @@ import { SuggestionKit } from "@/components/editor/plugins/suggestion-kit";
 import { TableKit } from "@/components/editor/plugins/table-kit";
 import { MdxComponentKit } from "./plugins/mdx-component-kit";
 
-export const EditorKit = [
+export const EditorKit: PlatePlugin[] = [
   ...CopilotKit,
   ...AIKit,
 
@@ -80,7 +79,7 @@ export const EditorKit = [
   ...BlockPlaceholderKit,
   ...FixedToolbarKit,
   ...FloatingToolbarKit,
-];
+] as PlatePlugin[];
 
 export type MyEditor = TPlateEditor<Value, (typeof EditorKit)[number]>;
 

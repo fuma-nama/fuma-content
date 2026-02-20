@@ -11,7 +11,7 @@ import { dehydrate, DehydratedState, HydrationBoundary } from "@tanstack/react-q
 import { Outlet } from "react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { useMounted } from "@/hooks/use-mounted";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export async function loader() {
   const core = await getCore();
