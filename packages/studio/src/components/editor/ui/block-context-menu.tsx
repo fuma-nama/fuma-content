@@ -21,6 +21,17 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  AlignCenterIcon,
+  ArrowLeftRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  SparklesIcon,
+  TrashIcon,
+} from "lucide-react";
+import { turnIntoItems } from "./turn-into-toolbar-button";
+import { alignItems } from "./align-toolbar-button";
 
 type Value = "askAI" | null;
 
@@ -95,6 +106,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               setValue("askAI");
             }}
           >
+            <SparklesIcon className="text-muted-foreground" />
             Ask AI
           </ContextMenuItem>
           <ContextMenuItem
@@ -103,6 +115,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor.tf.focus();
             }}
           >
+            <TrashIcon className="text-muted-foreground" />
             Delete
           </ContextMenuItem>
           <ContextMenuItem
@@ -110,20 +123,22 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor.getTransforms(BlockSelectionPlugin).blockSelection.duplicate();
             }}
           >
+            <CopyIcon className="text-muted-foreground" />
             Duplicate
             {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
           </ContextMenuItem>
           <ContextMenuSub>
-            <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>
+              <ArrowLeftRightIcon className="text-muted-foreground" />
+              Turn into
+            </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-48">
-              <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>Paragraph</ContextMenuItem>
-
-              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h1)}>Heading 1</ContextMenuItem>
-              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h2)}>Heading 2</ContextMenuItem>
-              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h3)}>Heading 3</ContextMenuItem>
-              <ContextMenuItem onClick={() => handleTurnInto(KEYS.blockquote)}>
-                Blockquote
-              </ContextMenuItem>
+              {turnIntoItems.map((item) => (
+                <ContextMenuItem key={item.value} onClick={() => handleTurnInto(item.value)}>
+                  <span className="text-muted-foreground">{item.icon}</span>
+                  {item.label}
+                </ContextMenuItem>
+              ))}
             </ContextMenuSubContent>
           </ContextMenuSub>
         </ContextMenuGroup>
@@ -132,19 +147,27 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           <ContextMenuItem
             onClick={() => editor.getTransforms(BlockSelectionPlugin).blockSelection.setIndent(1)}
           >
+            <ChevronRightIcon className="text-muted-foreground" />
             Indent
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => editor.getTransforms(BlockSelectionPlugin).blockSelection.setIndent(-1)}
           >
+            <ChevronLeftIcon className="text-muted-foreground" />
             Outdent
           </ContextMenuItem>
           <ContextMenuSub>
-            <ContextMenuSubTrigger>Align</ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>
+              <AlignCenterIcon className="text-muted-foreground" />
+              Align
+            </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-48">
-              <ContextMenuItem onClick={() => handleAlign("left")}>Left</ContextMenuItem>
-              <ContextMenuItem onClick={() => handleAlign("center")}>Center</ContextMenuItem>
-              <ContextMenuItem onClick={() => handleAlign("right")}>Right</ContextMenuItem>
+              {alignItems.map((item) => (
+                <ContextMenuItem key={item.value} onClick={() => handleAlign(item.value as never)}>
+                  <item.icon className="text-muted-foreground" />
+                  {item.label}
+                </ContextMenuItem>
+              ))}
             </ContextMenuSubContent>
           </ContextMenuSub>
         </ContextMenuGroup>

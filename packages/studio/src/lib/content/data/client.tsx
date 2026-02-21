@@ -6,8 +6,8 @@ import {
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { YamlEditorLazy } from "@/components/code-editor/yaml.lazy";
-import { useRef } from "react";
+
+import { lazy, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EditorSuspense } from "@/components/code-editor/suspense";
 
 interface DataDocEditProps {
   collectionId: string;
@@ -31,6 +32,10 @@ interface DataDocEditProps {
   jsonSchema?: JSONSchema;
   data: unknown;
 }
+
+const YamlCodeEditor = lazy(() =>
+  import("@/components/code-editor/yaml").then((mod) => ({ default: mod.YamlEditor })),
+);
 
 export const clientContext: ClientContext = {
   dialogs: {
@@ -131,7 +136,7 @@ function DocEditor({
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
         {jsonSchema && (
-          <TabsContent value="visual" className="-mt-6">
+          <TabsContent value="visual">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
               defaultValue={currentValue.current.data}
@@ -143,19 +148,22 @@ function DocEditor({
               writeOnly
               readOnly={false}
             >
-              <JSONSchemaEditorContent />
+              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:px-4" />
             </JSONSchemaEditorProvider>
           </TabsContent>
         )}
         <TabsContent value="code">
-          <YamlEditorLazy
-            defaultValue={currentValue.current.data}
-            onValueChange={(value) => {
-              onSync(() => {
-                currentValue.current.data = value;
-              });
-            }}
-          />
+          <EditorSuspense>
+            <YamlCodeEditor
+              defaultValue={currentValue.current.data}
+              onValueChange={(value) => {
+                onSync(() => {
+                  currentValue.current.data = value;
+                });
+              }}
+              className="rounded-none border-l-0 border-r-0"
+            />
+          </EditorSuspense>
         </TabsContent>
       </Tabs>
 

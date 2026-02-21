@@ -170,9 +170,12 @@ export function FieldInput({
           <button
             type="button"
             onClick={() => engine.delete(fieldName)}
-            className="text-muted-foreground"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "icon-sm" }),
+              "text-muted-foreground h-auto",
+            )}
           >
-            <X className="size-4" />
+            <X />
           </button>
         )}
       </div>

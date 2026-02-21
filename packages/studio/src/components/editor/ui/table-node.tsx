@@ -498,7 +498,7 @@ export function TableCellElement({
       className={cn(
         "h-full overflow-visible border-none bg-card text-card-foreground p-0",
         element.background && "bg-(--cellBackground)",
-        isHeader && "text-left *:m-0",
+        isHeader && "text-left",
         "before:size-full",
         selected && "before:z-10 before:bg-brand/5",
         "before:absolute before:box-border before:select-none before:content-['']",
@@ -534,7 +534,7 @@ export function TableCellElement({
             <>
               <ResizeHandle
                 {...rightProps}
-                className="-top-2 -right-1 h-[calc(100%_+_8px)] w-2 hover:bg-ring/50 data-[resizing=true]:bg-ring/50"
+                className="-top-2 -right-1 h-[calc(100%+8px)] w-2 hover:bg-ring/50 data-[resizing=true]:bg-ring/50"
               />
               <ResizeHandle {...bottomProps} className="-bottom-1 h-2" />
               {!hiddenLeft && (

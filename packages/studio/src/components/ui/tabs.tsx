@@ -25,7 +25,7 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "rounded-lg border p-0.5 group-data-horizontal/tabs:h-9 group-data-vertical/tabs:rounded-xl group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
+        "group/tabs-list bg-muted text-muted-foreground flex w-fit rounded-md border overflow-hidden group-data-horizontal/tabs:h-9 group-data-vertical/tabs:rounded-xl justify-center group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
         className,
       )}
       {...props}
@@ -38,8 +38,8 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 font-medium text-sm transition-colors focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start group-data-vertical/tabs:px-2.5 group-data-vertical/tabs:py-1.5 hover:text-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0",
-        "data-active:shadow-sm data-active:bg-linear-[to_bottom] data-active:from-accent data-active:text-accent-foreground",
+        "relative inline-flex flex-1 items-center justify-center border-b-2 border-transparent gap-1.5 whitespace-nowrap px-2 py-1 font-medium text-sm transition-colors focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 hover:text-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0",
+        "data-active:border-brand data-active:text-accent-foreground",
         className,
       )}
       {...props}

@@ -21,6 +21,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cva } from "class-variance-authority";
 import { Sheet, SheetClose, SheetContent } from "./ui/sheet";
 import { buttonVariants } from "./ui/button";
+import { useHotkeys } from "platejs/react";
 
 const SidebarContext = React.createContext<{
   open: boolean;
@@ -33,6 +34,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
 
   if (isMobile !== undefined && open === null) setOpen(!isMobile);
+
+  useHotkeys(["mod+s"], (e) => {
+    setOpen((prev) => !prev);
+    e.preventDefault();
+  });
 
   return (
     <SidebarContext
@@ -209,20 +215,28 @@ function ThemeToggle() {
         className="px-1.5 text-xs h-6 rounded-lg text-muted-foreground"
         variant="ghost"
       >
-        <SelectValue />
+        <div className="flex items-center gap-1.5">
+          <SelectValue />
+        </div>
       </SelectTrigger>
       <SelectContent className="text-muted-foreground">
         <SelectItem value="light">
-          <Sun className="size-4" />
-          Light
+          <div className="flex items-center gap-1.5">
+            <Sun className="size-4" />
+            Light
+          </div>
         </SelectItem>
         <SelectItem value="dark">
-          <Moon className="size-4" fill="currentColor" />
-          Dark
+          <div className="flex items-center gap-1.5">
+            <Moon className="size-4" fill="currentColor" />
+            Dark
+          </div>
         </SelectItem>
         <SelectItem value="system">
-          <Monitor className="size-4" />
-          System
+          <div className="flex items-center gap-1.5">
+            <Monitor className="size-4" />
+            System
+          </div>
         </SelectItem>
       </SelectContent>
     </Select>

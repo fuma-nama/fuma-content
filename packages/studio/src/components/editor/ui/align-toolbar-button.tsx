@@ -16,21 +16,25 @@ import {
 
 import { ToolbarButton } from "../../ui/toolbar";
 
-const items = [
+export const alignItems = [
   {
     icon: AlignLeftIcon,
+    label: "Left",
     value: "left",
   },
   {
     icon: AlignCenterIcon,
+    label: "Center",
     value: "center",
   },
   {
     icon: AlignRightIcon,
+    label: "Right",
     value: "right",
   },
   {
     icon: AlignJustifyIcon,
+    label: "Justify",
     value: "justify",
   },
 ];
@@ -44,7 +48,7 @@ export function AlignToolbarButton(props: React.ComponentProps<typeof DropdownMe
     }) ?? "left";
 
   const [open, setOpen] = React.useState(false);
-  const IconValue = items.find((item) => item.value === value)?.icon ?? AlignLeftIcon;
+  const IconValue = alignItems.find((item) => item.value === value)?.icon ?? AlignLeftIcon;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
@@ -54,7 +58,7 @@ export function AlignToolbarButton(props: React.ComponentProps<typeof DropdownMe
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="min-w-0" align="start">
+      <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(value) => {
@@ -62,13 +66,14 @@ export function AlignToolbarButton(props: React.ComponentProps<typeof DropdownMe
             editor.tf.focus();
           }}
         >
-          {items.map(({ icon: Icon, value: itemValue }) => (
+          {alignItems.map((item) => (
             <DropdownMenuRadioItem
-              key={itemValue}
-              className="pl-2 data-[state=checked]:bg-accent"
-              value={itemValue}
+              key={item.value}
+              className="data-[state=checked]:bg-accent"
+              value={item.value}
             >
-              <Icon />
+              <item.icon className="text-muted-foreground" />
+              {item.label}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

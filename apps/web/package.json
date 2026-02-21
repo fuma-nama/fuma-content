@@ -12,25 +12,25 @@
     "@radix-ui/react-popover": "^1.1.15",
     "class-variance-authority": "^0.7.1",
     "fuma-content": "workspace:*",
-    "fumadocs-core": "16.6.0",
-    "fumadocs-ui": "16.6.0",
-    "lucide-react": "^0.563.0",
+    "fumadocs-core": "16.6.4",
+    "fumadocs-ui": "16.6.4",
+    "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "shiki": "^3.22.0",
-    "tailwind-merge": "^3.4.0",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@fuma-content/studio": "workspace:^",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4.2.0",
     "@types/mdx": "^2.0.13",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.2",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^4.2.0",
     "typescript": "^5.9.3"
   }
 }

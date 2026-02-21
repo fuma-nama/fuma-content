@@ -107,15 +107,16 @@ function CommandEmpty({
 
 function CommandGroup({
   className,
+  heading,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Group>) {
   return (
     <CommandPrimitive.Group
       data-slot="command-group"
-      className={cn(
-        "text-foreground **:[[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium",
-        className,
-      )}
+      heading={
+        heading && <p className="text-muted-foreground px-3 py-2 text-xs font-medium">{heading}</p>
+      }
+      className={cn("text-foreground overflow-hidden p-1", className)}
       {...props}
     />
   );

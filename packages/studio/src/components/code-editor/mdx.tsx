@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import "./monaco";
@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 
 export function MDXCodeEditor({
   defaultValue,
-  className,
   onValueChange,
+  ...rest
 }: {
   defaultValue: string;
-  className?: string;
   onValueChange: (value: string) => void;
+
+  className?: string;
+  wrapperProps?: ComponentProps<"div">;
 }) {
   const { resolvedTheme } = useTheme();
   const [value, setValue] = useState(defaultValue);
@@ -31,9 +33,10 @@ export function MDXCodeEditor({
           <code>{value}</code>
         </pre>
       }
+      {...rest}
       className={cn(
         "bg-secondary text-secondary-foreground overflow-hidden border rounded-lg",
-        className,
+        rest.className,
       )}
       options={{
         minimap: { enabled: false },

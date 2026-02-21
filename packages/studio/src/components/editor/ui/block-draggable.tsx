@@ -112,6 +112,7 @@ function Draggable(props: PlateElementProps) {
 
   return (
     <div
+      data-draggable=""
       className={cn(
         "relative",
         isDragging && "opacity-50",
@@ -153,7 +154,7 @@ function Draggable(props: PlateElementProps) {
 
       <div
         ref={previewRef}
-        className={cn("-left-0 absolute hidden w-full")}
+        className="left-0 absolute hidden w-full"
         style={{ top: `${-previewTop}px` }}
         contentEditable={false}
       />

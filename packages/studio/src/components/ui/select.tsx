@@ -20,7 +20,7 @@ function SelectGroup({ className, ...props }: React.ComponentProps<typeof Select
   );
 }
 
-function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
+function SelectValue(props: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
@@ -37,7 +37,6 @@ function SelectTrigger({
       data-slot="select-trigger"
       className={cn(
         "flex w-fit text-sm items-center h-9 whitespace-nowrap gap-1.5 transition-colors [&_svg]:shrink-0 outline-none hover:bg-accent",
-        "*:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5",
         variant === "default" &&
           "rounded-md border border-input bg-input/30 px-3 py-2 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
         className,
@@ -64,7 +63,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-36 origin-(--radix-select-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-100 data-closed:animate-out data-open:animate-in",
+          "data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-36 origin-(--radix-select-content-transform-origin) overflow-auto rounded-md p-1 bg-popover text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-100 data-closed:animate-out data-open:animate-in",
           position === "popper" &&
             "data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
           className,
@@ -108,14 +107,14 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "flex w-full select-none items-center gap-2.5 ps-3 p-2 text-sm outline-hidden focus:bg-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground data-disabled:opacity-50 [&_svg]:shrink-0 *:[span]:flex *:[span]:items-center *:[span]:gap-2 *:[span]:flex-1",
+        "flex w-full select-none rounded-sm items-center gap-2.5 px-2 py-1.5 text-sm outline-hidden focus:text-accent-foreground data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground data-disabled:opacity-50 [&_svg]:shrink-0",
         className,
       )}
       {...props}
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator asChild>
-        <CheckIcon className="size-4" />
+        <CheckIcon className="ms-auto text-muted-foreground size-3.5" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );
