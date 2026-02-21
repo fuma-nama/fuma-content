@@ -1,3 +1,4 @@
+import { PlatePlugin } from "platejs/react";
 import { BaseAlignKit } from "./plugins/align-base-kit";
 import { BaseBasicBlocksKit } from "./plugins/basic-blocks-base-kit";
 import { BaseBasicMarksKit } from "./plugins/basic-marks-base-kit";
@@ -16,7 +17,7 @@ import { BaseMediaKit } from "./plugins/media-base-kit";
 import { BaseSuggestionKit } from "./plugins/suggestion-base-kit";
 import { BaseTableKit } from "./plugins/table-base-kit";
 
-export const BaseEditorKit = [
+export const BaseEditorKit: PlatePlugin[] = [
   ...BaseBasicBlocksKit,
   ...BaseCodeBlockKit,
   ...BaseTableKit,
@@ -34,4 +35,4 @@ export const BaseEditorKit = [
   ...BaseSuggestionKit,
   ...MarkdownKit,
   ...MdxComponentKit,
-];
+] as PlatePlugin[];

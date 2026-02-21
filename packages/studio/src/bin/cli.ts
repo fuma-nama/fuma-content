@@ -7,7 +7,8 @@ import type { ServerBuild } from "react-router";
 import { createRequestHandler } from "@react-router/express";
 import { createRequestListener } from "@mjackson/node-fetch-server";
 import express from "express";
-import { Server } from "@hocuspocus/server";
+import expressWebsockets from "express-ws";
+import { createHocuspocus } from "./hocuspocus";
 
 Object.assign(process.env, {
   NODE_ENV: process.env.NODE_ENV ?? "production",
@@ -72,16 +73,8 @@ async function run() {
     build = buildModule as ServerBuild;
   }
 
-  let app = express();
-  const hocuspocus =
-    process.env.VITE_STUDIO_YJS === "1"
-      ? new Server({
-          name: "hocuspocus",
-          quiet: true,
-          port: 8888, // TODO: allow custom port option
-        })
-      : null;
-
+  const { app } = expressWebsockets(express());
+  createHocuspocus(app);
   app.disable("x-powered-by");
 
   app.use(
@@ -110,7 +103,6 @@ async function run() {
     console.log(`[started]`);
   }
 
-  await hocuspocus?.listen();
   const server = process.env.HOST
     ? app.listen(port, process.env.HOST, onListen)
     : app.listen(port, onListen);
@@ -118,6 +110,5 @@ async function run() {
   for (const signal of ["SIGTERM", "SIGINT"])
     process.once(signal, () => {
       server.close(console.error);
-      void hocuspocus?.destroy();
     });
 }

@@ -17,9 +17,9 @@ export function RemoteCursorOverlay() {
 }
 
 function RemoteCursorOverlayContent() {
-  const containerRef: any = useEditorContainerRef();
+  const containerRef = useEditorContainerRef();
   const [cursors] = useRemoteCursorOverlayPositions<CursorData>({
-    containerRef,
+    containerRef: containerRef as never,
   });
 
   return (
@@ -60,45 +60,21 @@ type CursorData = {
   name: string;
 };
 
-const cursorOpacity = 0.7;
-const hoverOpacity = 1;
-
 function Caret({
   caretPosition,
   data,
 }: Pick<CursorOverlayData<CursorData>, "caretPosition" | "data">) {
-  const [isHover, setIsHover] = React.useState(false);
-
-  const handleMouseEnter = () => {
-    setIsHover(true);
-  };
-  const handleMouseLeave = () => {
-    setIsHover(false);
-  };
-  const caretStyle: React.CSSProperties = {
-    ...caretPosition,
-    background: data?.color,
-    opacity: cursorOpacity,
-    transition: "opacity 0.2s",
-  };
-  const caretStyleHover = { ...caretStyle, opacity: hoverOpacity };
-
-  const labelStyle: React.CSSProperties = {
-    background: data?.color,
-    opacity: cursorOpacity,
-    transform: "translateY(-100%)",
-    transition: "opacity 0.2s",
-  };
-  const labelStyleHover = { ...labelStyle, opacity: hoverOpacity };
-
   return (
-    <div className="absolute w-0.5" style={isHover ? caretStyleHover : caretStyle}>
-      <div
-        className="absolute top-0 whitespace-nowrap rounded rounded-bl-none px-1.5 py-0.5 text-white text-xs"
-        style={isHover ? labelStyleHover : labelStyle}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
+    <div
+      className="absolute w-0.5 -translate-y-full bg-(--cursor-color,--color-primary)"
+      style={
+        {
+          "--cursor-color": data?.color,
+          ...caretPosition,
+        } as object
+      }
+    >
+      <div className="absolute top-0 whitespace-nowrap rounded rounded-bl-none px-1.5 py-0.5 text-white text-xs bg-(--cursor-color,--color-primary)">
         {data?.name}
       </div>
     </div>

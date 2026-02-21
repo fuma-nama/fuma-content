@@ -3,33 +3,15 @@ import { EditorKit } from "./editor-kit";
 import { RemoteCursorOverlay } from "./ui/remote-cursor-overlay";
 import type { PlatePlugin } from "platejs/react";
 
-export const useYjs = import.meta.env.VITE_STUDIO_YJS === "1";
-
 export function createEditorKit(documentId: string): PlatePlugin[] {
-  return [
-    ...EditorKit,
-    YjsPlugin.configure({
-      render: {
-        afterEditable: RemoteCursorOverlay,
-      },
-      options: {
-        // Configure local user cursor appearance
-        cursors: {
-          data: {
-            name: "User Name",
-            color: "#aabbcc",
-          },
-        },
-        providers: [
-          {
-            type: "hocuspocus",
-            options: {
-              name: documentId,
-              url: "ws://localhost:8888",
-            },
-          },
-        ],
-      },
-    }),
-  ] as PlatePlugin[];
+  return [...EditorKit] as PlatePlugin[];
+}
+
+export function getUrl() {
+  if (import.meta.env.DEV) return "ws://localhost:8080/hocuspocus";
+
+  if (typeof window === "undefined") return "";
+  const url = new URL("/hocuspocus", window.location.href);
+  url.protocol = url.protocol === "https" ? "wss" : "ws";
+  return url.href;
 }

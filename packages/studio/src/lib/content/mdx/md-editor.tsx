@@ -1,14 +1,13 @@
 "use client";
 
 import { MarkdownPlugin } from "@platejs/markdown";
-import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { Plate, type PlateEditor, usePlateEditor, usePluginOption } from "platejs/react";
+import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
 import { YjsPlugin } from "@platejs/yjs/react";
-import { createEditorKit, useYjs } from "@/components/editor/yjs";
+import { getUrl } from "@/components/editor/yjs";
 import { EditorKit } from "@/components/editor/editor-kit";
-import type { Value } from "platejs";
-import { use } from "react";
+import { RemoteCursorOverlay } from "@/components/editor/ui/remote-cursor-overlay";
 
 enum ConnectionStatus {
   Initial,
@@ -16,7 +15,6 @@ enum ConnectionStatus {
   Connected,
 }
 
-const promiseMap: Record<string, Promise<Value>> = {};
 export function MDXEditor({
   documentId,
   defaultValue,
@@ -30,45 +28,62 @@ export function MDXEditor({
 }) {
   // tract the connection status of editor, can be a ref because state update is already sent by `editor`
   const connectionRef = useRef(ConnectionStatus.Initial);
+  // it is found that re-mounting the entire `<Plate />` can fix the issue where using Y.js with Plate.js would cause editor to render nothing.
+  // there is something wrong with upstream integration, but it works for now.
+  const [rootId, setRootId] = useState(0);
   const editor = usePlateEditor({
-    plugins: useYjs ? useMemo(() => createEditorKit(documentId), [documentId]) : EditorKit,
+    plugins: useMemo(
+      () => [
+        ...EditorKit,
+        YjsPlugin.configure({
+          render: {
+            afterEditable: RemoteCursorOverlay,
+          },
+          options: {
+            // Configure local user cursor appearance
+            cursors: {
+              data: {
+                name: "User Name",
+                color: "#aabbcc",
+              },
+            },
+            providers: [
+              {
+                type: "hocuspocus",
+                options: {
+                  name: documentId,
+                  url: getUrl(),
+                },
+              },
+            ],
+          },
+        }),
+      ],
+      [documentId],
+    ),
     skipInitialization: true,
   });
 
   useEffect(() => {
-    if (!useYjs) return;
-    const yjsApi = editor.getApi(YjsPlugin).yjs;
-
     if (connectionRef.current === ConnectionStatus.Initial) {
       connectionRef.current = ConnectionStatus.Connecting;
-
-      void yjsApi.init({
+      void editor.getApi(YjsPlugin).yjs.init({
         id: documentId,
         value: editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue),
         onReady() {
+          setRootId((prev) => prev + 1);
           connectionRef.current = ConnectionStatus.Connected;
         },
       });
     }
 
     return () => {
-      if (connectionRef.current === ConnectionStatus.Connected) yjsApi.destroy();
+      if (connectionRef.current === ConnectionStatus.Connected) {
+        connectionRef.current = ConnectionStatus.Initial;
+        editor.getApi(YjsPlugin).yjs.destroy();
+      }
     };
-  }, [editor]);
-
-  if (!useYjs && connectionRef.current === ConnectionStatus.Initial) {
-    connectionRef.current = ConnectionStatus.Connecting;
-
-    const value = use(
-      (promiseMap[defaultValue] ??= new Promise((res) => {
-        res(editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue));
-      })),
-    );
-    editor.tf.init({
-      value,
-    });
-    connectionRef.current = ConnectionStatus.Connected;
-  }
+  }, [documentId, editor]);
 
   return (
     <Plate
@@ -83,11 +98,13 @@ export function MDXEditor({
           });
       }}
     >
-      {children ?? (
-        <MDXEditorContainer>
-          <MDXEditorView />
-        </MDXEditorContainer>
-      )}
+      <Fragment key={rootId}>
+        {children ?? (
+          <MDXEditorContainer>
+            <MDXEditorView />
+          </MDXEditorContainer>
+        )}
+      </Fragment>
     </Plate>
   );
 }

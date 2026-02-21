@@ -3,7 +3,6 @@
 import { insertCallout } from "@platejs/callout";
 import { insertCodeBlock, toggleCodeBlock } from "@platejs/code-block";
 import { insertDate } from "@platejs/date";
-import { insertColumnGroup, toggleColumnGroup } from "@platejs/layout";
 import { triggerFloatingLink } from "@platejs/link/react";
 import { insertEquation, insertInlineEquation } from "@platejs/math";
 import {
@@ -16,8 +15,6 @@ import { SuggestionPlugin } from "@platejs/suggestion/react";
 import { TablePlugin } from "@platejs/table/react";
 import { KEYS, type NodeEntry, type Path, PathApi, type TElement } from "platejs";
 import type { PlateEditor } from "platejs/react";
-
-const ACTION_THREE_COLUMNS = "action_three_columns";
 
 const insertList = (editor: PlateEditor, type: string) => {
   editor.tf.insertNodes(
@@ -33,7 +30,6 @@ const insertBlockMap: Record<string, (editor: PlateEditor, type: string) => void
   [KEYS.listTodo]: insertList,
   [KEYS.ol]: insertList,
   [KEYS.ul]: insertList,
-  [ACTION_THREE_COLUMNS]: (editor) => insertColumnGroup(editor, { columns: 3, select: true }),
   [KEYS.audio]: (editor) => insertAudioPlaceholder(editor, { select: true }),
   [KEYS.callout]: (editor) => insertCallout(editor, { select: true }),
   [KEYS.codeBlock]: (editor) => insertCodeBlock(editor, { select: true }),
@@ -140,7 +136,6 @@ const setBlockMap: Record<
   [KEYS.listTodo]: setList,
   [KEYS.ol]: setList,
   [KEYS.ul]: setList,
-  [ACTION_THREE_COLUMNS]: (editor) => toggleColumnGroup(editor, { columns: 3 }),
   [KEYS.codeBlock]: (editor) => toggleCodeBlock(editor),
 };
 
