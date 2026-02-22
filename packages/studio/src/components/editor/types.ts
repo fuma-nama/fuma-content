@@ -1,5 +1,3 @@
-"use client";
-
 import type {
   EmptyText,
   KEYS,
@@ -22,8 +20,10 @@ import type {
   TTextAlignProps,
 } from "platejs";
 import type { MdxJsxAttribute, MdxJsxExpressionAttribute } from "mdast-util-mdx";
-import type { ELEMENT_UNKNOWN_NODE, ELEMENT_MDX_COMPONENT } from "./plugins/mdx-component-kit";
 import type { BlockContent } from "mdast";
+
+export const ELEMENT_MDX_COMPONENT = "mdx-component" as const;
+export const ELEMENT_UNKNOWN_NODE = "unknown-md-node" as const;
 
 export interface MyBlockElement extends TElement, TListProps {
   id?: string;

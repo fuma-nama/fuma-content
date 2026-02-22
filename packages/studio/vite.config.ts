@@ -15,7 +15,6 @@ export default defineConfig({
     rsc(),
     babel({
       filter: /\.[jt]sx?$/,
-      exclude: ["@monaco-editor/react"],
       babelConfig: {
         presets: ["@babel/preset-typescript"],
         plugins: [["babel-plugin-react-compiler", reactCompilerOptions]],
@@ -27,7 +26,9 @@ export default defineConfig({
     port: 3000,
   },
   resolve: {
-    external: ["fuma-content"],
-    noExternal: ["katex"],
+    external: ["fuma-content", "platejs"],
+  },
+  optimizeDeps: {
+    exclude: ["@tanstack/react-query"],
   },
 });

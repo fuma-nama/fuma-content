@@ -5,6 +5,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import grayMatter from "gray-matter";
 import { getJSONSchema } from "fuma-content";
+import * as Y from "yjs";
+import { slateNodesToInsertDelta, yTextToSlateElement } from "@slate-yjs/core";
+import type { SlateEditor } from "platejs";
 
 export interface MDXStudioDocument extends FileStudioDocument {
   isMDX: true;
@@ -25,8 +28,22 @@ export function mdxDocument(
   };
 }
 
+let editor: Promise<SlateEditor> | null = null;
+
+async function getEditor(): Promise<SlateEditor> {
+  editor ??= (async () => {
+    const { createSlateEditor } = await import("platejs");
+    const { MarkdownKit } = await import("@/components/editor/plugins/markdown-kit");
+
+    return createSlateEditor({
+      plugins: MarkdownKit,
+    });
+  })();
+  return editor;
+}
+
 export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument> {
-  return {
+  const hook: StudioHook<MDXStudioDocument> = {
     async getDocuments() {
       collection.invalidateCache();
       const files = await collection.getFiles();
@@ -75,5 +92,38 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
         }
       },
     },
+    hocuspocus: {
+      async loadDocument(_payload, { documentId }) {
+        const doc = await hook.getDocument(documentId);
+        if (!doc) return;
+        const content = await doc.read();
+        if (content === undefined) return;
+
+        const ydoc = new Y.Doc();
+        const editor = await getEditor();
+        const { MarkdownPlugin } = await import("@platejs/markdown");
+        const value = editor.getPlugin(MarkdownPlugin).api.markdown.deserialize(content);
+        ydoc
+          .get("content", Y.XmlText)
+          .applyDelta(slateNodesToInsertDelta(value), { sanitize: false });
+        return ydoc;
+      },
+      async storeDocument(payload, { documentId }) {
+        const doc = await hook.getDocument(documentId);
+        if (!doc) return;
+
+        const text = payload.document.get("content", Y.XmlText);
+        const element = yTextToSlateElement(text);
+        const editor = await getEditor();
+        const { MarkdownPlugin } = await import("@platejs/markdown");
+        await doc.write(
+          editor
+            .getPlugin(MarkdownPlugin)
+            .api.markdown.serialize({ value: element.children as never }),
+        );
+      },
+    },
   };
+
+  return hook;
 }

@@ -458,6 +458,9 @@ importers:
       '@react-router/express':
         specifier: ^7.13.0
         version: 7.13.0(express@5.2.1)(react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)
+      '@slate-yjs/core':
+        specifier: ^1.0.2
+        version: 1.0.2(slate@0.120.0)(yjs@13.6.29)
       '@slate-yjs/react':
         specifier: 1.1.0
         version: 1.1.0(@slate-yjs/core@1.0.2(slate@0.120.0)(yjs@13.6.29))(react@19.2.4)(slate-react@0.120.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(slate-dom@0.119.0(slate@0.120.0))(slate@0.120.0))(slate@0.120.0)(yjs@13.6.29)
@@ -470,6 +473,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.21
         version: 5.90.21(react@19.2.4)
+      '@udecode/utils':
+        specifier: ^52.0.1
+        version: 52.0.1
       '@uploadthing/react':
         specifier: 7.3.3
         version: 7.3.3(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3))(react@19.2.4)(uploadthing@7.7.4(express@5.2.1)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3))(tailwindcss@4.2.0))
@@ -482,9 +488,6 @@ importers:
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -593,8 +596,11 @@ importers:
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      y-protocols:
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.29)
       yjs:
-        specifier: ^13.6.29
+        specifier: 13.6.29
         version: 13.6.29
       zod:
         specifier: ^4.3.6
@@ -645,6 +651,9 @@ importers:
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
+      katex:
+        specifier: ^0.16.28
+        version: 0.16.28
       mdast-util-mdx:
         specifier: ^3.0.0
         version: 3.0.0
@@ -5483,8 +5492,8 @@ packages:
     resolution: {integrity: sha512-XCHRdUw4lf3SKBaJe4EvgqIuWwkPSo9XoeO8GjQW94Bp7TWv9hNhzZjZ+OH9yf1UmLygb7DIT5GSFQiyt16zYg==}
     hasBin: true
 
-  katex@0.16.27:
-    resolution: {integrity: sha512-aeQoDkuRWSqQN6nSvVCEFvfXdqo1OQiCmmW1kc9xSdjutPv7BGO7pqY9sQRJpMOGrEdfDgF2TfRXe5eUAD2Waw==}
+  katex@0.16.28:
+    resolution: {integrity: sha512-YHzO7721WbmAL6Ov1uzN/l5mY5WWWhJBSW+jq4tkfZfsxmo1hu6frS0EOswvjBUnWE6NtjEs48SFn5CQESRLZg==}
     hasBin: true
 
   kind-of@6.0.3:
@@ -12655,7 +12664,7 @@ snapshots:
     dependencies:
       commander: 8.3.0
 
-  katex@0.16.27:
+  katex@0.16.28:
     dependencies:
       commander: 8.3.0
 
@@ -13070,7 +13079,7 @@ snapshots:
     dependencies:
       '@types/katex': 0.16.7
       devlop: 1.1.0
-      katex: 0.16.27
+      katex: 0.16.28
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1

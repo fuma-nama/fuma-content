@@ -11,6 +11,7 @@ import { Outlet } from "react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { useMounted } from "@/hooks/use-mounted";
 import type { ReactNode } from "react";
+import { WebsocketProvider } from "@/lib/yjs/provider";
 
 export async function loader() {
   const core = await getCore();
@@ -43,12 +44,14 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
     <ClientContextProvider contexts={loaderData.clientContexts}>
       <ClientBoundary>
         <HydrationBoundary state={loaderData.queryState as DehydratedState}>
-          <SidebarProvider>
-            <AppSidebar>
-              <Outlet />
-            </AppSidebar>
-            <Toaster />
-          </SidebarProvider>
+          <WebsocketProvider>
+            <SidebarProvider>
+              <AppSidebar>
+                <Outlet />
+              </AppSidebar>
+              <Toaster />
+            </SidebarProvider>
+          </WebsocketProvider>
         </HydrationBoundary>
       </ClientBoundary>
     </ClientContextProvider>

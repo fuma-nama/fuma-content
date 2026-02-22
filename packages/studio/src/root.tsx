@@ -1,8 +1,7 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, ScrollRestoration } from "react-router";
-
 import type { Route } from "./+types/root";
-import "./styles/root.css";
 import { Providers } from "./components/providers";
+import "./styles/root.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -19,7 +18,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

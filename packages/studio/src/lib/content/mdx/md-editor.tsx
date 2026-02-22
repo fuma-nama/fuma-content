@@ -1,33 +1,18 @@
 "use client";
 
-import { MarkdownPlugin } from "@platejs/markdown";
-import { Plate, type PlateEditor, usePlateEditor } from "platejs/react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { Plate, usePlateEditor } from "platejs/react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
 import { YjsPlugin } from "@platejs/yjs/react";
-import { getUrl } from "@/components/editor/yjs";
 import { EditorKit } from "@/components/editor/editor-kit";
 import { RemoteCursorOverlay } from "@/components/editor/ui/remote-cursor-overlay";
+import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
+import * as Y from "yjs";
 
-enum ConnectionStatus {
-  Initial,
-  Connecting,
-  Connected,
-}
-
-export function MDXEditor({
-  documentId,
-  defaultValue,
-  onUpdate,
-  children,
-}: {
-  documentId: string;
-  defaultValue: string;
-  onUpdate?: (options: { editor: PlateEditor; getMarkdown: () => string }) => void;
-  children?: (ctx: { ready: boolean }) => ReactNode;
-}) {
-  // tract the connection status of editor, can be a ref because state update is already sent by `editor`
-  const connectionRef = useRef(ConnectionStatus.Initial);
+export function MDXEditor({ children }: { children?: (ctx: { ready: boolean }) => ReactNode }) {
+  const provider = useHocuspocusProvider();
+  const name = provider.configuration.name;
+  const isSync = useIsSync();
   const [ready, setReady] = useState(false);
   const editor = usePlateEditor({
     plugins: useMemo(
@@ -38,71 +23,49 @@ export function MDXEditor({
             afterEditable: RemoteCursorOverlay,
           },
           options: {
-            // Configure local user cursor appearance
+            // TODO: auth system
             cursors: {
               data: {
                 name: "User Name",
                 color: "#aabbcc",
               },
             },
-            providers: [
-              {
-                type: "hocuspocus",
-                options: {
-                  name: documentId,
-                  url: getUrl(),
-                },
-              },
-            ],
+            _isConnected: true,
+            providers: [provider],
+            awareness: provider.awareness,
+            ydoc: provider.document,
+            sharedType: provider.document.get("content", Y.XmlText),
           },
         }),
       ],
-      [documentId],
+      [provider],
     ),
     skipInitialization: true,
   });
 
   useEffect(() => {
-    if (connectionRef.current === ConnectionStatus.Initial) {
-      connectionRef.current = ConnectionStatus.Connecting;
-      void editor.getApi(YjsPlugin).yjs.init({
-        id: documentId,
-        async value() {
-          return editor.getApi(MarkdownPlugin).markdown.deserialize(defaultValue);
-        },
-        onReady({ value }) {
-          console.log(value);
-          connectionRef.current = ConnectionStatus.Connected;
-          setReady(true);
-        },
-      });
-    }
+    if (!isSync || ready) return;
 
-    return () => {
-      if (connectionRef.current === ConnectionStatus.Connected) {
-        connectionRef.current = ConnectionStatus.Initial;
-        editor.getApi(YjsPlugin).yjs.destroy();
-      }
-    };
-  }, [documentId, editor]);
+    void editor
+      .getApi(YjsPlugin)
+      .yjs.init({
+        id: name,
+        autoConnect: false,
+        value: null,
+      })
+      .then(() => {
+        setReady(true);
+      });
+  }, [name, editor, ready, isSync]);
+
+  editor.setOption(YjsPlugin, "_isConnected", provider.isConnected);
+  editor.setOption(YjsPlugin, "_isSynced", isSync);
 
   return (
-    <Plate
-      editor={editor}
-      onValueChange={() => {
-        if (connectionRef.current === ConnectionStatus.Connected)
-          onUpdate?.({
-            editor,
-            getMarkdown() {
-              return editor.getApi(MarkdownPlugin).markdown.serialize();
-            },
-          });
-      }}
-    >
+    <Plate editor={editor}>
       {children
         ? children({ ready })
-        : // it is found that re-rendering the entire `<MDXEditorView />` can fix the issue where using Y.js with Plate.js would cause editor to render nothing.
-          ready && (
+        : ready && (
             <MDXEditorContainer>
               <MDXEditorView />
             </MDXEditorContainer>

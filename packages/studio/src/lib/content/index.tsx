@@ -5,6 +5,7 @@ import { MDXCollection } from "fuma-content/collections/mdx";
 import { mdxHook } from "./mdx";
 import { DataCollection } from "fuma-content/collections/data";
 import { dataHook } from "./data";
+import type { onLoadDocumentPayload, onStoreDocumentPayload } from "@hocuspocus/server";
 
 export type Awaitable<T> = T | Promise<T>;
 
@@ -47,6 +48,21 @@ export interface StudioHook<Doc extends StudioDocument = StudioDocument> {
 
   actions?: {
     deleteDocument?: (options: { collection: Collection; document: Doc }) => Awaitable<void>;
+  };
+
+  hocuspocus?: {
+    /**
+     * @param payload
+     * @returns true if handled, otherwise fallback to next.
+     */
+    storeDocument?: (
+      payload: onStoreDocumentPayload,
+      ctx: { collectionId: string; documentId: string },
+    ) => Awaitable<void>;
+    loadDocument?: (
+      payload: onLoadDocumentPayload,
+      ctx: { collectionId: string; documentId: string },
+    ) => Awaitable<object | undefined>;
   };
 }
 

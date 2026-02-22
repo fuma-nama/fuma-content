@@ -85,7 +85,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
             y: event.clientY,
           };
         }}
-        render={<div className="w-full">{children}</div>}
+        render={<div className="flex flex-col flex-1">{children}</div>}
       />
 
       <ContextMenuContent

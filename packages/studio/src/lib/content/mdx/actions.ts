@@ -1,32 +1,11 @@
 "use server";
-import { getCore, requireDocument } from "@/lib/config";
+// TODO: check security when implementing auth system
+import { getCore } from "@/lib/config";
 import type { DocumentItem } from "@/lib/data/store";
 import { studioHook } from "..";
 import { MDXCollection } from "fuma-content/collections/mdx";
-import grayMatter from "gray-matter";
-import { removeUndefined } from "@/lib/utils/remove-undefined";
-import { isMDXDocument } from ".";
 import { createFileDocument } from "../file";
-import z from "zod";
-
-const saveSchema = z.object({
-  collectionId: z.string(),
-  documentId: z.string(),
-  frontmatter: z.record(z.string(), z.unknown()).optional(),
-  content: z.string(),
-});
-
-// TODO: check security when implementing auth system
-export async function saveMDXDocument(input: z.input<typeof saveSchema>) {
-  const { collectionId, documentId, frontmatter, content } = saveSchema.parse(input);
-  const { document: doc } = await requireDocument(collectionId, documentId);
-
-  if (isMDXDocument(doc)) {
-    await doc.write(
-      frontmatter ? grayMatter.stringify(content, removeUndefined(frontmatter, true)) : content,
-    );
-  }
-}
+import { z } from "zod/mini";
 
 const createSchema = z.object({
   collectionId: z.string(),

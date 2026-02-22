@@ -1,6 +1,6 @@
 "use client";
 
-import emojiMartData from "@emoji-mart/data";
+import emojiMartData from "@emoji-mart/data/sets/15/native.json" with { type: "json" };
 import { EmojiInputPlugin, EmojiPlugin } from "@platejs/emoji/react";
 
 import { EmojiInputElement } from "@/components/editor/ui/emoji-node";

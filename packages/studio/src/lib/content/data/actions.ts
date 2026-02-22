@@ -5,7 +5,7 @@ import { studioHook } from "..";
 import { createFileDocument } from "../file";
 import { encoderDecoders, getEncoderDecoder, isDataDocument } from ".";
 import { DataCollection } from "fuma-content/collections/data";
-import z from "zod";
+import { z } from "zod/mini";
 
 const saveSchema = z.object({
   collectionId: z.string(),

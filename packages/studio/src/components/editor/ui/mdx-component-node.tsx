@@ -43,7 +43,7 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="p-2"
+            className="p-2.5"
             onCloseAutoFocus={() => {
               const v = valueRef.current;
               if (!v) return;
@@ -62,7 +62,7 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
                 valueRef.current = v;
               }}
             >
-              <JSONSchemaEditorContent />
+              <JSONSchemaEditorContent className="[&>div]:bg-background" />
             </JSONSchemaEditorProvider>
           </PopoverContent>
         </Popover>

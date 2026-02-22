@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { useLiveQuery, eq } from "@tanstack/react-db";
 import { collection, documentCollection } from "@/lib/data/store";
 import { useCreateDocumentDialog } from "@/components/collection/client";
-import { ChevronRight, PlusIcon, ViewIcon } from "lucide-react";
+import { PlusIcon, ViewIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DocumentActionsContext,

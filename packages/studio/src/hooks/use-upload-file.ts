@@ -5,7 +5,7 @@ import type { ClientUploadedFileData, UploadFilesOptions } from "uploadthing/typ
 
 import { generateReactHelpers } from "@uploadthing/react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { $ZodError } from "zod/v4/core";
 
 export type UploadedFile<T = unknown> = ClientUploadedFileData<T>;
 
@@ -103,11 +103,10 @@ export const { uploadFiles, useUploadThing } = generateReactHelpers<OurFileRoute
 export function getErrorMessage(err: unknown) {
   const unknownError = "Something went wrong, please try again later.";
 
-  if (err instanceof z.ZodError) {
-    const errors = err.issues.map((issue) => issue.message);
-
-    return errors.join("\n");
+  if (err instanceof $ZodError) {
+    return err.issues.map((issue) => issue.message).join("\n");
   }
+
   if (err instanceof Error) {
     return err.message;
   }

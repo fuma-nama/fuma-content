@@ -1,8 +1,6 @@
 import { createPlatePlugin } from "platejs/react";
 import { MdxComponent, UnknownNodeComponent } from "../ui/mdx-component-node";
-
-export const ELEMENT_MDX_COMPONENT = "mdx-component" as const;
-export const ELEMENT_UNKNOWN_NODE = "unknown-md-node" as const;
+import { ELEMENT_MDX_COMPONENT, ELEMENT_UNKNOWN_NODE } from "../types";
 
 const MdxComponentPlugin = createPlatePlugin({
   key: ELEMENT_MDX_COMPONENT,
@@ -20,6 +18,9 @@ const MdxComponentPlugin = createPlatePlugin({
     delete: {
       empty: "reset",
     },
+    selection: {
+      affinity: "directional",
+    },
   },
 });
 
@@ -36,13 +37,10 @@ const UnknownNodePlugin = createPlatePlugin({
     break: {
       default: "exit",
     },
+    selection: {
+      affinity: "directional",
+    },
   },
 });
 
 export const MdxComponentKit = [MdxComponentPlugin, UnknownNodePlugin];
-
-export function isPropValueSupported(value: unknown) {
-  return (
-    typeof value === "string" || typeof value === "number" || value === null || value === undefined
-  );
-}

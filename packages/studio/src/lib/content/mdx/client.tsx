@@ -7,16 +7,17 @@ import {
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { lazy, useRef } from "react";
-import { createMDXDocument, saveMDXDocument } from "./actions";
+import { lazy } from "react";
+import { createMDXDocument } from "./actions";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
-import { StatusBar } from "@/components/edit/status-bar";
-import { useSync } from "@/components/edit/use-sync";
 import { EditorFallback, EditorSuspense } from "@/components/code-editor/suspense";
+import { HocuspocusContextProvider } from "@/lib/yjs/provider";
+import { encodeDocId } from "@/lib/yjs";
+import { StatusBar } from "@/components/edit/status-bar";
 
 const MdxCodeEditor = lazy(() =>
   import("@/components/code-editor/mdx").then((mod) => ({ default: mod.MDXCodeEditor })),
@@ -84,22 +85,8 @@ export function MDXDocUpdateEditor({
   frontmatter: defaultFrontmatter = {},
   jsonSchema,
 }: MDXDocUpdateEditorProps) {
-  const currentValue = useRef<{ frontmatter: Record<string, unknown>; content: string }>({
-    frontmatter: defaultFrontmatter,
-    content: defaultContent,
-  });
-  const { onSync, status } = useSync(() => {
-    const { frontmatter, content } = currentValue.current;
-    return saveMDXDocument({
-      collectionId,
-      documentId,
-      frontmatter,
-      content,
-    });
-  });
-
   return (
-    <>
+    <HocuspocusContextProvider name={encodeDocId(collectionId, documentId)}>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4">
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
@@ -109,12 +96,7 @@ export function MDXDocUpdateEditor({
           <TabsContent value="visual">
             <JSONSchemaEditorProvider
               schema={jsonSchema}
-              defaultValue={currentValue.current.frontmatter}
-              onValueChange={(value) => {
-                onSync(() => {
-                  currentValue.current.frontmatter = value as Record<string, unknown>;
-                });
-              }}
+              defaultValue={defaultFrontmatter}
               writeOnly
               readOnly={false}
             >
@@ -125,13 +107,8 @@ export function MDXDocUpdateEditor({
         <TabsContent value="code">
           <EditorSuspense>
             <YamlCodeEditor
-              defaultValue={currentValue.current.frontmatter}
+              defaultValue={defaultFrontmatter}
               className="rounded-none border-l-0 border-r-0"
-              onValueChange={(value) => {
-                onSync(() => {
-                  currentValue.current.frontmatter = value as Record<string, unknown>;
-                });
-              }}
             />
           </EditorSuspense>
         </TabsContent>
@@ -142,15 +119,7 @@ export function MDXDocUpdateEditor({
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
         <TabsContent value="visual" className="flex flex-col size-full">
-          <MDXEditor
-            documentId={documentId}
-            defaultValue={currentValue.current.content}
-            onUpdate={(options) => {
-              onSync(() => {
-                currentValue.current.content = options.getMarkdown();
-              });
-            }}
-          >
+          <MDXEditor>
             {({ ready }) =>
               ready ? (
                 <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
@@ -165,21 +134,16 @@ export function MDXDocUpdateEditor({
         <TabsContent value="code" className="flex flex-col size-full">
           <EditorSuspense>
             <MdxCodeEditor
-              defaultValue={currentValue.current.content}
+              defaultValue={defaultContent}
               className="rounded-none border-0 border-t flex-1"
               wrapperProps={{
                 className: "flex-1",
-              }}
-              onValueChange={(v) => {
-                onSync(() => {
-                  currentValue.current.content = v;
-                });
               }}
             />
           </EditorSuspense>
         </TabsContent>
       </Tabs>
-      <StatusBar status={status} />
-    </>
+      <StatusBar />
+    </HocuspocusContextProvider>
   );
 }

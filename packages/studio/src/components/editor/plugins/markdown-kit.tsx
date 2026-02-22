@@ -7,13 +7,13 @@ import {
 import { getPluginType, KEYS, TText } from "platejs";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { visit } from "unist-util-visit";
 import {
   ELEMENT_MDX_COMPONENT,
   ELEMENT_UNKNOWN_NODE,
-  isPropValueSupported,
-} from "./mdx-component-kit";
-import { visit } from "unist-util-visit";
-import type { MdxComponentElement, UnknownNode } from "../types";
+  type MdxComponentElement,
+  type UnknownNode,
+} from "../types";
 import type { Transformer } from "unified";
 import type { BlockContent, Root } from "mdast";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx";
@@ -72,7 +72,7 @@ export const MarkdownKit = [
               type: ELEMENT_MDX_COMPONENT,
             };
             for (const attr of mdastNode.attributes) {
-              if (attr.type === "mdxJsxAttribute" && isPropValueSupported(attr.value)) {
+              if (attr.type === "mdxJsxAttribute" && isMdxPropValueSupported(attr.value)) {
                 element.customProps[attr.name] = attr.value;
               } else {
                 element.unserializableProps.push(attr);
@@ -164,4 +164,10 @@ function remarkRefactorCustomElements(): Transformer<Root, Root> {
       },
     );
   };
+}
+
+export function isMdxPropValueSupported(value: unknown) {
+  return (
+    typeof value === "string" || typeof value === "number" || value === null || value === undefined
+  );
 }
