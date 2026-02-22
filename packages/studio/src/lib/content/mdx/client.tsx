@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
 import { StatusBar } from "@/components/edit/status-bar";
 import { useSync } from "@/components/edit/use-sync";
-import { EditorSuspense } from "@/components/code-editor/suspense";
+import { EditorFallback, EditorSuspense } from "@/components/code-editor/suspense";
 
 const MdxCodeEditor = lazy(() =>
   import("@/components/code-editor/mdx").then((mod) => ({ default: mod.MDXCodeEditor })),
@@ -101,7 +101,7 @@ export function MDXDocUpdateEditor({
   return (
     <>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4">
-        <TabsList className="mx-1.5">
+        <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
@@ -118,7 +118,7 @@ export function MDXDocUpdateEditor({
               writeOnly
               readOnly={false}
             >
-              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:px-4" />
+              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
             </JSONSchemaEditorProvider>
           </TabsContent>
         )}
@@ -137,26 +137,30 @@ export function MDXDocUpdateEditor({
         </TabsContent>
       </Tabs>
       <Tabs defaultValue="visual" className="mt-4 flex-1">
-        <TabsList className="mx-1.5">
+        <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
         <TabsContent value="visual" className="flex flex-col size-full">
-          <EditorSuspense>
-            <MDXEditor
-              documentId={documentId}
-              defaultValue={currentValue.current.content}
-              onUpdate={(options) => {
-                onSync(() => {
-                  currentValue.current.content = options.getMarkdown();
-                });
-              }}
-            >
-              <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
-                <MDXEditorView />
-              </MDXEditorContainer>
-            </MDXEditor>
-          </EditorSuspense>
+          <MDXEditor
+            documentId={documentId}
+            defaultValue={currentValue.current.content}
+            onUpdate={(options) => {
+              onSync(() => {
+                currentValue.current.content = options.getMarkdown();
+              });
+            }}
+          >
+            {({ ready }) =>
+              ready ? (
+                <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
+                  <MDXEditorView />
+                </MDXEditorContainer>
+              ) : (
+                <EditorFallback />
+              )
+            }
+          </MDXEditor>
         </TabsContent>
         <TabsContent value="code" className="flex flex-col size-full">
           <EditorSuspense>

@@ -131,7 +131,7 @@ function DocEditor({
   return (
     <>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
-        <TabsList>
+        <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
         </TabsList>
@@ -148,7 +148,7 @@ function DocEditor({
               writeOnly
               readOnly={false}
             >
-              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:px-4" />
+              <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
             </JSONSchemaEditorProvider>
           </TabsContent>
         )}

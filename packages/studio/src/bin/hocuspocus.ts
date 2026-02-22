@@ -9,6 +9,9 @@ export function createHocuspocus(app: Application) {
     async onLoadDocument() {
       return new Doc();
     },
+    async onStoreDocument(data) {
+      console.log(data.document);
+    },
   });
   app.ws("/hocuspocus", (websocket, request) => {
     server.hocuspocus.handleConnection(websocket, request);

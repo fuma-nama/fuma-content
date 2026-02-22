@@ -66,7 +66,7 @@ function Caret({
 }: Pick<CursorOverlayData<CursorData>, "caretPosition" | "data">) {
   return (
     <div
-      className="absolute w-0.5 -translate-y-full bg-(--cursor-color,--color-primary)"
+      className="absolute w-0.5 bg-(--cursor-color,--color-primary)"
       style={
         {
           "--cursor-color": data?.color,
@@ -74,7 +74,7 @@ function Caret({
         } as object
       }
     >
-      <div className="absolute top-0 whitespace-nowrap rounded rounded-bl-none px-1.5 py-0.5 text-white text-xs bg-(--cursor-color,--color-primary)">
+      <div className="absolute top-0 whitespace-nowrap rounded-md -translate-y-full px-1.5 py-0.5 text-white text-xs bg-(--cursor-color,--color-primary)">
         {data?.name}
       </div>
     </div>
