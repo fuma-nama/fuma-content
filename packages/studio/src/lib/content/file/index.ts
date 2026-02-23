@@ -3,50 +3,42 @@ import fs from "node:fs/promises";
 import type { FileSystemCollection } from "fuma-content/collections/fs";
 import path from "node:path";
 
-export interface FileStudioDocument extends StudioDocument {
-  isFile: true;
-  filePath: string;
+export class FileStudioDocument implements StudioDocument {
+  id: string;
+  name: string;
 
-  read: () => Promise<string | undefined>;
-  write: (content: string) => Promise<void>;
-}
+  toItem({ collectionId }: { collectionId: string }) {
+    return {
+      id: this.id,
+      name: this.name,
+      permissions: {
+        delete: this.collection.pluginHook(studioHook).actions?.deleteDocument !== undefined,
+      },
+      collectionId,
+    };
+  }
 
-export function fileDocument(
-  collection: FileSystemCollection,
-  fullPath: string,
-  name?: string,
-): FileStudioDocument {
-  const relativePath = path.relative(collection.dir, fullPath);
-  return {
-    id: encodeId(relativePath),
-    isFile: true,
-    filePath: fullPath,
-    name: name ?? relativePath,
-    toItem({ collectionId }) {
-      return {
-        id: this.id,
-        name: this.name,
-        permissions: {
-          delete: collection.pluginHook(studioHook).actions?.deleteDocument !== undefined,
-        },
-        collectionId,
-      };
-    },
-    async read() {
-      try {
-        return (await fs.readFile(this.filePath)).toString();
-      } catch {
-        return;
-      }
-    },
-    async write(content) {
-      await fs.writeFile(this.filePath, content);
-    },
-  };
-}
+  async read() {
+    try {
+      return (await fs.readFile(this.filePath)).toString();
+    } catch {
+      return;
+    }
+  }
 
-export function isFileDocument(doc: StudioDocument): doc is FileStudioDocument {
-  return "isFile" in doc && doc.isFile === true;
+  async write(content: string) {
+    await fs.writeFile(this.filePath, content);
+  }
+
+  constructor(
+    readonly collection: FileSystemCollection,
+    readonly filePath: string,
+    name?: string,
+  ) {
+    const relativePath = path.relative(collection.dir, filePath);
+    this.id = encodeId(relativePath);
+    this.name = name ?? relativePath;
+  }
 }
 
 function encodeId(file: string) {

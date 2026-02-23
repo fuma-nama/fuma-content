@@ -27,7 +27,7 @@ export function StatusBar() {
 
   return (
     <div className="sticky mt-auto w-full bottom-0 bg-background border-t flex gap-2 px-4 justify-end h-10 z-20">
-      <div className="flex min-w-36 items-center font-mono text-xs text-muted-foreground gap-1.5">
+      <div className="flex min-w-44 items-center font-mono text-xs text-muted-foreground gap-1.5">
         <div
           className={cn(
             "transition-colors size-2.5 rounded-full",

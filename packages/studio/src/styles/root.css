@@ -2,6 +2,7 @@
 
 @import "tw-animate-css";
 @import "./codeblock.css";
+@import "./monaco.css";
 
 @custom-variant dark (&:is(.dark *));
 

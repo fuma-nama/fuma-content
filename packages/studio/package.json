@@ -24,7 +24,7 @@
   },
   "scripts": {
     "dev": "tsdown --watch",
-    "dev:app": "concurrently \"react-router dev\" \"bun ./src/bin/dev.ts\"",
+    "dev:app": "concurrently \"react-router dev\" \"bun --watch ./src/bin/dev.ts\"",
     "build": "tsdown && react-router build",
     "preview": "node dist/bin.mjs",
     "types:check": "tsc --noEmit"
@@ -106,6 +106,7 @@
     "lowlight": "^3.3.0",
     "lucide-react": "^0.575.0",
     "monaco-editor": "^0.55.1",
+    "mutative-yjs": "^0.2.1",
     "next-themes": "^0.4.6",
     "open": "^11.0.0",
     "platejs": "^52.0.17",
@@ -128,6 +129,7 @@
     "unist-util-visit": "^5.1.0",
     "uploadthing": "7.7.4",
     "vaul": "^1.1.2",
+    "y-monaco": "^0.1.6",
     "y-protocols": "^1.0.7",
     "yjs": "13.6.29",
     "zod": "^4.3.6"

@@ -1,38 +1,36 @@
 "use client";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import "./monaco";
 import { cn } from "@/lib/utils";
+import { MonacoBinding } from "y-monaco";
+import { useHocuspocusProvider } from "@/lib/yjs/provider";
+import { Text } from "yjs";
 
 export function MDXCodeEditor({
-  defaultValue,
-  onValueChange,
+  field,
   ...rest
 }: {
-  defaultValue: string;
-  onValueChange: (value: string) => void;
-
+  field: string;
   className?: string;
   wrapperProps?: ComponentProps<"div">;
 }) {
   const { resolvedTheme } = useTheme();
-  const [value, setValue] = useState(defaultValue);
+  const provider = useHocuspocusProvider();
 
   return (
     <Editor
       language="mdx"
-      value={value}
-      onChange={(value = "") => {
-        setValue(value);
-        onValueChange(value);
+      onMount={(editor) => {
+        new MonacoBinding(
+          provider.document.get(field, Text),
+          editor.getModel()!,
+          new Set([editor]),
+          provider.awareness,
+        );
       }}
       theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
-      loading={
-        <pre className="ps-17 py-5 text-sm size-full">
-          <code>{value}</code>
-        </pre>
-      }
       {...rest}
       className={cn(
         "bg-secondary text-secondary-foreground overflow-hidden border rounded-lg",

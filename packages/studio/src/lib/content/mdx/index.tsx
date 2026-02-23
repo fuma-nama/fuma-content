@@ -1,6 +1,6 @@
 import { MDXCollection } from "fuma-content/collections/mdx";
-import { StudioDocument, StudioHook } from "..";
-import { fileDocument, FileStudioDocument } from "../file";
+import { StudioHook } from "..";
+import { FileStudioDocument } from "../file";
 import fs from "node:fs/promises";
 import path from "node:path";
 import grayMatter from "gray-matter";
@@ -8,24 +8,46 @@ import { getJSONSchema } from "fuma-content";
 import * as Y from "yjs";
 import { slateNodesToInsertDelta, yTextToSlateElement } from "@slate-yjs/core";
 import type { SlateEditor } from "platejs";
+import { dump, load } from "js-yaml";
+import { applyJsonObject } from "mutative-yjs";
 
-export interface MDXStudioDocument extends FileStudioDocument {
-  isMDX: true;
-}
+export class MDXStudioDocument extends FileStudioDocument {
+  constructor(
+    readonly collection: MDXCollection,
+    readonly filePath: string,
+    name?: string,
+  ) {
+    super(collection, filePath, name);
+  }
 
-export function isMDXDocument(doc: StudioDocument): doc is MDXStudioDocument {
-  return "isMDX" in doc && doc.isMDX === true;
-}
+  async readParsed() {
+    const content = await this.read();
+    if (content === undefined) return;
 
-export function mdxDocument(
-  collection: MDXCollection,
-  file: string,
-  name?: string,
-): MDXStudioDocument {
-  return {
-    isMDX: true,
-    ...fileDocument(collection, file, name),
-  };
+    return grayMatter({ content });
+  }
+
+  async updateParsed(frontmatter?: unknown, content?: string) {
+    if (frontmatter != null && content != null) {
+      await this.write(grayMatter.stringify({ content }, frontmatter));
+      return;
+    }
+
+    if (frontmatter == null && content == null) {
+      return;
+    }
+
+    const parsed = await this.readParsed();
+    if (parsed) {
+      await this.write(
+        grayMatter.stringify({ content: content ?? parsed.content }, frontmatter ?? parsed.data),
+      );
+      return;
+    }
+
+    content ??= "";
+    await this.write(frontmatter ? grayMatter.stringify({ content }, frontmatter) : content);
+  }
 }
 
 let editor: Promise<SlateEditor> | null = null;
@@ -49,7 +71,7 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
       const files = await collection.getFiles();
 
       return files.map((file) => {
-        return mdxDocument(collection, path.join(collection.dir, file));
+        return new MDXStudioDocument(collection, path.join(collection.dir, file));
       });
     },
     async getDocument(id) {
@@ -59,7 +81,6 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
     pages: {
       async edit({ document }) {
         const { MDXDocUpdateEditor } = await import("./client");
-        const parsed = grayMatter((await document.read()) ?? "");
 
         const jsonSchema = collection.frontmatterSchema
           ? JSON.parse(JSON.stringify(getJSONSchema(collection.frontmatterSchema)))
@@ -70,8 +91,6 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
             documentId={document.id}
             collectionId={collection.name}
             jsonSchema={jsonSchema}
-            frontmatter={parsed.data}
-            content={parsed.content}
           />
         );
       },
@@ -93,34 +112,67 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
       },
     },
     hocuspocus: {
-      async loadDocument(_payload, { documentId }) {
+      async loadDocument(payload, { documentId }) {
         const doc = await hook.getDocument(documentId);
         if (!doc) return;
-        const content = await doc.read();
-        if (content === undefined) return;
 
-        const ydoc = new Y.Doc();
+        const parsed = await doc.readParsed();
+        if (parsed === undefined) return;
+
+        const ydoc = payload.document;
         const editor = await getEditor();
         const { MarkdownPlugin } = await import("@platejs/markdown");
-        const value = editor.getPlugin(MarkdownPlugin).api.markdown.deserialize(content);
-        ydoc
-          .get("content", Y.XmlText)
-          .applyDelta(slateNodesToInsertDelta(value), { sanitize: false });
+
+        applyJsonObject(ydoc.getMap("frontmatter"), parsed.data);
+        ydoc.get("frontmatter:text", Y.Text).insert(0, dump(parsed.data));
+        const ycontent = ydoc.get("content", Y.XmlText);
+        const ycontentText = ydoc.get("content:text", Y.Text);
+        ycontentText.insert(0, parsed.content);
+        ycontent.applyDelta(
+          slateNodesToInsertDelta(
+            editor.getPlugin(MarkdownPlugin).api.markdown.deserialize(parsed.content),
+          ),
+          { sanitize: false },
+        );
+        ycontent.observeDeep((_, t) => {
+          if (t.local) return;
+          const element = yTextToSlateElement(ycontent);
+          const serialized = editor
+            .getPlugin(MarkdownPlugin)
+            .api.markdown.serialize({ value: element.children as never });
+
+          ydoc.transact(() => {
+            ycontentText.delete(0, ycontentText.length);
+            ycontentText.insert(0, serialized);
+          });
+        });
         return ydoc;
       },
       async storeDocument(payload, { documentId }) {
         const doc = await hook.getDocument(documentId);
         if (!doc) return;
+        let frontmatter: unknown | undefined;
+        let content: string | undefined;
 
-        const text = payload.document.get("content", Y.XmlText);
-        const element = yTextToSlateElement(text);
-        const editor = await getEditor();
-        const { MarkdownPlugin } = await import("@platejs/markdown");
-        await doc.write(
-          editor
+        if (!payload.document.isEmpty("frontmatter:text")) {
+          try {
+            // validate
+            frontmatter = load(payload.document.getText("frontmatter:text").toString());
+          } catch {}
+        }
+
+        if (!payload.document.isEmpty("content")) {
+          const text = payload.document.get("content", Y.XmlText);
+          const element = yTextToSlateElement(text);
+          const editor = await getEditor();
+
+          const { MarkdownPlugin } = await import("@platejs/markdown");
+          content = editor
             .getPlugin(MarkdownPlugin)
-            .api.markdown.serialize({ value: element.children as never }),
-        );
+            .api.markdown.serialize({ value: element.children as never });
+        }
+
+        await doc.updateParsed(frontmatter, content);
       },
     },
   };

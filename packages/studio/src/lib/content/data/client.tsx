@@ -6,16 +6,14 @@ import {
   JSONSchemaEditorProvider,
 } from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { lazy, useRef } from "react";
+import { lazy } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
 import { StatusBar } from "@/components/edit/status-bar";
-import { useSync } from "@/components/edit/use-sync";
-import { createDataDocument, saveDataDocument } from "./actions";
+import { createDataDocument } from "./actions";
 import {
   Select,
   SelectContent,
@@ -24,13 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EditorSuspense } from "@/components/code-editor/suspense";
+import { HocuspocusContextProvider } from "@/lib/yjs/provider";
+import { encodeDocId } from "@/lib/yjs";
+import { JSONSchemaEditorProviderWithYjs } from "@/components/json-schema-editor/yts";
 
 interface DataDocEditProps {
   collectionId: string;
   documentId: string;
-
   jsonSchema?: JSONSchema;
-  data: unknown;
 }
 
 const YamlCodeEditor = lazy(() =>
@@ -101,35 +100,9 @@ export const clientContext: ClientContext = {
   },
 };
 
-export function DataDocEdit({ collectionId, documentId, ...rest }: DataDocEditProps) {
+export function DataDocEdit({ collectionId, documentId, jsonSchema }: DataDocEditProps) {
   return (
-    <DocEditor
-      {...rest}
-      onSync={(data) => {
-        return saveDataDocument({ collectionId, documentId, data });
-      }}
-    />
-  );
-}
-
-function DocEditor({
-  jsonSchema,
-  data: defaultData,
-  onSync: onSyncCallback,
-}: {
-  jsonSchema?: JSONSchema;
-  data: unknown;
-  onSync: (data: unknown) => void | Promise<void>;
-}) {
-  const currentValue = useRef({
-    data: defaultData,
-  });
-  const { onSync, status } = useSync(() => {
-    return onSyncCallback(currentValue.current.data);
-  });
-
-  return (
-    <>
+    <HocuspocusContextProvider name={encodeDocId(collectionId, documentId)}>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
@@ -137,37 +110,24 @@ function DocEditor({
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">
-            <JSONSchemaEditorProvider
+            <JSONSchemaEditorProviderWithYjs
+              field="data"
               schema={jsonSchema}
-              defaultValue={currentValue.current.data}
-              onValueChange={(value) => {
-                onSync(() => {
-                  currentValue.current.data = value;
-                });
-              }}
               writeOnly
               readOnly={false}
             >
               <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
-            </JSONSchemaEditorProvider>
+            </JSONSchemaEditorProviderWithYjs>
           </TabsContent>
         )}
         <TabsContent value="code">
           <EditorSuspense>
-            <YamlCodeEditor
-              defaultValue={currentValue.current.data}
-              onValueChange={(value) => {
-                onSync(() => {
-                  currentValue.current.data = value;
-                });
-              }}
-              className="rounded-none border-l-0 border-r-0"
-            />
+            <YamlCodeEditor field="data:text" className="rounded-none border-l-0 border-r-0" />
           </EditorSuspense>
         </TabsContent>
       </Tabs>
 
-      <StatusBar status={status} />
-    </>
+      <StatusBar />
+    </HocuspocusContextProvider>
   );
 }

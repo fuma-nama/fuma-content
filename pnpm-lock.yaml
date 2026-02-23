@@ -530,6 +530,9 @@ importers:
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
+      mutative-yjs:
+        specifier: ^0.2.1
+        version: 0.2.1(mutative@1.1.0)(yjs@13.6.29)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -596,6 +599,9 @@ importers:
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      y-monaco:
+        specifier: ^0.1.6
+        version: 0.1.6(monaco-editor@0.55.1)(yjs@13.6.29)
       y-protocols:
         specifier: ^1.0.7
         version: 1.0.7(yjs@13.6.29)
@@ -5944,6 +5950,12 @@ packages:
   multipasta@0.2.7:
     resolution: {integrity: sha512-KPA58d68KgGil15oDqXjkUBEBYc00XvbPj5/X+dyzeo/lWm9Nc25pQRlf1D+gv4OpK7NM0J1odrbu9JNNGvynA==}
 
+  mutative-yjs@0.2.1:
+    resolution: {integrity: sha512-gSQg7+1A0rlogld3pAM3sTAJmkI6s6j2MYjlQq8cQ1MvjPcjaeNBu3LxtIVoD08vl4xdkYz82dUXPfF6dqFtrA==}
+    peerDependencies:
+      mutative: '>=1.0.0'
+      yjs: '>=13.0.0'
+
   mutative@1.1.0:
     resolution: {integrity: sha512-2PJADREjOusk3iJkD3rXV2YjAxTuaLxdfqtqTEt6vcY07LtEBR1seHuBHXWEIuscqRDGvbauYPs+A4Rj/KTczQ==}
     engines: {node: '>=14.0'}
@@ -7714,6 +7726,13 @@ packages:
   xmlbuilder2@4.0.3:
     resolution: {integrity: sha512-bx8Q1STctnNaaDymWnkfQLKofs0mGNN7rLLapJlGuV3VlvegD7Ls4ggMjE3aUSWItCCzU0PEv45lI87iSigiCA==}
     engines: {node: '>=20.0'}
+
+  y-monaco@0.1.6:
+    resolution: {integrity: sha512-sYRywMmcylt+Nupl+11AvizD2am06ST8lkVbUXuaEmrtV6Tf+TD4rsEm6u9YGGowYue+Vfg1IJ97SUP2J+PVXg==}
+    engines: {node: '>=12.0.0', npm: '>=6.0.0'}
+    peerDependencies:
+      monaco-editor: '>=0.20.0'
+      yjs: ^13.3.1
 
   y-protocols@1.0.7:
     resolution: {integrity: sha512-YSVsLoXxO67J6eE/nV4AtFtT3QEotZf5sK5BHxFBXso7VDUT3Tx07IfA6hsu5Q5OmBdMkQVmFZ9QOA7fikWvnw==}
@@ -13384,6 +13403,11 @@ snapshots:
 
   multipasta@0.2.7: {}
 
+  mutative-yjs@0.2.1(mutative@1.1.0)(yjs@13.6.29):
+    dependencies:
+      mutative: 1.1.0
+      yjs: 13.6.29
+
   mutative@1.1.0: {}
 
   mute-stream@2.0.0: {}
@@ -15359,6 +15383,12 @@ snapshots:
       '@oozcitak/infra': 2.0.2
       '@oozcitak/util': 10.0.0
       js-yaml: 4.1.1
+
+  y-monaco@0.1.6(monaco-editor@0.55.1)(yjs@13.6.29):
+    dependencies:
+      lib0: 0.2.117
+      monaco-editor: 0.55.1
+      yjs: 13.6.29
 
   y-protocols@1.0.7(yjs@13.6.29):
     dependencies:

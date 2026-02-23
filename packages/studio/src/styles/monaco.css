@@ -1,0 +1,21 @@
+.yRemoteSelection {
+  background-color: color-mix(in oklab, var(--color-primary) 50%, transparent);
+}
+
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: var(--color-primary) solid 2px;
+  border-top: var(--color-primary) solid 2px;
+  border-bottom: var(--color-primary) solid 2px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.yRemoteSelectionHead::after {
+  position: absolute;
+  content: " ";
+  border: 3px solid var(--color-primary);
+  border-radius: 4px;
+  left: -4px;
+  top: -5px;
+}

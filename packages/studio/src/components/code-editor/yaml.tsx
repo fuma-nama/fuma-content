@@ -3,27 +3,16 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { load, dump } from "js-yaml";
 import { useTheme } from "next-themes";
-import "./monaco";
 import { cn } from "@/lib/utils";
+import { MonacoBinding } from "y-monaco";
+import { useHocuspocusProvider } from "@/lib/yjs/provider";
+import * as Y from "yjs";
+import "./monaco";
 
-export function YamlEditor({
-  className,
-  defaultValue,
-  onValueChange,
-}: {
-  className?: string;
-  defaultValue: unknown;
-  onValueChange: (v: unknown) => void;
-}) {
+export function YamlEditor({ className, field }: { field: string; className?: string }) {
   const { resolvedTheme } = useTheme();
+  const provider = useHocuspocusProvider();
   const [error, setError] = useState<string | null>(null);
-  const [value, setValue] = useState(() => {
-    try {
-      return dump(defaultValue);
-    } catch {
-      return "";
-    }
-  });
 
   return (
     <div
@@ -35,12 +24,17 @@ export function YamlEditor({
       <Editor
         height="240px"
         language="yaml"
-        value={value}
+        onMount={(editor) => {
+          new MonacoBinding(
+            provider.document.get(field, Y.Text),
+            editor.getModel()!,
+            new Set([editor]),
+            provider.awareness,
+          );
+        }}
         onChange={(newValue = "") => {
-          setValue(newValue);
           try {
-            const parsed = load(newValue);
-            onValueChange(parsed);
+            load(newValue);
             setError(null);
           } catch (e) {
             if (e instanceof Error) {
@@ -49,11 +43,6 @@ export function YamlEditor({
           }
         }}
         theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
-        loading={
-          <pre className="ps-17 py-5 text-sm size-full">
-            <code>{value}</code>
-          </pre>
-        }
         options={{
           minimap: { enabled: false },
           padding: {

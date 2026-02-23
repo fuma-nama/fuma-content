@@ -1,22 +1,23 @@
 import path from "node:path";
 import { Awaitable, StudioDocument, StudioHook } from "..";
-import { fileDocument, FileStudioDocument } from "../file";
+import { FileStudioDocument } from "../file";
 import { DataCollection } from "fuma-content/collections/data";
 import fs from "node:fs/promises";
 import { getJSONSchema } from "fuma-content";
 import { dump, load } from "js-yaml";
 
-export interface DataStudioDocument extends FileStudioDocument, EncoderDecoder {
-  isData: true;
+export class DataStudioDocument extends FileStudioDocument {
+  readonly encoderDecoder: EncoderDecoder;
+
+  constructor(collection: DataCollection, file: string, name?: string) {
+    super(collection, file, name);
+    this.encoderDecoder = getEncoderDecoder(path.extname(file).slice(1));
+  }
 }
 
 interface EncoderDecoder {
   encode: (data: unknown) => Awaitable<string>;
   decode: (content: string) => Awaitable<unknown>;
-}
-
-export function isDataDocument(doc: StudioDocument): doc is DataStudioDocument {
-  return "isData" in doc && doc.isData === true;
 }
 
 export const encoderDecoders = {
@@ -44,18 +45,6 @@ export function getEncoderDecoder(
   return encoderDecoders[format as never] ?? encoderDecoders.json;
 }
 
-export function dataDocument(
-  collection: DataCollection,
-  file: string,
-  name?: string,
-): DataStudioDocument {
-  return {
-    isData: true,
-    ...getEncoderDecoder(path.extname(file).slice(1)),
-    ...fileDocument(collection, file, name),
-  };
-}
-
 export function dataHook(collection: DataCollection): StudioHook<DataStudioDocument> {
   return {
     async getDocuments() {
@@ -63,7 +52,7 @@ export function dataHook(collection: DataCollection): StudioHook<DataStudioDocum
       const files = await collection.getFiles();
 
       return files.map((file) => {
-        return dataDocument(collection, path.join(collection.dir, file));
+        return new DataStudioDocument(collection, path.join(collection.dir, file));
       });
     },
     async getDocument(id) {
@@ -84,7 +73,6 @@ export function dataHook(collection: DataCollection): StudioHook<DataStudioDocum
     pages: {
       async edit({ document }) {
         const { DataDocEdit } = await import("./client");
-        const content = (await document.read()) ?? "";
 
         const jsonSchema = collection.schema
           ? JSON.parse(JSON.stringify(getJSONSchema(collection.schema)))
@@ -95,7 +83,6 @@ export function dataHook(collection: DataCollection): StudioHook<DataStudioDocum
             documentId={document.id}
             collectionId={collection.name}
             jsonSchema={jsonSchema}
-            data={await document.decode(content)}
           />
         );
       },

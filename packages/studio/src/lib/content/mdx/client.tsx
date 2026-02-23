@@ -18,6 +18,7 @@ import { EditorFallback, EditorSuspense } from "@/components/code-editor/suspens
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
 import { encodeDocId } from "@/lib/yjs";
 import { StatusBar } from "@/components/edit/status-bar";
+import { JSONSchemaEditorProviderWithYjs } from "@/components/json-schema-editor/yts";
 
 const MdxCodeEditor = lazy(() =>
   import("@/components/code-editor/mdx").then((mod) => ({ default: mod.MDXCodeEditor })),
@@ -30,10 +31,7 @@ const YamlCodeEditor = lazy(() =>
 interface MDXDocUpdateEditorProps {
   collectionId: string;
   documentId: string;
-
   jsonSchema?: JSONSchema;
-  content: string;
-  frontmatter?: Record<string, unknown>;
 }
 
 export const clientContext: ClientContext = {
@@ -81,8 +79,6 @@ export const clientContext: ClientContext = {
 export function MDXDocUpdateEditor({
   collectionId,
   documentId,
-  content: defaultContent,
-  frontmatter: defaultFrontmatter = {},
   jsonSchema,
 }: MDXDocUpdateEditorProps) {
   return (
@@ -94,20 +90,20 @@ export function MDXDocUpdateEditor({
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">
-            <JSONSchemaEditorProvider
+            <JSONSchemaEditorProviderWithYjs
+              field="frontmatter"
               schema={jsonSchema}
-              defaultValue={defaultFrontmatter}
               writeOnly
               readOnly={false}
             >
               <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
-            </JSONSchemaEditorProvider>
+            </JSONSchemaEditorProviderWithYjs>
           </TabsContent>
         )}
         <TabsContent value="code">
           <EditorSuspense>
             <YamlCodeEditor
-              defaultValue={defaultFrontmatter}
+              field="frontmatter:text"
               className="rounded-none border-l-0 border-r-0"
             />
           </EditorSuspense>
@@ -134,7 +130,7 @@ export function MDXDocUpdateEditor({
         <TabsContent value="code" className="flex flex-col size-full">
           <EditorSuspense>
             <MdxCodeEditor
-              defaultValue={defaultContent}
+              field="content:text"
               className="rounded-none border-0 border-t flex-1"
               wrapperProps={{
                 className: "flex-1",
