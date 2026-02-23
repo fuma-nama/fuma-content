@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DotIcon, FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun, XIcon } from "lucide-react";
+import { FileIcon, LayersIcon, Monitor, Moon, SearchIcon, Sun, XIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -54,7 +54,7 @@ export function useSidebar() {
 }
 
 export const sidebarItemVariants = cva(
-  "flex items-center px-4 py-1.5 gap-2 text-sm font-mono transition-colors border-s-2 border-transparent [&_svg]:size-4 [&_svg]:shrink-0",
+  "flex items-center px-4 py-1.5 gap-2 text-sm font-mono truncate transition-colors border-s-2 border-transparent [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       active: {
@@ -65,9 +65,10 @@ export const sidebarItemVariants = cva(
   },
 );
 
-export function AppSidebar(props: React.ComponentProps<"aside">) {
+export function AppSidebar({ children }: { children: React.ReactNode }) {
   const sidebar = useSidebar();
   const [search, setSearch] = React.useState("");
+  const [dragging, setDragging] = React.useState(false);
   const { data: items = [] } = useLiveQuery(
     (q) => {
       return q
@@ -105,7 +106,7 @@ export function AppSidebar(props: React.ComponentProps<"aside">) {
         )}
       </div>
       <div className="inline-flex mx-4 items-center border rounded-md bg-secondary text-secondary-foreground transition-colors focus-within:ring-2 focus-within:ring-ring">
-        <SearchIcon className="size-4 ms-2 text-muted-foreground" />
+        <SearchIcon className="size-4 ms-2 text-muted-foreground shrink-0" />
         <input
           placeholder="Search..."
           className="text-sm flex-1 px-2 py-1.5 focus-visible:outline-none"
@@ -134,35 +135,78 @@ export function AppSidebar(props: React.ComponentProps<"aside">) {
 
   return (
     <Sheet open={sidebar.open} onOpenChange={sidebar.setOpen}>
+      <style>{`:root { --sidebar-width: 300px; }`}</style>
       {sidebar.isMobile ? (
-        <SheetContent
-          side="left"
-          {...(props as object)}
-          className={cn("flex flex-col gap-2", props.className)}
-        >
+        <SheetContent side="left" className="flex flex-col gap-2">
           {content}
         </SheetContent>
       ) : (
-        <aside
-          {...props}
-          className={cn(
-            "fixed flex flex-col gap-2 w-[300px] start-0 inset-y-0 transition-transform border-e max-md:hidden",
-            !sidebar.open && "-translate-x-full",
-            props.className,
-          )}
-        >
+        <DraggableAside dragging={dragging} setDragging={setDragging}>
           {content}
-        </aside>
+        </DraggableAside>
       )}
       <div
         className={cn(
-          "flex flex-col transition-[padding] min-h-screen",
-          sidebar.open && "md:ps-[300px]",
+          "flex flex-col min-h-screen",
+          dragging ? "pointer-events-none" : "transition-[padding]",
+          sidebar.open && "md:ps-(--sidebar-width)",
         )}
       >
-        {props.children}
+        {children}
       </div>
     </Sheet>
+  );
+}
+
+function DraggableAside({
+  dragging,
+  setDragging,
+  ...props
+}: { dragging: boolean; setDragging: (v: boolean) => void } & React.ComponentProps<"aside">) {
+  const sidebar = useSidebar();
+
+  const onMouseMove = React.useEffectEvent((e: MouseEvent) => {
+    if (!dragging) return;
+    document.body.style.setProperty(
+      "--sidebar-width",
+      `${Math.max(Math.min(e.clientX, 500), 200)}px`,
+    );
+
+    e.stopPropagation();
+    e.preventDefault();
+  });
+  const onDragStart = () => {
+    setDragging(true);
+    document.addEventListener("mousemove", onMouseMove, { capture: true });
+    document.addEventListener("mouseleave", onDragEnd);
+    document.addEventListener("mouseup", onDragEnd);
+  };
+  const onDragEnd = React.useEffectEvent(() => {
+    setDragging(false);
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseleave", onDragEnd);
+    document.removeEventListener("mouseup", onDragEnd);
+  });
+
+  return (
+    <aside
+      {...props}
+      className={cn(
+        "fixed flex flex-col gap-2 w-(--sidebar-width) start-0 inset-y-0 transition-transform border-e z-40 max-md:hidden",
+        !sidebar.open && "-translate-x-full pointer-events-none",
+        props.className,
+      )}
+    >
+      {props.children}
+      <button
+        aria-label="Drag to resize sidebar"
+        className={cn(
+          "absolute end-0 translate-x-1/2 w-1.5 inset-y-0 bg-primary/50 opacity-0",
+          dragging ? "opacity-100" : "hover:opacity-100",
+        )}
+        onMouseDown={onDragStart}
+      />
+    </aside>
   );
 }
 
