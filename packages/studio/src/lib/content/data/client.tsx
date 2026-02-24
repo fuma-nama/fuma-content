@@ -1,10 +1,6 @@
 "use client";
 
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
-import {
-  JSONSchemaEditorContent,
-  JSONSchemaEditorProvider,
-} from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lazy } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -24,7 +20,10 @@ import {
 import { EditorSuspense } from "@/components/code-editor/suspense";
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
 import { encodeDocId } from "@/lib/yjs";
-import { JSONSchemaEditorProviderWithYjs } from "@/components/json-schema-editor/yts";
+import {
+  JSONSchemaEditorProviderWithYjs,
+  JSONSchemaEditorContent,
+} from "@/components/json-schema-editor/yts";
 
 interface DataDocEditProps {
   collectionId: string;
@@ -122,7 +121,7 @@ export function DataDocEdit({ collectionId, documentId, jsonSchema }: DataDocEdi
         )}
         <TabsContent value="code">
           <EditorSuspense>
-            <YamlCodeEditor field="data:text" className="rounded-none border-l-0 border-r-0" />
+            <YamlCodeEditor field="data" className="rounded-none border-l-0 border-r-0" />
           </EditorSuspense>
         </TabsContent>
       </Tabs>

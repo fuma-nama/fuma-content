@@ -1,9 +1,10 @@
 import { Ajv2020 } from "ajv/dist/2020";
-import { createContext, ReactNode, use, useMemo, useState } from "react";
+import { createContext, ReactNode, use, useMemo } from "react";
 import { getDefaultValue } from "./get-default-values";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 import { mergeAllOf } from "./utils/merge-schema";
-import { FieldKey, useDataEngine } from "@fumari/stf";
+import { FieldKey, useDataEngine, useFieldValue } from "@fumari/stf";
+import { stringifyFieldKey } from "@fumari/stf/lib/utils";
 
 interface SchemaContextType {
   schema: JSONSchema;
@@ -85,44 +86,43 @@ export function useFieldInfo(
 } {
   const { ajv } = use(SchemaContext)!;
   const engine = useDataEngine();
-  const attachedData = engine.attachedData<FieldInfo>("field-info");
-  const [info, setInfo] = useState<FieldInfo>(() => {
-    const value = engine.get(fieldName);
-    const initialInfo = attachedData.get(fieldName);
-    if (initialInfo) return initialInfo;
+  const fieldData = engine.namespace(`field-info:${stringifyFieldKey(fieldName)}`);
+  const [info, setInfo] = useFieldValue<FieldInfo>(fieldName, {
+    stf: fieldData,
+    defaultValue(): FieldInfo {
+      const value = engine.get(fieldName);
+      const out: FieldInfo = {
+        oneOf: -1,
+      };
+      const union = getUnion(schema);
+      if (union) {
+        const [members, field] = union;
 
-    const out: FieldInfo = {
-      oneOf: -1,
-    };
-    const union = getUnion(schema);
-    if (union) {
-      const [members, field] = union;
+        out.oneOf = members.findIndex((item) => ajv.validate(item, value));
+        if (out.oneOf === -1) out.oneOf = 0;
+        out.unionField = field;
+      }
 
-      out.oneOf = members.findIndex((item) => ajv.validate(item, value));
-      if (out.oneOf === -1) out.oneOf = 0;
-      out.unionField = field;
-    }
+      if (Array.isArray(schema.type)) {
+        const types = schema.type;
 
-    if (Array.isArray(schema.type)) {
-      const types = schema.type;
+        out.selectedType =
+          types.find((type) => ajv.validate({ ...schema, type }, value)) ?? types.at(0);
+      }
 
-      out.selectedType =
-        types.find((type) => ajv.validate({ ...schema, type }, value)) ?? types.at(0);
-    }
+      if (schema.allOf) {
+        const merged = mergeAllOf(schema);
 
-    if (schema.allOf) {
-      const merged = mergeAllOf(schema);
+        if (typeof merged !== "boolean")
+          out.intersection = {
+            merged,
+          };
+      }
 
-      if (typeof merged !== "boolean")
-        out.intersection = {
-          merged,
-        };
-    }
-
-    return out;
+      return out;
+    },
   });
 
-  attachedData.set(fieldName, info);
   return {
     info,
     updateInfo(value) {

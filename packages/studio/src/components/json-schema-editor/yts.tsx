@@ -1,11 +1,13 @@
 "use client";
-import { ComponentProps, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { ComponentProps, useEffect, useEffectEvent, useMemo, type ReactNode } from "react";
 import { FieldSet } from "./components/inputs";
 import { SchemaProvider, EditorContextType, useResolvedSchema, useSchemaContext } from "./schema";
 import { StfProvider, useListener, useStf } from "@fumari/stf";
 import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
 import { bind } from "mutative-yjs";
 import { objectSet } from "@fumari/stf/lib/utils";
+import { dump } from "js-yaml";
+import type * as Y from "yjs";
 
 export interface JSONSchemaProviderWithYjsProps extends EditorContextType {
   field: string;
@@ -14,49 +16,60 @@ export interface JSONSchemaProviderWithYjsProps extends EditorContextType {
 
 export function JSONSchemaEditorProviderWithYjs({
   children,
-  ...props
+  field,
+  ...rest
 }: JSONSchemaProviderWithYjsProps) {
   const provider = useHocuspocusProvider();
   const isSync = useIsSync();
-  const ydata = useMemo(() => provider.document.getMap("frontmatter"), [provider]);
+  const ydata = provider.document.getMap(field);
   const binder = useMemo(() => bind(ydata), [ydata]);
   const stf = useStf({});
-  const blockEventsRef = useRef(false);
+
+  const onDataUpdate = useEffectEvent((_events: Y.YEvent<any>[], t: Y.Transaction) => {
+    if (t.local) {
+      const ytext = provider.document.getText(`${field}:text`);
+      const str = dump(ydata.toJSON());
+
+      if (ytext.toString() === str) return;
+      provider.document.transact(() => {
+        ytext.delete(0, ytext.length);
+        ytext.insert(0, str);
+      });
+    } else {
+      stf.dataEngine.update([], ydata.toJSON(), { custom: { remote: true } });
+    }
+  });
 
   useEffect(() => {
     if (!isSync) return;
-    blockEventsRef.current = true;
-    stf.dataEngine.reset(ydata.toJSON());
-    blockEventsRef.current = false;
 
-    return binder.subscribe(() => {
-      blockEventsRef.current = true;
-      stf.dataEngine.update([], ydata.toJSON());
-      blockEventsRef.current = false;
-    });
-  }, [isSync, binder]);
-
-  useEffect(() => {
+    stf.dataEngine.update([], ydata.toJSON(), { custom: { remote: true } });
+    ydata.observeDeep(onDataUpdate);
     return () => {
+      ydata.unobserveDeep(onDataUpdate);
       binder.unbind();
     };
-  }, []);
+  }, [isSync, binder, ydata, stf]);
 
   useListener({
     stf,
-    onUpdate(key) {
-      if (blockEventsRef.current) return;
+    onUpdate(key, { custom }) {
+      if (custom?.remote) return;
 
       binder.update((s) => {
-        console.log("update", s, key, stf.dataEngine.get(key));
         objectSet(s, key, stf.dataEngine.get(key));
+      });
+    },
+    onDelete(key) {
+      binder.update((s) => {
+        objectSet(s, key, undefined);
       });
     },
   });
 
   return (
     <StfProvider value={stf}>
-      <SchemaProvider {...props}>{children}</SchemaProvider>
+      <SchemaProvider {...rest}>{children}</SchemaProvider>
     </StfProvider>
   );
 }

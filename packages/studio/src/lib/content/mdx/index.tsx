@@ -8,7 +8,6 @@ import { getJSONSchema } from "fuma-content";
 import * as Y from "yjs";
 import { slateNodesToInsertDelta, yTextToSlateElement } from "@slate-yjs/core";
 import type { SlateEditor } from "platejs";
-import { dump, load } from "js-yaml";
 import { applyJsonObject } from "mutative-yjs";
 
 export class MDXStudioDocument extends FileStudioDocument {
@@ -124,28 +123,13 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
         const { MarkdownPlugin } = await import("@platejs/markdown");
 
         applyJsonObject(ydoc.getMap("frontmatter"), parsed.data);
-        ydoc.get("frontmatter:text", Y.Text).insert(0, dump(parsed.data));
         const ycontent = ydoc.get("content", Y.XmlText);
-        const ycontentText = ydoc.get("content:text", Y.Text);
-        ycontentText.insert(0, parsed.content);
         ycontent.applyDelta(
           slateNodesToInsertDelta(
             editor.getPlugin(MarkdownPlugin).api.markdown.deserialize(parsed.content),
           ),
           { sanitize: false },
         );
-        ycontent.observeDeep((_, t) => {
-          if (t.local) return;
-          const element = yTextToSlateElement(ycontent);
-          const serialized = editor
-            .getPlugin(MarkdownPlugin)
-            .api.markdown.serialize({ value: element.children as never });
-
-          ydoc.transact(() => {
-            ycontentText.delete(0, ycontentText.length);
-            ycontentText.insert(0, serialized);
-          });
-        });
         return ydoc;
       },
       async storeDocument(payload, { documentId }) {
@@ -154,10 +138,16 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
         let frontmatter: unknown | undefined;
         let content: string | undefined;
 
-        if (!payload.document.isEmpty("frontmatter:text")) {
+        if (!payload.document.isEmpty("frontmatter")) {
           try {
-            // validate
-            frontmatter = load(payload.document.getText("frontmatter:text").toString());
+            const data = payload.document.getMap("frontmatter").toJSON();
+            const schema = doc.collection.frontmatterSchema;
+            if (schema) {
+              const result = await schema["~standard"].validate(data);
+              if (result.issues) throw new Error("invalid frontmatter value");
+            }
+
+            frontmatter = data;
           } catch {}
         }
 

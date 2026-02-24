@@ -2,10 +2,6 @@
 
 import { MDXEditor, MDXEditorContainer, MDXEditorView } from "./md-editor";
 import type { JSONSchema } from "json-schema-typed/draft-2020-12";
-import {
-  JSONSchemaEditorContent,
-  JSONSchemaEditorProvider,
-} from "@/components/json-schema-editor/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lazy } from "react";
 import { createMDXDocument } from "./actions";
@@ -18,11 +14,10 @@ import { EditorFallback, EditorSuspense } from "@/components/code-editor/suspens
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
 import { encodeDocId } from "@/lib/yjs";
 import { StatusBar } from "@/components/edit/status-bar";
-import { JSONSchemaEditorProviderWithYjs } from "@/components/json-schema-editor/yts";
-
-const MdxCodeEditor = lazy(() =>
-  import("@/components/code-editor/mdx").then((mod) => ({ default: mod.MDXCodeEditor })),
-);
+import {
+  JSONSchemaEditorProviderWithYjs,
+  JSONSchemaEditorContent,
+} from "@/components/json-schema-editor/yts";
 
 const YamlCodeEditor = lazy(() =>
   import("@/components/code-editor/yaml").then((mod) => ({ default: mod.YamlEditor })),
@@ -83,7 +78,7 @@ export function MDXDocUpdateEditor({
 }: MDXDocUpdateEditorProps) {
   return (
     <HocuspocusContextProvider name={encodeDocId(collectionId, documentId)}>
-      <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4">
+      <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4 mb-2">
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
           <TabsTrigger value="code">Code Editor</TabsTrigger>
@@ -102,43 +97,21 @@ export function MDXDocUpdateEditor({
         )}
         <TabsContent value="code">
           <EditorSuspense>
-            <YamlCodeEditor
-              field="frontmatter:text"
-              className="rounded-none border-l-0 border-r-0"
-            />
+            <YamlCodeEditor field="frontmatter" className="rounded-none border-l-0 border-r-0" />
           </EditorSuspense>
         </TabsContent>
       </Tabs>
-      <Tabs defaultValue="visual" className="mt-4 flex-1">
-        <TabsList className="mx-3.5">
-          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-          <TabsTrigger value="code">Code Editor</TabsTrigger>
-        </TabsList>
-        <TabsContent value="visual" className="flex flex-col size-full">
-          <MDXEditor>
-            {({ ready }) =>
-              ready ? (
-                <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
-                  <MDXEditorView />
-                </MDXEditorContainer>
-              ) : (
-                <EditorFallback />
-              )
-            }
-          </MDXEditor>
-        </TabsContent>
-        <TabsContent value="code" className="flex flex-col size-full">
-          <EditorSuspense>
-            <MdxCodeEditor
-              field="content:text"
-              className="rounded-none border-0 border-t flex-1"
-              wrapperProps={{
-                className: "flex-1",
-              }}
-            />
-          </EditorSuspense>
-        </TabsContent>
-      </Tabs>
+      <MDXEditor>
+        {({ ready }) =>
+          ready ? (
+            <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">
+              <MDXEditorView />
+            </MDXEditorContainer>
+          ) : (
+            <EditorFallback />
+          )
+        }
+      </MDXEditor>
       <StatusBar />
     </HocuspocusContextProvider>
   );
