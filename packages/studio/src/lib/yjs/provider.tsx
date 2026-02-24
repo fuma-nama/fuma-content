@@ -36,6 +36,10 @@ export function useHocuspocusProvider() {
   return ctx;
 }
 
+export function useHocuspocusProviderOptional() {
+  return use(ProviderContext);
+}
+
 export function WebsocketProvider({ children }: { children: ReactNode }) {
   const ws = useMemo(
     () =>

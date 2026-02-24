@@ -6,24 +6,17 @@ import { mergeAllOf } from "./utils/merge-schema";
 import { FieldKey, useDataEngine, useFieldValue } from "@fumari/stf";
 import { stringifyFieldKey } from "@fumari/stf/lib/utils";
 
-interface SchemaContextType {
+interface EditorContextType {
   schema: JSONSchema;
   ajv: Ajv2020;
+  yjs?: YjsContext;
 }
 
-export interface EditorContextType {
-  schema: JSONSchema;
-
-  /**
-   * show write only fields
-   */
-  writeOnly: boolean;
-
-  /**
-   * show read only fields
-   */
-  readOnly: boolean;
+export interface YjsContext {
+  field: string;
 }
+
+export type EditorContextProps = Omit<EditorContextType, "ajv"> & { children: ReactNode };
 
 type UnionField = "anyOf" | "oneOf";
 
@@ -41,17 +34,14 @@ export interface FieldInfo {
   };
 }
 
-const SchemaContext = createContext<SchemaContextType | undefined>(undefined);
+const SchemaContext = createContext<EditorContextType | undefined>(undefined);
 export const anyFields = {
   type: ["string", "number", "boolean", "array", "object"],
   items: true,
   additionalProperties: true,
 } satisfies JSONSchema;
 
-export function SchemaProvider({
-  schema,
-  children,
-}: Omit<SchemaContextType, "ajv"> & { children: ReactNode }) {
+export function EditorProvider({ schema, yjs, children }: EditorContextProps) {
   const ajv = useMemo(
     () =>
       new Ajv2020({
@@ -64,7 +54,7 @@ export function SchemaProvider({
   );
 
   return (
-    <SchemaContext.Provider value={useMemo(() => ({ schema, ajv }), [schema, ajv])}>
+    <SchemaContext.Provider value={useMemo(() => ({ schema, ajv, yjs }), [schema, ajv, yjs])}>
       {children}
     </SchemaContext.Provider>
   );
@@ -147,8 +137,8 @@ export function useFieldInfo(
   };
 }
 
-export function useSchemaContext() {
-  return use(SchemaContext);
+export function useEditorContext() {
+  return use(SchemaContext)!;
 }
 
 /**
@@ -179,7 +169,7 @@ function getUnion(
  */
 export function dereference(
   schema: JSONSchema,
-  { ajv }: Pick<SchemaContextType, "ajv">,
+  { ajv }: Pick<EditorContextType, "ajv">,
 ): JSONSchema {
   if (typeof schema === "boolean") return schema;
   if (schema.$ref) return ajv.getSchema(schema.$ref)?.schema ?? false;

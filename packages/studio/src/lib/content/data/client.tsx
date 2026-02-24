@@ -20,10 +20,11 @@ import {
 import { EditorSuspense } from "@/components/code-editor/suspense";
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
 import { encodeDocId } from "@/lib/yjs";
+
 import {
-  JSONSchemaEditorProviderWithYjs,
+  JSONSchemaEditorProvider,
   JSONSchemaEditorContent,
-} from "@/components/json-schema-editor/yts";
+} from "@/components/json-schema-editor/client";
 
 interface DataDocEditProps {
   collectionId: string;
@@ -109,14 +110,9 @@ export function DataDocEdit({ collectionId, documentId, jsonSchema }: DataDocEdi
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">
-            <JSONSchemaEditorProviderWithYjs
-              field="data"
-              schema={jsonSchema}
-              writeOnly
-              readOnly={false}
-            >
+            <JSONSchemaEditorProvider yjs={{ field: "data" }} schema={jsonSchema}>
               <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
-            </JSONSchemaEditorProviderWithYjs>
+            </JSONSchemaEditorProvider>
           </TabsContent>
         )}
         <TabsContent value="code">

@@ -25,3 +25,17 @@ export function decodeDocId(id: string): [collectionId: string, documentId: stri
     return null;
   }
 }
+
+export const awarenessSchema = z.looseObject({
+  data: z.optional(
+    z.object({
+      name: z.string(),
+      color: z.string(),
+    }),
+  ),
+  "json-schema-editor": z.optional(
+    z.object({
+      focused: z.optional(z.string()),
+    }),
+  ),
+});

@@ -1,5 +1,12 @@
 "use client";
-import { type ComponentProps, type HTMLAttributes, type ReactNode, useState } from "react";
+import {
+  type ComponentProps,
+  type HTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import { ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { FieldKey, useArray, useDataEngine, useFieldValue, useObject } from "@fumari/stf";
 import {
@@ -13,23 +20,16 @@ import { Input } from "@/components/ui/input";
 import { getDefaultValue } from "../get-default-values";
 import { cn } from "@/lib/utils";
 import { FormatFlags, schemaToString } from "../utils/schema-to-string";
-import { anyFields, useFieldInfo, useResolvedSchema } from "../schema";
-import type { JSONSchema } from "json-schema-typed/draft-2020-12";
+import { anyFields, useEditorContext, useFieldInfo, useResolvedSchema } from "../schema";
+import { buttonVariants } from "@/components/ui/button";
 import { stringifyFieldKey } from "@fumari/stf/lib/utils";
 import { cva } from "class-variance-authority";
-import { buttonVariants } from "@/components/ui/button";
+import type { JSONSchema } from "json-schema-typed";
+import { labelVariants } from "@/components/ui/label";
+import { useHocuspocusProvider } from "@/lib/yjs/provider";
+import { awarenessSchema } from "@/lib/yjs";
 
-const labelVariants = cva(
-  "text-xs font-medium text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-);
-
-function FieldLabel(props: ComponentProps<"label">) {
-  return (
-    <label {...props} className={cn("w-full inline-flex items-center gap-0.5", props.className)}>
-      {props.children}
-    </label>
-  );
-}
+const fieldLabelVariants = cva("w-full inline-flex items-center gap-0.5");
 
 function FieldLabelType(props: ComponentProps<"code">) {
   return (
@@ -157,28 +157,42 @@ export function FieldInput({
   isRequired?: boolean;
   fieldName: FieldKey;
 }) {
-  const engine = useDataEngine();
   const [value, setValue] = useFieldValue(fieldName);
   const id = stringifyFieldKey(fieldName);
   if (field.type === "null") return;
 
-  function renderUnset(children: ReactNode) {
+  if (field.type === "string" && field.format === "binary") {
     return (
-      <div {...props} className={cn("flex flex-row gap-2", props.className)}>
-        {children}
-        {value !== undefined && !isRequired && (
-          <button
-            type="button"
-            onClick={() => engine.delete(fieldName)}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "icon-sm" }),
-              "text-muted-foreground h-auto",
-            )}
-          >
-            <X />
-          </button>
-        )}
-      </div>
+      <>
+        <label
+          htmlFor={id}
+          className={cn(
+            buttonVariants({
+              variant: "secondary",
+              className: "w-full h-9 gap-2 truncate",
+            }),
+          )}
+        >
+          {value instanceof File ? (
+            <>
+              <span className="text-muted-foreground text-xs">Selected</span>
+              <span className="truncate w-0 flex-1 text-end">{value.name}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">Upload</span>
+          )}
+        </label>
+        <input
+          id={id}
+          type="file"
+          multiple={false}
+          onChange={(e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            setValue(e.target.files.item(0));
+          }}
+          hidden
+        />
+      </>
     );
   }
 
@@ -220,64 +234,22 @@ export function FieldInput({
     );
   }
 
-  if (field.type === "integer" || field.type === "number") {
-    return renderUnset(
-      <Input
-        id={id}
-        placeholder="Enter value"
-        type="number"
-        step={field.type === "integer" ? 1 : undefined}
-        value={String(value ?? "")}
-        onChange={(e) =>
-          setValue(Number.isNaN(e.target.valueAsNumber) ? undefined : e.target.valueAsNumber)
-        }
-      />,
-    );
-  }
-
-  if (field.type === "string" && field.format === "binary") {
-    return renderUnset(
-      <>
-        <label
-          htmlFor={id}
-          className={cn(
-            buttonVariants({
-              variant: "secondary",
-              className: "w-full h-9 gap-2 truncate",
-            }),
-          )}
-        >
-          {value instanceof File ? (
-            <>
-              <span className="text-muted-foreground text-xs">Selected</span>
-              <span className="truncate w-0 flex-1 text-end">{value.name}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">Upload</span>
-          )}
-        </label>
-        <input
-          id={id}
-          type="file"
-          multiple={false}
-          onChange={(e) => {
-            if (!e.target.files || e.target.files.length === 0) return;
-            setValue(e.target.files.item(0));
-          }}
-          hidden
-        />
-      </>,
-    );
-  }
-
-  return renderUnset(
+  const isNumber = field.type === "integer" || field.type === "number";
+  return (
     <Input
       id={id}
       placeholder="Enter value"
-      type={field.format === "date" ? "date" : "text"}
+      type={isNumber ? "number" : "text"}
+      step={field.type === "integer" ? 1 : undefined}
       value={String(value ?? "")}
-      onChange={(e) => setValue(e.target.value)}
-    />,
+      onChange={(e) => {
+        if (isNumber) {
+          setValue(Number.isNaN(e.target.valueAsNumber) ? undefined : e.target.valueAsNumber);
+        } else if (!isNumber) {
+          setValue(e.target.value);
+        }
+      }}
+    />
   );
 }
 
@@ -307,8 +279,21 @@ export function FieldSet({
   const { info, updateInfo } = useFieldInfo(fieldName, field);
   const id = stringifyFieldKey(fieldName);
   const dataEngine = useDataEngine();
+  const { yjs } = useEditorContext();
+  const [isDefined] = useFieldValue(fieldName, {
+    compute(currentValue) {
+      return currentValue !== undefined;
+    },
+  });
 
   if (_field === false) return;
+  if (collapsible && !isDefined && show) setShow(false);
+
+  function container(props: ComponentProps<"fieldset">) {
+    if (!yjs) return <fieldset {...props} />;
+
+    return <CollaborationFieldSet fieldId={id} {...props} />;
+  }
 
   function renderLabelTrigger(schema = field) {
     if (!collapsible) return renderLabelName();
@@ -335,6 +320,18 @@ export function FieldSet({
         {name}
         {isRequired && <span className="text-red-400/80 mx-1">*</span>}
       </span>
+    );
+  }
+
+  function renderUnsetButton() {
+    return (
+      <button
+        type="button"
+        onClick={() => dataEngine.delete(fieldName)}
+        className="text-muted-foreground hover:text-accent-foreground"
+      >
+        <X className="size-3.5" />
+      </button>
     );
   }
 
@@ -422,50 +419,141 @@ export function FieldSet({
 
   if (field.type === "object" || info.intersection) {
     const schema = info.intersection?.merged ?? field;
-    return (
-      <fieldset {...props} className={cn("flex flex-col gap-1.5 @container", props.className)}>
-        <FieldLabel htmlFor={id}>
-          {renderLabelTrigger(schema)}
-          {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
-          {toolbar}
-        </FieldLabel>
-        {show && (
-          <ObjectInput
-            field={schema}
-            fieldName={fieldName}
-            className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
-          />
-        )}
-      </fieldset>
-    );
+    return container({
+      ...props,
+      className: cn("flex flex-col gap-1.5", props.className),
+      children: (
+        <>
+          <div className={fieldLabelVariants()}>
+            {renderLabelTrigger(schema)}
+            {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
+            {toolbar}
+            {!isRequired && isDefined && renderUnsetButton()}
+          </div>
+          {show && (
+            <ObjectInput
+              field={schema}
+              fieldName={fieldName}
+              className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
+            />
+          )}
+        </>
+      ),
+    });
   }
 
   if (field.type === "array") {
-    return (
-      <fieldset {...props} className={cn("flex flex-col gap-1.5", props.className)}>
-        <FieldLabel htmlFor={id}>
-          {renderLabelTrigger()}
+    return container({
+      ...props,
+      className: cn("flex flex-col gap-1.5", props.className),
+      children: (
+        <>
+          <div className={fieldLabelVariants()}>
+            {renderLabelTrigger()}
+            {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
+            {toolbar}
+            {!isRequired && isDefined && renderUnsetButton()}
+          </div>
+          {show && (
+            <ArrayInput
+              fieldName={fieldName}
+              items={field.items ?? anyFields}
+              className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
+            />
+          )}
+        </>
+      ),
+    });
+  }
+
+  return container({
+    ...props,
+    className: cn("flex flex-col gap-1.5", props.className),
+    children: (
+      <>
+        <label className={fieldLabelVariants()} htmlFor={id}>
+          {renderLabelName()}
           {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
           {toolbar}
-        </FieldLabel>
-        {show && (
-          <ArrayInput
-            fieldName={fieldName}
-            items={field.items ?? anyFields}
-            className="rounded-lg border bg-card text-card-foreground p-2 shadow-sm"
-          />
-        )}
-      </fieldset>
-    );
-  }
+          {!isRequired && isDefined && renderUnsetButton()}
+        </label>
+        <FieldInput field={field} fieldName={fieldName} isRequired={isRequired} />
+      </>
+    ),
+  });
+}
+
+interface User {
+  name: string;
+  color: string;
+}
+
+function CollaborationFieldSet({
+  fieldId: id,
+  ...rest
+}: ComponentProps<"fieldset"> & { fieldId: string }) {
+  const { awareness } = useHocuspocusProvider();
+  const [users, setUsers] = useState<User[]>([]);
+
+  const onAwarenessChange = useEffectEvent(() => {
+    const newUsers: User[] = [];
+
+    for (const [clientId, rawItem] of awareness.getStates()) {
+      if (clientId === awareness.clientID) continue;
+
+      const result = awarenessSchema.safeParse(rawItem);
+      if (!result.success) continue;
+      const item = result.data;
+
+      if (item["json-schema-editor"]?.focused === id && item.data) {
+        newUsers.push(item.data);
+      }
+    }
+
+    setUsers(newUsers);
+  });
+
+  useEffect(() => {
+    awareness.on("change", onAwarenessChange);
+    return () => {
+      awareness.off("change", onAwarenessChange);
+    };
+  }, [awareness]);
+
   return (
-    <fieldset {...props} className={cn("flex flex-col gap-1.5", props.className)}>
-      <FieldLabel htmlFor={id}>
-        {renderLabelName()}
-        {slotType ?? <FieldLabelType>{schemaToString(field)}</FieldLabelType>}
-        {toolbar}
-      </FieldLabel>
-      <FieldInput field={field} fieldName={fieldName} isRequired={isRequired} />
+    <fieldset
+      {...rest}
+      className={cn(
+        "relative",
+        rest.className,
+        users.length > 0 && "[&_input]:ring-2! [&_input]:ring-orange-400!",
+      )}
+      onFocus={(event) => {
+        awareness.setLocalStateField("json-schema-editor", {
+          focused: id,
+        });
+        event.stopPropagation();
+      }}
+    >
+      {users.length > 0 && (
+        <div className="absolute bottom-0 translate-y-full z-10 start-1 flex gap-0.5">
+          {users.map((user) => (
+            <p
+              key={user.name}
+              className="px-2 py-1 text-xs bg-(--user-color,--color-primary) font-medium text-white shadow-md rounded-b-md"
+              style={
+                {
+                  "--user-color": user.color,
+                } as object
+              }
+            >
+              {user.name}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {rest.children}
     </fieldset>
   );
 }

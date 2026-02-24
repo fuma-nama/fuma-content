@@ -55,8 +55,6 @@ export function MdxComponent(props: PlateElementProps<MdxComponentElement>) {
           >
             <JSONSchemaEditorProvider
               defaultValue={element.customProps}
-              writeOnly
-              readOnly={false}
               schema={{ type: "object", additionalProperties: true }}
               onValueChange={(v) => {
                 valueRef.current = v;

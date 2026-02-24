@@ -15,9 +15,9 @@ import { HocuspocusContextProvider } from "@/lib/yjs/provider";
 import { encodeDocId } from "@/lib/yjs";
 import { StatusBar } from "@/components/edit/status-bar";
 import {
-  JSONSchemaEditorProviderWithYjs,
+  JSONSchemaEditorProvider,
   JSONSchemaEditorContent,
-} from "@/components/json-schema-editor/yts";
+} from "@/components/json-schema-editor/client";
 
 const YamlCodeEditor = lazy(() =>
   import("@/components/code-editor/yaml").then((mod) => ({ default: mod.YamlEditor })),
@@ -85,14 +85,9 @@ export function MDXDocUpdateEditor({
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">
-            <JSONSchemaEditorProviderWithYjs
-              field="frontmatter"
-              schema={jsonSchema}
-              writeOnly
-              readOnly={false}
-            >
+            <JSONSchemaEditorProvider yjs={{ field: "frontmatter" }} schema={jsonSchema}>
               <JSONSchemaEditorContent className="*:first:hidden [&>div]:border-l-0 [&>div]:border-r-0 [&>div]:rounded-none [&>div]:bg-card/50 [&>div]:p-4" />
-            </JSONSchemaEditorProviderWithYjs>
+            </JSONSchemaEditorProvider>
           </TabsContent>
         )}
         <TabsContent value="code">
