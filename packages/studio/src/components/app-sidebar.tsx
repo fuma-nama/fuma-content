@@ -8,13 +8,7 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
-import { eq, ilike, or, useLiveQuery } from "@tanstack/react-db";
-import {
-  collection,
-  documentCollection,
-  type CollectionItem,
-  type DocumentItem,
-} from "@/lib/data/store";
+import { type CollectionItem, type DocumentItem } from "@/lib/data/store";
 import { CollectionActionsContext } from "./collection/actions";
 import { Link, useLocation } from "react-router";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,6 +16,7 @@ import { cva } from "class-variance-authority";
 import { Sheet, SheetClose, SheetContent } from "./ui/sheet";
 import { buttonVariants } from "./ui/button";
 import { useHotkeys } from "platejs/react";
+import { useCollections, useDocuments } from "@/lib/yjs/store";
 
 const SidebarContext = React.createContext<{
   open: boolean;
@@ -69,19 +64,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const sidebar = useSidebar();
   const [search, setSearch] = React.useState("");
   const [dragging, setDragging] = React.useState(false);
-  const { data: items = [] } = useLiveQuery(
-    (q) => {
-      return q
-        .from({ collection })
-        .join({ docs: documentCollection }, ({ collection, docs }) =>
-          eq(collection.id, docs.collectionId),
-        )
-        .where((b) =>
-          or(ilike(b.collection.name, `${search}%`), ilike(b.docs?.name, `${search}%`)),
-        );
-    },
-    [search],
-  );
+  const deferredSearch = React.useDeferredValue(search);
 
   const content = (
     <>
@@ -115,16 +98,9 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         />
       </div>
       <ul>
-        {items.map((item, i) => {
-          const subsequence = i > 0 && items[i - 1].collection.id === item.collection.id;
-
-          return (
-            <React.Fragment key={`${item.collection.id}-${item.docs?.id}`}>
-              {!subsequence && <SidebarCollectionItem item={item.collection} />}
-              {item.docs && <SidebarDocumentItem item={item.docs} />}
-            </React.Fragment>
-          );
-        })}
+        <React.Suspense>
+          <SidebarItems search={deferredSearch} />
+        </React.Suspense>
       </ul>
 
       <div className="mt-auto flex items-center gap-2 px-2.5 h-10 border-t">
@@ -156,6 +132,48 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       </div>
     </Sheet>
   );
+}
+
+function SidebarItems({ search }: { search: string }) {
+  const collections = useCollections();
+  const documents = useDocuments();
+
+  const items = React.useMemo(() => {
+    const out: { collection: CollectionItem; docs: DocumentItem[] }[] = [];
+    const normalizedSearch = search.toLowerCase().trim();
+
+    for (const col of collections) {
+      const docs = documents.filter(
+        (doc) =>
+          doc.collectionId === col.id &&
+          (normalizedSearch.length === 0 || doc.name.toLowerCase().includes(normalizedSearch)),
+      );
+
+      if (
+        normalizedSearch.length > 0 &&
+        !col.name.toLowerCase().includes(normalizedSearch) &&
+        docs.length === 0
+      )
+        continue;
+
+      out.push({
+        collection: col,
+        docs,
+      });
+    }
+    return out;
+  }, [collections, documents, search]);
+
+  return items.map((item) => {
+    return (
+      <React.Fragment key={item.collection.id}>
+        <SidebarCollectionItem item={item.collection} />
+        {item.docs.map((doc) => (
+          <SidebarDocumentItem key={doc.id} item={doc} />
+        ))}
+      </React.Fragment>
+    );
+  });
 }
 
 function DraggableAside({

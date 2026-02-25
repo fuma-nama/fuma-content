@@ -1,8 +1,11 @@
 import { Server } from "@hocuspocus/server";
 import type { Application } from "express-ws";
 import type { Awaitable, studioHook } from "@/lib/content";
-import { decodeDocId } from "@/lib/yjs";
+import { DocId } from "@/lib/yjs";
 import type { Core } from "fuma-content";
+import { getCollectionItems, getDocumentItems } from "@/lib/data/actions";
+import * as Y from "yjs";
+import { applyJsonArray } from "mutative-yjs";
 
 export interface HocuspocusEnv {
   getCore: () => Awaitable<Core>;
@@ -20,8 +23,18 @@ export function createHocuspocus(app: Application) {
         return;
       }
 
+      if (DocId.root === data.documentName) {
+        const doc = new Y.Doc();
+        const collections = doc.getArray("collections");
+        const documents = doc.getArray("documents");
+        applyJsonArray(collections, (await getCollectionItems()) as never[]);
+        applyJsonArray(documents, (await getDocumentItems()) as never[]);
+
+        return doc;
+      }
+
       const core = await env.getCore();
-      const docId = decodeDocId(data.documentName);
+      const docId = DocId.decodeCollectionDoc(data.documentName);
       if (!docId) return;
 
       const [collectionId, documentId] = docId;
@@ -40,8 +53,12 @@ export function createHocuspocus(app: Application) {
         return;
       }
 
+      if (DocId.root === data.documentName) {
+        return;
+      }
+
       const core = await env.getCore();
-      const docId = decodeDocId(data.documentName);
+      const docId = DocId.decodeCollectionDoc(data.documentName);
       if (!docId) return;
 
       const [collectionId, documentId] = docId;

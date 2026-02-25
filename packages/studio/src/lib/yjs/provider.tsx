@@ -16,7 +16,9 @@ import {
 import * as Y from "yjs";
 import { Awareness } from "y-protocols/awareness";
 
-const ProviderContext = createContext<HocuspocusProvider | null>(null);
+const ProviderContext = createContext<{ provider: HocuspocusProvider; synced: boolean } | null>(
+  null,
+);
 const WebsocketContext = createContext<HocuspocusProviderWebsocket | null>(null);
 
 class HocuspocusProvider extends HocuspocusProviderBase {
@@ -33,11 +35,7 @@ class HocuspocusProvider extends HocuspocusProviderBase {
 export function useHocuspocusProvider() {
   const ctx = use(ProviderContext);
   if (!ctx) throw new Error("must be used under <HocuspocusContextProvider />");
-  return ctx;
-}
-
-export function useHocuspocusProviderOptional() {
-  return use(ProviderContext);
+  return ctx.provider;
 }
 
 export function WebsocketProvider({ children }: { children: ReactNode }) {
@@ -77,8 +75,12 @@ export function HocuspocusContextProvider({
       document,
       awareness: new Awareness(document),
       websocketProvider: ws,
+      onSynced(data) {
+        setSynced(data.state);
+      },
     });
   }, [name, ws]);
+  const [synced, setSynced] = useState(() => provider.synced);
 
   useEffect(() => {
     provider.attach();
@@ -88,26 +90,15 @@ export function HocuspocusContextProvider({
     };
   }, []);
 
-  return <ProviderContext value={provider}>{children}</ProviderContext>;
+  return (
+    <ProviderContext value={useMemo(() => ({ provider, synced }), [provider, synced])}>
+      {children}
+    </ProviderContext>
+  );
 }
 
 export function useIsSync() {
-  const provider = useHocuspocusProvider();
-  const [status, setStatus] = useState(() => provider.isSynced);
-
-  const onChange = useEffectEvent(() => {
-    setStatus(provider.isSynced);
-  });
-
-  useEffect(() => {
-    provider.on("synced", onChange);
-
-    return () => {
-      provider.off("synced", onChange);
-    };
-  }, [provider]);
-
-  return status;
+  return use(ProviderContext)?.synced ?? false;
 }
 
 export function useStatus(): WebSocketStatus {

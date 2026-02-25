@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { SiteHeader } from "@/components/site-header";
-import { useLiveQuery, eq } from "@tanstack/react-db";
-import { collection, documentCollection } from "@/lib/data/store";
 import { useCreateDocumentDialog } from "@/components/collection/client";
 import { PlusIcon, ViewIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -13,24 +11,12 @@ import { Link } from "react-router";
 import { Route } from "./+types/page";
 import { NotFoundError } from "@/root";
 import { cn } from "@/lib/utils";
+import { useCollections, useDocuments } from "@/lib/yjs/store";
 
 export default function Page(args: Route.ComponentProps) {
   const collectionId = args.params.name;
-  const { data: info } = useLiveQuery(
-    (q) =>
-      q
-        .from({ collection })
-        .where((b) => eq(b.collection.id, collectionId))
-        .findOne(),
-    [collectionId],
-  );
-  const { data: documents } = useLiveQuery(
-    (q) =>
-      q
-        .from({ documentCollection })
-        .where((b) => eq(b.documentCollection.collectionId, collectionId)),
-    [collectionId],
-  );
+  const info = useCollections().find((item) => item.id === collectionId);
+  const documents = useDocuments().filter((doc) => doc.collectionId === collectionId);
   if (!info) throw new NotFoundError();
   const createDoc = useCreateDocumentDialog(info);
 

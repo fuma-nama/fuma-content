@@ -8,7 +8,7 @@ import {
   EditorContextProps,
   YjsContext,
 } from "./schema";
-import { StfProvider, useDataEngine, useListener, useStf } from "@fumari/stf";
+import { StfProvider, useListener, useStf } from "@fumari/stf";
 import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
 import { bind } from "mutative-yjs";
 import type * as Y from "yjs";

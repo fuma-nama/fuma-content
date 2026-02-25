@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { EditorSuspense } from "@/components/code-editor/suspense";
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
-import { encodeDocId } from "@/lib/yjs";
+import { DocId } from "@/lib/yjs";
 
 import {
   JSONSchemaEditorProvider,
@@ -102,7 +102,7 @@ export const clientContext: ClientContext = {
 
 export function DataDocEdit({ collectionId, documentId, jsonSchema }: DataDocEditProps) {
   return (
-    <HocuspocusContextProvider name={encodeDocId(collectionId, documentId)}>
+    <HocuspocusContextProvider name={DocId.encodeCollectionDoc(collectionId, documentId)}>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>

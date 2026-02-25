@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { ClientContext } from "..";
 import { EditorFallback, EditorSuspense } from "@/components/code-editor/suspense";
 import { HocuspocusContextProvider } from "@/lib/yjs/provider";
-import { encodeDocId } from "@/lib/yjs";
+import { DocId } from "@/lib/yjs";
 import { StatusBar } from "@/components/edit/status-bar";
 import {
   JSONSchemaEditorProvider,
@@ -77,7 +77,7 @@ export function MDXDocUpdateEditor({
   jsonSchema,
 }: MDXDocUpdateEditorProps) {
   return (
-    <HocuspocusContextProvider name={encodeDocId(collectionId, documentId)}>
+    <HocuspocusContextProvider name={DocId.encodeCollectionDoc(collectionId, documentId)}>
       <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4 mb-2">
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>

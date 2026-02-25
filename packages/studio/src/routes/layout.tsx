@@ -4,14 +4,12 @@ import { Toaster } from "@/components/ui/sonner";
 import { getCore } from "@/lib/config";
 import { ClientContext, studioHook } from "@/lib/content";
 import { Route } from "./+types/layout";
-import { queryClient } from "@/lib/data/query";
-import { getCollectionItems, getDocumentItems } from "@/lib/data/actions";
-import { dehydrate, DehydratedState, HydrationBoundary } from "@tanstack/react-query";
 import { Outlet } from "react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { useMounted } from "@/hooks/use-mounted";
 import type { ReactNode } from "react";
-import { WebsocketProvider } from "@/lib/yjs/provider";
+import { HocuspocusContextProvider, WebsocketProvider } from "@/lib/yjs/provider";
+import { DocId } from "@/lib/yjs";
 
 export async function loader() {
   const core = await getCore();
@@ -24,18 +22,8 @@ export async function loader() {
     }
   }
 
-  await queryClient.prefetchQuery({
-    queryKey: ["collections"],
-    queryFn: () => getCollectionItems(),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["documents"],
-    queryFn: () => getDocumentItems(),
-  });
-
   return {
     clientContexts,
-    queryState: dehydrate(queryClient),
   };
 }
 
@@ -43,16 +31,16 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
   return (
     <ClientContextProvider contexts={loaderData.clientContexts}>
       <ClientBoundary>
-        <HydrationBoundary state={loaderData.queryState as DehydratedState}>
-          <WebsocketProvider>
+        <WebsocketProvider>
+          <HocuspocusContextProvider name={DocId.root}>
             <SidebarProvider>
               <AppSidebar>
                 <Outlet />
               </AppSidebar>
               <Toaster />
             </SidebarProvider>
-          </WebsocketProvider>
-        </HydrationBoundary>
+          </HocuspocusContextProvider>
+        </WebsocketProvider>
       </ClientBoundary>
     </ClientContextProvider>
   );

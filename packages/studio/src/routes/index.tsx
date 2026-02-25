@@ -1,20 +1,19 @@
 import { CollectionActionsContext } from "@/components/collection/actions";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { collection } from "@/lib/data/store";
-import { useLiveQuery } from "@tanstack/react-db";
+import { useCollections } from "@/lib/yjs/store";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 
 export default function Page() {
-  const query = useLiveQuery((q) => q.from({ collection }));
+  const collections = useCollections();
   return (
     <>
       <SiteHeader>
         <h1 className="text-sm font-medium">Collections</h1>
       </SiteHeader>
       <div className="flex flex-col flex-1 p-2">
-        {query.data.map((collection) => (
+        {collections.map((collection) => (
           <CollectionActionsContext key={collection.id} collection={collection}>
             <Link
               to={`/collection/${collection.id}`}
@@ -28,7 +27,7 @@ export default function Page() {
       </div>
       <div className="flex items-center h-10 px-4 border-t">
         <Badge variant="outline" className="font-mono text-muted-foreground">
-          Collections: {query.data.length}
+          Collections: {collections.length}
         </Badge>
       </div>
     </>

@@ -8,6 +8,7 @@ import { EditorKit } from "@/components/editor/editor-kit";
 import { RemoteCursorOverlay } from "@/components/editor/ui/remote-cursor-overlay";
 import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
 import * as Y from "yjs";
+import { CursorEditor } from "@slate-yjs/core";
 
 export function MDXEditor({ children }: { children?: (ctx: { ready: boolean }) => ReactNode }) {
   const provider = useHocuspocusProvider();
@@ -19,6 +20,11 @@ export function MDXEditor({ children }: { children?: (ctx: { ready: boolean }) =
       () => [
         ...EditorKit,
         YjsPlugin.configure({
+          handlers: {
+            onBlur() {
+              CursorEditor.sendCursorPosition(editor as never, null);
+            },
+          },
           render: {
             afterEditable: RemoteCursorOverlay,
           },

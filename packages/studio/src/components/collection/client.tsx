@@ -6,10 +6,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { CollectionItem, documentCollection, type DocumentItem } from "@/lib/data/store";
+import type { CollectionItem, DocumentItem } from "@/lib/data/store";
 import { type ReactNode, createContext, use, useCallback, useMemo, useState } from "react";
 import { useClientContext } from "./context";
 import { useNavigate } from "react-router";
+import { useHocuspocusProvider } from "@/lib/yjs/provider";
+import { insertDocument } from "@/lib/yjs/store";
 
 const CreateDialogContext = createContext<{
   open: boolean;
@@ -24,6 +26,7 @@ export function useCreateDocumentDialog(collection: CollectionItem) {
   return {
     component: useCallback(
       ({ children }: { children: ReactNode }) => {
+        const provider = useHocuspocusProvider();
         const [open, setOpen] = useState(false);
         const navigate = useNavigate();
 
@@ -40,10 +43,10 @@ export function useCreateDocumentDialog(collection: CollectionItem) {
                     setOpen,
                     onCreate(item) {
                       navigate(`/collection/${item.collectionId}/${item.id}`);
-                      documentCollection.utils.writeInsert(item);
+                      insertDocument(provider.document, item);
                     },
                   }),
-                  [open],
+                  [open, provider.document],
                 )}
               >
                 <Content collection={collection} useDialog={useDialog} />
