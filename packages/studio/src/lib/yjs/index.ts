@@ -35,7 +35,9 @@ export const awarenessSchema = z.looseObject({
   ),
   "json-schema-editor": z.optional(
     z.object({
-      focused: z.optional(z.string()),
+      focused: z.nullable(z.optional(z.string())),
     }),
   ),
 });
+
+export type AwarenessState = z.infer<typeof awarenessSchema>;

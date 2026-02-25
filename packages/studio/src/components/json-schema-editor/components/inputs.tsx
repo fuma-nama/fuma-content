@@ -27,7 +27,7 @@ import { cva } from "class-variance-authority";
 import type { JSONSchema } from "json-schema-typed";
 import { labelVariants } from "@/components/ui/label";
 import { useHocuspocusProvider } from "@/lib/yjs/provider";
-import { awarenessSchema } from "@/lib/yjs";
+import { awarenessSchema, type AwarenessState } from "@/lib/yjs";
 
 const fieldLabelVariants = cva("w-full inline-flex items-center gap-0.5");
 
@@ -531,7 +531,13 @@ function CollaborationFieldSet({
       onFocus={(event) => {
         awareness.setLocalStateField("json-schema-editor", {
           focused: id,
-        });
+        } satisfies AwarenessState);
+        event.stopPropagation();
+      }}
+      onBlur={(event) => {
+        awareness.setLocalStateField("json-schema-editor", {
+          focused: null,
+        } satisfies AwarenessState);
         event.stopPropagation();
       }}
     >

@@ -106,7 +106,7 @@ export function DataDocEdit({ collectionId, documentId, jsonSchema }: DataDocEdi
       <Tabs defaultValue={jsonSchema ? "visual" : "code"}>
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-          <TabsTrigger value="code">Code Editor</TabsTrigger>
+          <TabsTrigger value="code">YAML</TabsTrigger>
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">

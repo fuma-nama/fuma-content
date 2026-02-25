@@ -81,7 +81,7 @@ export function MDXDocUpdateEditor({
       <Tabs defaultValue={jsonSchema ? "visual" : "code"} className="mt-4 mb-2">
         <TabsList className="mx-3.5">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-          <TabsTrigger value="code">Code Editor</TabsTrigger>
+          <TabsTrigger value="code">YAML</TabsTrigger>
         </TabsList>
         {jsonSchema && (
           <TabsContent value="visual">

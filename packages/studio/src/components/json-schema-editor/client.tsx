@@ -20,12 +20,15 @@ export interface JSONSchemaProviderProps extends EditorContextProps {
   onValueChange?: (value: unknown) => void;
 }
 
-export function JSONSchemaEditorProvider({
-  children,
-  defaultValue,
-  onValueChange,
-  ...props
-}: JSONSchemaProviderProps) {
+export function JSONSchemaEditorProvider(props: JSONSchemaProviderProps) {
+  return props.yjs ? (
+    <ProviderWithYjs {...(props as JSONSchemaProviderProps & { yjs: YjsContext })} />
+  ) : (
+    <Provider {...props} />
+  );
+}
+
+function Provider({ children, defaultValue, onValueChange, ...props }: JSONSchemaProviderProps) {
   const stf = useStf({
     defaultValues: defaultValue as never,
   });
@@ -39,26 +42,26 @@ export function JSONSchemaEditorProvider({
 
   return (
     <StfProvider value={stf}>
-      {props.yjs && <YjsStateUpdater yjs={props.yjs} />}
       <EditorProvider {...props}>{children}</EditorProvider>
     </StfProvider>
   );
 }
 
-export function JSONSchemaEditorContent(props: Partial<ComponentProps<typeof FieldSet>>) {
-  const { schema } = useEditorContext();
-  const field = useResolvedSchema(schema);
-
-  if (field.format === "binary") return <FieldSet field={field} fieldName={[]} {...props} />;
-  return <FieldSet field={field} fieldName={[]} collapsible={false} {...props} />;
-}
-
-function YjsStateUpdater({ yjs: { field } }: { yjs: YjsContext }) {
-  const engine = useDataEngine();
+function ProviderWithYjs({
+  children,
+  defaultValue: _,
+  onValueChange,
+  ...props
+}: JSONSchemaProviderProps & { yjs: YjsContext }) {
+  const { field } = props.yjs;
   const provider = useHocuspocusProvider();
   const isSync = useIsSync();
   const ydata = provider.document.getMap(field);
   const binder = useMemo(() => bind(ydata), [ydata]);
+  const stf = useStf({
+    defaultValues: () => ydata.toJSON(),
+  });
+  const engine = stf.dataEngine;
 
   const onDataUpdate = useEffectEvent((_events: Y.YEvent<any>[], t: Y.Transaction) => {
     if (t.local) {
@@ -82,14 +85,20 @@ function YjsStateUpdater({ yjs: { field } }: { yjs: YjsContext }) {
     ydata.observeDeep(onDataUpdate);
     return () => {
       ydata.unobserveDeep(onDataUpdate);
+    };
+  }, [isSync, ydata, engine]);
+
+  useEffect(() => {
+    return () => {
       binder.unbind();
     };
-  }, [isSync, binder, ydata, engine]);
+  }, []);
 
   useListener({
-    stf: engine,
+    stf,
     onUpdate(key, { custom }) {
       if (custom?.remote) return;
+      if (onValueChange) onValueChange(stf.dataEngine.getData());
 
       binder.update((s) => {
         objectSet(s, key, engine.get(key));
@@ -102,5 +111,17 @@ function YjsStateUpdater({ yjs: { field } }: { yjs: YjsContext }) {
     },
   });
 
-  return <></>;
+  return (
+    <StfProvider value={stf}>
+      <EditorProvider {...props}>{children}</EditorProvider>
+    </StfProvider>
+  );
+}
+
+export function JSONSchemaEditorContent(props: Partial<ComponentProps<typeof FieldSet>>) {
+  const { schema } = useEditorContext();
+  const field = useResolvedSchema(schema);
+
+  if (field.format === "binary") return <FieldSet field={field} fieldName={[]} {...props} />;
+  return <FieldSet field={field} fieldName={[]} collapsible={false} {...props} />;
 }
