@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import type { CollectionItem, DocumentItem } from "@/lib/data/store";
+import type { CollectionItem, DocumentItem } from "@/lib/yjs";
 import { type ReactNode, createContext, use, useCallback, useMemo, useState } from "react";
 import { useClientContext } from "./context";
 import { useNavigate } from "react-router";
@@ -19,8 +19,8 @@ const CreateDialogContext = createContext<{
   onCreate: (item: DocumentItem) => void;
 } | null>(null);
 
-export function useCreateDocumentDialog(collection: CollectionItem) {
-  const Content = useClientContext(collection.id).dialogs?.createDocument;
+export function useCreateDocumentDialog(collection?: CollectionItem) {
+  const Content = useClientContext(collection?.id).dialogs?.createDocument;
   if (!Content) return null;
 
   return {
@@ -30,6 +30,7 @@ export function useCreateDocumentDialog(collection: CollectionItem) {
         const [open, setOpen] = useState(false);
         const navigate = useNavigate();
 
+        if (!collection) return;
         return (
           <Dialog open={open} onOpenChange={setOpen}>
             {children}
@@ -42,8 +43,8 @@ export function useCreateDocumentDialog(collection: CollectionItem) {
                     open,
                     setOpen,
                     onCreate(item) {
-                      navigate(`/collection/${item.collectionId}/${item.id}`);
                       insertDocument(provider.document, item);
+                      navigate(`/collection/${item.collectionId}/${item.id}`);
                     },
                   }),
                   [open, provider.document],
@@ -55,7 +56,7 @@ export function useCreateDocumentDialog(collection: CollectionItem) {
           </Dialog>
         );
       },
-      [Content],
+      [Content, collection],
     ),
     trigger: DialogTrigger,
   };

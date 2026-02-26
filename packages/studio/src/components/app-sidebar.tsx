@@ -8,14 +8,13 @@ import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
-import { type CollectionItem, type DocumentItem } from "@/lib/data/store";
+import type { CollectionItem, DocumentItem } from "@/lib/yjs";
 import { CollectionActionsContext } from "./collection/actions";
 import { Link, useLocation } from "react-router";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cva } from "class-variance-authority";
 import { Sheet, SheetClose, SheetContent } from "./ui/sheet";
 import { buttonVariants } from "./ui/button";
-import { useHotkeys } from "platejs/react";
 import { useCollections, useDocuments } from "@/lib/yjs/store";
 
 const SidebarContext = React.createContext<{
@@ -28,12 +27,21 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState<boolean | null>(null);
   const isMobile = useIsMobile();
 
-  if (isMobile !== undefined && open === null) setOpen(!isMobile);
-
-  useHotkeys(["mod+s"], (e) => {
-    setOpen((prev) => !prev);
-    e.preventDefault();
+  const onKeyDown = React.useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+      setOpen((prev) => !prev);
+      e.preventDefault();
+    }
   });
+
+  React.useEffect(() => {
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  if (isMobile !== undefined && open === null) setOpen(!isMobile);
 
   return (
     <SidebarContext

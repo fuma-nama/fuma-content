@@ -1,5 +1,5 @@
 "use client";
-import type { CollectionItem } from "@/lib/data/store";
+import type { CollectionItem } from "@/lib/yjs";
 import {
   ContextMenu,
   ContextMenuContent,

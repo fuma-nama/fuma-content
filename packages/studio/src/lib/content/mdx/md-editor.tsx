@@ -10,7 +10,13 @@ import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
 import * as Y from "yjs";
 import { CursorEditor } from "@slate-yjs/core";
 
-export function MDXEditor({ children }: { children?: (ctx: { ready: boolean }) => ReactNode }) {
+export function MDXEditor({
+  field,
+  children,
+}: {
+  field: string;
+  children?: (ctx: { ready: boolean }) => ReactNode;
+}) {
   const provider = useHocuspocusProvider();
   const name = provider.configuration.name;
   const isSync = useIsSync();
@@ -40,7 +46,7 @@ export function MDXEditor({ children }: { children?: (ctx: { ready: boolean }) =
             providers: [provider],
             awareness: provider.awareness,
             ydoc: provider.document,
-            sharedType: provider.document.get("content", Y.XmlText),
+            sharedType: provider.document.get(field, Y.XmlText),
           },
         }),
       ],

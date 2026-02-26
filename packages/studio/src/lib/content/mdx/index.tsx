@@ -86,7 +86,6 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
           : undefined;
         return (
           <MDXDocUpdateEditor
-            key={document.id}
             documentId={document.id}
             collectionId={collection.name}
             jsonSchema={jsonSchema}
@@ -124,6 +123,7 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
 
         applyJsonObject(ydoc.getMap("frontmatter"), parsed.data);
         const ycontent = ydoc.get("content", Y.XmlText);
+        ycontent.delete(0, ycontent.length);
         ycontent.applyDelta(
           slateNodesToInsertDelta(
             editor.getPlugin(MarkdownPlugin).api.markdown.deserialize(parsed.content),

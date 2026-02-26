@@ -7,8 +7,8 @@ import { Route } from "./+types/layout";
 import { Outlet } from "react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { useMounted } from "@/hooks/use-mounted";
-import type { ReactNode } from "react";
-import { HocuspocusContextProvider, WebsocketProvider } from "@/lib/yjs/provider";
+import { Suspense, useDeferredValue, type ReactNode } from "react";
+import { HocuspocusContextProvider, useIsSync, WebsocketProvider } from "@/lib/yjs/provider";
 import { DocId } from "@/lib/yjs";
 
 export async function loader() {
@@ -30,32 +30,41 @@ export async function loader() {
 export default function Layout({ loaderData }: Route.ComponentProps) {
   return (
     <ClientContextProvider contexts={loaderData.clientContexts}>
-      <ClientBoundary>
-        <WebsocketProvider>
-          <HocuspocusContextProvider name={DocId.root}>
-            <SidebarProvider>
+      <WebsocketProvider>
+        <HocuspocusContextProvider name={DocId.root}>
+          <SidebarProvider>
+            <ClientBoundary>
               <AppSidebar>
                 <Outlet />
               </AppSidebar>
               <Toaster />
-            </SidebarProvider>
-          </HocuspocusContextProvider>
-        </WebsocketProvider>
-      </ClientBoundary>
+            </ClientBoundary>
+          </SidebarProvider>
+        </HocuspocusContextProvider>
+      </WebsocketProvider>
     </ClientContextProvider>
   );
 }
 
 function ClientBoundary({ children }: { children: ReactNode }) {
   const mounted = useMounted();
+  const isSync = useIsSync();
+  const ready = useDeferredValue(mounted && isSync);
 
-  if (!mounted)
-    return (
-      <div className="fixed flex items-center justify-center inset-0 bg-background z-50 text-sm text-muted-foreground gap-1">
-        <Spinner />
-        Loading
-      </div>
-    );
+  return (
+    <Suspense>
+      <Inter ready={ready}>{children}</Inter>
+    </Suspense>
+  );
+}
 
-  return children;
+function Inter({ ready, children }: { ready: boolean; children: ReactNode }) {
+  if (ready) return children;
+
+  return (
+    <div className="fixed flex items-center justify-center inset-0 bg-background z-50 text-sm text-muted-foreground gap-1">
+      <Spinner />
+      Loading
+    </div>
+  );
 }

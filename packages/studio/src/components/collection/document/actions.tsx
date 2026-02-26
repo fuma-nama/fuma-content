@@ -14,15 +14,11 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ReactElement } from "react";
-import type { DocumentItem } from "@/lib/data/store";
-import { isActive } from "@/lib/utils/urls";
-import { useLocation, useNavigate } from "react-router";
+import type { DocumentItem } from "@/lib/yjs";
 import { deleteDocument } from "@/lib/yjs/store";
 import { useHocuspocusProvider } from "@/lib/yjs/provider";
 
 export function DocumentActionsDropdown({ document }: { document: DocumentItem }) {
-  const navigate = useNavigate();
-  const pathname = useLocation().pathname;
   const provider = useHocuspocusProvider();
 
   return (
@@ -38,9 +34,6 @@ export function DocumentActionsDropdown({ document }: { document: DocumentItem }
             variant="destructive"
             onClick={() => {
               deleteDocument(provider.document, document.collectionId, document.id);
-              if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
-                navigate(`/collection/${document.collectionId}`);
-              }
             }}
           >
             <TrashIcon />
@@ -59,8 +52,6 @@ export function DocumentActionsContext({
   document: DocumentItem;
   children: ReactElement;
 }) {
-  const navigate = useNavigate();
-  const pathname = useLocation().pathname;
   const provider = useHocuspocusProvider();
 
   return (
@@ -72,9 +63,6 @@ export function DocumentActionsContext({
             variant="destructive"
             onClick={() => {
               deleteDocument(provider.document, document.collectionId, document.id);
-              if (isActive(pathname, `/collection/${document.collectionId}/${document.id}`, true)) {
-                navigate(`/collection/${document.collectionId}`);
-              }
             }}
           >
             <TrashIcon />

@@ -3,12 +3,13 @@ import type { Application } from "express-ws";
 import type { Awaitable, studioHook } from "@/lib/content";
 import { DocId } from "@/lib/yjs";
 import type { Core } from "fuma-content";
-import { getCollectionItems, getDocumentItems } from "@/lib/data/actions";
 import * as Y from "yjs";
 import { applyJsonArray } from "mutative-yjs";
+import type { RootHandler } from "@/lib/content/root";
 
 export interface HocuspocusEnv {
   getCore: () => Awaitable<Core>;
+  getRootHandler: () => Awaitable<RootHandler>;
   getPluginHook: () => typeof studioHook;
 }
 
@@ -24,6 +25,8 @@ export function createHocuspocus(app: Application) {
       }
 
       if (DocId.root === data.documentName) {
+        const { getCollectionItems, getDocumentItems } = await env.getRootHandler();
+
         const doc = new Y.Doc();
         const collections = doc.getArray("collections");
         const documents = doc.getArray("documents");

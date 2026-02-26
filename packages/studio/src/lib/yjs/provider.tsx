@@ -82,9 +82,9 @@ export function HocuspocusContextProvider({
   }, [name, ws]);
   const [synced, setSynced] = useState(() => provider.synced);
 
-  useEffect(() => {
-    provider.attach();
+  if (typeof window !== "undefined" && !provider.isAttached) provider.attach();
 
+  useEffect(() => {
     return () => {
       provider.detach();
     };

@@ -1,7 +1,7 @@
 "use server";
 // TODO: check security when implementing auth system
 import { getCore } from "@/lib/config";
-import type { DocumentItem } from "@/lib/data/store";
+import type { DocumentItem } from "@/lib/yjs";
 import { studioHook } from "..";
 import { MDXCollection } from "fuma-content/collections/mdx";
 import { createFileDocument } from "../file";

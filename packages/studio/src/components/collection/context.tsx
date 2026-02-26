@@ -19,6 +19,7 @@ export function ClientContextProvider({
 /**
  * you can assume the client context is immutable
  */
-export function useClientContext(collectionId: string): ClientContext {
+export function useClientContext(collectionId: string | undefined): ClientContext {
+  if (!collectionId) return {};
   return use(ClientContext)?.get(collectionId) ?? {};
 }

@@ -3,7 +3,7 @@ import { DocumentItem, validateCollections, validateDocuments } from ".";
 import { useHocuspocusProvider, useIsSync } from "./provider";
 import * as Y from "yjs";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { deleteDocumentAction } from "../data/actions";
+import { deleteDocumentAction } from "../content/actions";
 
 export function useCollections() {
   const doc = useHocuspocusProvider().document;
@@ -45,14 +45,18 @@ export async function deleteDocument(doc: Y.Doc, collectionId: string, documentI
   await deleteDocumentAction(documentId, collectionId);
 
   const ydocuments = doc.getArray("documents");
-  const idx = validateDocuments(ydocuments.toJSON()).findIndex(
-    (doc) => doc.collectionId === collectionId && doc.id === documentId,
-  );
-  ydocuments.delete(idx);
+  const docs = validateDocuments(ydocuments.toJSON());
+  const idx = docs.findIndex((doc) => doc.collectionId === collectionId && doc.id === documentId);
+  if (idx !== -1) ydocuments.delete(idx, 1);
 }
 
 export function insertDocument(doc: Y.Doc, item: DocumentItem) {
   const ydocuments = doc.getArray("documents");
+  const docs = validateDocuments(ydocuments.toJSON());
+
+  // exists
+  if (docs.some((doc) => doc.id === item.id && doc.collectionId === item.collectionId)) return;
+
   const yitem = new Y.Map();
   applyJsonObject(yitem, item as never);
   ydocuments.push([yitem]);

@@ -1,11 +1,11 @@
 import { defineCollectionHook, type Collection } from "fuma-content/collections";
 import type { FC } from "react";
-import type { CollectionItem, DocumentItem } from "@/lib/data/store";
 import { MDXCollection } from "fuma-content/collections/mdx";
 import { mdxHook } from "./mdx";
 import { DataCollection } from "fuma-content/collections/data";
 import { dataHook } from "./data";
 import type { onLoadDocumentPayload, onStoreDocumentPayload } from "@hocuspocus/server";
+import type { CollectionItem, DocumentItem } from "../yjs";
 
 export type Awaitable<T> = T | Promise<T>;
 

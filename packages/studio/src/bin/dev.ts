@@ -8,6 +8,10 @@ function run() {
   const { app } = expressWebsockets(express());
   global.HOCUSPOCUS_ENV = {
     getCore: getCore,
+    async getRootHandler() {
+      const { rootHandler } = await import("@/lib/content/root");
+      return rootHandler;
+    },
     getPluginHook() {
       return studioHook;
     },

@@ -1,9 +1,9 @@
 "use server";
 import { getCore, requireDocument } from "@/lib/config";
-import type { DocumentItem } from "@/lib/data/store";
+import type { DocumentItem } from "@/lib/yjs";
 import { studioHook } from "..";
 import { createFileDocument } from "../file";
-import { encoderDecoders, getEncoderDecoder, isDataDocument } from ".";
+import { DataStudioDocument, encoderDecoders, getEncoderDecoder } from ".";
 import { DataCollection } from "fuma-content/collections/data";
 import { z } from "zod/mini";
 
@@ -21,8 +21,8 @@ export async function saveDataDocument(input: z.input<typeof saveSchema>) {
   const collection = core.getCollection(collectionId);
   if (!(collection instanceof DataCollection)) throw new Error("Invalid collection ID");
 
-  if (isDataDocument(doc)) {
-    await doc.write(await doc.encode(data));
+  if (doc instanceof DataStudioDocument) {
+    await doc.write(await doc.encoderDecoder.encode(data));
   }
 }
 

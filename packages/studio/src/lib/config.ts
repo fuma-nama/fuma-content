@@ -36,4 +36,8 @@ global.HOCUSPOCUS_ENV = {
   getPluginHook() {
     return studioHook;
   },
+  async getRootHandler() {
+    const { rootHandler } = await import("@/lib/content/root");
+    return rootHandler;
+  },
 };

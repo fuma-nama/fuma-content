@@ -17,9 +17,9 @@ export default function Page(args: Route.ComponentProps) {
   const collectionId = args.params.name;
   const info = useCollections().find((item) => item.id === collectionId);
   const documents = useDocuments().filter((doc) => doc.collectionId === collectionId);
-  if (!info) throw new NotFoundError();
   const createDoc = useCreateDocumentDialog(info);
 
+  if (!info) throw new NotFoundError();
   return (
     <>
       <SiteHeader>

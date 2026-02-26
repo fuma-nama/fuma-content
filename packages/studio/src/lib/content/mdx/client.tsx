@@ -96,7 +96,7 @@ export function MDXDocUpdateEditor({
           </EditorSuspense>
         </TabsContent>
       </Tabs>
-      <MDXEditor>
+      <MDXEditor field="content">
         {({ ready }) =>
           ready ? (
             <MDXEditorContainer className="border-0 border-t rounded-none flex-1 [--toolbar-offset:--spacing(10)]">

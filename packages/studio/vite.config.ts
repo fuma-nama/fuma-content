@@ -28,7 +28,4 @@ export default defineConfig({
   resolve: {
     external: ["fuma-content", "platejs"],
   },
-  optimizeDeps: {
-    exclude: ["@tanstack/react-query"],
-  },
 });

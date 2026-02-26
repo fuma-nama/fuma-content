@@ -13,7 +13,7 @@ export async function ServerComponent({ params }: Route.ComponentProps) {
 
   return (
     <>
-      <Header collectionId={collection.name} documentId={document.id} />
+      <Header collectionId={name} documentId={id} />
       <Fragment key={id}>
         {await collection.pluginHook(studioHook).pages?.edit?.({ document, collection })}
       </Fragment>
