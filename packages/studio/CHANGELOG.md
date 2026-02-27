@@ -1,5 +1,11 @@
 # @fuma-content/studio
 
+## 1.1.0
+
+### Minor Changes
+
+- afd5cec: ready for real-time collaboration release
+
 ## 1.0.5
 
 ### Patch Changes
