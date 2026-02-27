@@ -1,6 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { SiteHeader } from "@/components/site-header";
-import { useCreateDocumentDialog } from "@/components/collection/client";
+import {
+  CreateDocumentDialog,
+  CreateDocumentDialogTrigger,
+  useCreateDocumentDialogCheck,
+} from "@/components/collection/client";
 import { PlusIcon, ViewIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -15,11 +19,13 @@ import { useCollections, useDocuments } from "@/lib/yjs/store";
 
 export default function Page(args: Route.ComponentProps) {
   const collectionId = args.params.name;
-  const info = useCollections().find((item) => item.id === collectionId);
-  const documents = useDocuments().filter((doc) => doc.collectionId === collectionId);
-  const createDoc = useCreateDocumentDialog(info);
+  const collections = useCollections();
+  const info = collections?.find((item) => item.id === collectionId);
+  const documents = useDocuments()?.filter((doc) => doc.collectionId === collectionId);
+  const canCreateDoc = useCreateDocumentDialogCheck(info);
 
-  if (!info) throw new NotFoundError();
+  if (!info && collections) throw new NotFoundError();
+  if (!info) return null;
   return (
     <>
       <SiteHeader>
@@ -33,18 +39,20 @@ export default function Page(args: Route.ComponentProps) {
           <div className="flex items-center gap-2 text-muted-foreground text-sm py-3 px-4 border-b">
             <ViewIcon className="size-4" />
             All Documents
-            {createDoc && (
-              <createDoc.component>
-                <createDoc.trigger className={cn(buttonVariants({ size: "xs" }), "ms-auto")}>
+            {canCreateDoc && (
+              <CreateDocumentDialog collection={info}>
+                <CreateDocumentDialogTrigger
+                  className={cn(buttonVariants({ size: "xs" }), "ms-auto")}
+                >
                   <PlusIcon />
                   <span className="max-md:hidden">Create Document</span>
                   <span className="md:hidden">Create</span>
-                </createDoc.trigger>
-              </createDoc.component>
+                </CreateDocumentDialogTrigger>
+              </CreateDocumentDialog>
             )}
           </div>
           <div className="flex flex-col p-2 flex-1 overflow-auto">
-            {documents.map((doc) => (
+            {documents?.map((doc) => (
               <DocumentActionsContext key={doc.id} document={doc}>
                 <div className="flex items-center rounded-md text-muted-foreground border-b last:border-b-0 hover:bg-accent hover:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground">
                   <Link
@@ -60,7 +68,7 @@ export default function Page(args: Route.ComponentProps) {
           </div>
           <div className="flex items-center gap-2 border-t px-4 h-10">
             <Badge variant="outline" className="text-xs font-mono text-muted-foreground">
-              Documents: {documents.length}
+              Documents: {documents?.length}
             </Badge>
           </div>
         </>

@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import type { CollectionItem, DocumentItem } from "@/lib/yjs";
-import { type ReactNode, createContext, use, useCallback, useMemo, useState } from "react";
+import { type ReactNode, createContext, use, useMemo, useState } from "react";
 import { useClientContext } from "./context";
 import { useNavigate } from "react-router";
 import { useHocuspocusProvider } from "@/lib/yjs/provider";
@@ -19,47 +19,51 @@ const CreateDialogContext = createContext<{
   onCreate: (item: DocumentItem) => void;
 } | null>(null);
 
-export function useCreateDocumentDialog(collection?: CollectionItem) {
+export function CreateDocumentDialog({
+  collection,
+  children,
+}: {
+  collection: CollectionItem | undefined;
+  children: ReactNode;
+}) {
   const Content = useClientContext(collection?.id).dialogs?.createDocument;
-  if (!Content) return null;
+  const provider = useHocuspocusProvider();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  return {
-    component: useCallback(
-      ({ children }: { children: ReactNode }) => {
-        const provider = useHocuspocusProvider();
-        const [open, setOpen] = useState(false);
-        const navigate = useNavigate();
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {children}
+      {Content && collection && (
+        <DialogContent>
+          <DialogTitle>Create Document</DialogTitle>
+          <DialogDescription>Enter the basic information of document.</DialogDescription>
+          <CreateDialogContext
+            value={useMemo(
+              () => ({
+                open,
+                setOpen,
+                onCreate(item) {
+                  insertDocument(provider.document, item);
+                  navigate(`/collection/${item.collectionId}/${item.id}`);
+                },
+              }),
+              [open, provider.document],
+            )}
+          >
+            <Content collection={collection} useDialog={useDialog} />
+          </CreateDialogContext>
+        </DialogContent>
+      )}
+    </Dialog>
+  );
+}
 
-        if (!collection) return;
-        return (
-          <Dialog open={open} onOpenChange={setOpen}>
-            {children}
-            <DialogContent>
-              <DialogTitle>Create Document</DialogTitle>
-              <DialogDescription>Enter the basic information of document.</DialogDescription>
-              <CreateDialogContext
-                value={useMemo(
-                  () => ({
-                    open,
-                    setOpen,
-                    onCreate(item) {
-                      insertDocument(provider.document, item);
-                      navigate(`/collection/${item.collectionId}/${item.id}`);
-                    },
-                  }),
-                  [open, provider.document],
-                )}
-              >
-                <Content collection={collection} useDialog={useDialog} />
-              </CreateDialogContext>
-            </DialogContent>
-          </Dialog>
-        );
-      },
-      [Content, collection],
-    ),
-    trigger: DialogTrigger,
-  };
+export const CreateDocumentDialogTrigger = DialogTrigger;
+
+export function useCreateDocumentDialogCheck(collection?: CollectionItem) {
+  const Content = useClientContext(collection?.id).dialogs?.createDocument;
+  return Content !== undefined && collection !== undefined;
 }
 
 function useDialog() {

@@ -150,6 +150,7 @@ function SidebarItems({ search }: { search: string }) {
     const out: { collection: CollectionItem; docs: DocumentItem[] }[] = [];
     const normalizedSearch = search.toLowerCase().trim();
 
+    if (!collections || !documents) return out;
     for (const col of collections) {
       const docs = documents.filter(
         (doc) =>

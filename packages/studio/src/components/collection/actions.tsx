@@ -7,7 +7,11 @@ import {
   ContextMenuTrigger,
 } from "../ui/context-menu";
 import type { ReactElement } from "react";
-import { useCreateDocumentDialog } from "./client";
+import {
+  CreateDocumentDialog,
+  CreateDocumentDialogTrigger,
+  useCreateDocumentDialogCheck,
+} from "./client";
 import { PlusIcon } from "lucide-react";
 
 export function CollectionActionsContext({
@@ -17,25 +21,25 @@ export function CollectionActionsContext({
   collection: CollectionItem;
   children: ReactElement;
 }) {
-  const createDoc = useCreateDocumentDialog(collection);
+  const canCreateDoc = useCreateDocumentDialogCheck(collection);
 
   let child = (
     <ContextMenu>
       <ContextMenuTrigger render={children} />
       <ContextMenuContent>
-        {createDoc && (
-          <createDoc.trigger asChild>
+        {canCreateDoc && (
+          <CreateDocumentDialogTrigger asChild>
             <ContextMenuItem>
               <PlusIcon />
               Create Document
             </ContextMenuItem>
-          </createDoc.trigger>
+          </CreateDocumentDialogTrigger>
         )}
       </ContextMenuContent>
     </ContextMenu>
   );
 
-  if (createDoc) child = <createDoc.component>{child}</createDoc.component>;
-
+  if (canCreateDoc)
+    child = <CreateDocumentDialog collection={collection}>{child}</CreateDocumentDialog>;
   return child;
 }

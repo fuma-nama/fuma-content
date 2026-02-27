@@ -57,7 +57,7 @@ export const rootDataSchema = z.object({
   documents: z.array(documentItemSchema),
 });
 
-const cursorDataSchema = z.object({
+export const cursorDataSchema = z.object({
   name: z.string(),
   color: z.string(),
 });

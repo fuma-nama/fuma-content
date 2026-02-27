@@ -7,7 +7,7 @@ import { Route } from "./+types/layout";
 import { Outlet } from "react-router";
 import { Spinner } from "@/components/ui/spinner";
 import { useMounted } from "@/hooks/use-mounted";
-import { Suspense, useDeferredValue, type ReactNode } from "react";
+import { Activity, type ReactNode } from "react";
 import { HocuspocusContextProvider, useIsSync, WebsocketProvider } from "@/lib/yjs/provider";
 import { DocId } from "@/lib/yjs";
 
@@ -30,18 +30,18 @@ export async function loader() {
 export default function Layout({ loaderData }: Route.ComponentProps) {
   return (
     <ClientContextProvider contexts={loaderData.clientContexts}>
-      <WebsocketProvider>
-        <HocuspocusContextProvider name={DocId.root}>
-          <SidebarProvider>
+      <SidebarProvider>
+        <WebsocketProvider>
+          <HocuspocusContextProvider name={DocId.root}>
             <ClientBoundary>
               <AppSidebar>
                 <Outlet />
               </AppSidebar>
               <Toaster />
             </ClientBoundary>
-          </SidebarProvider>
-        </HocuspocusContextProvider>
-      </WebsocketProvider>
+          </HocuspocusContextProvider>
+        </WebsocketProvider>
+      </SidebarProvider>
     </ClientContextProvider>
   );
 }
@@ -49,22 +49,17 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
 function ClientBoundary({ children }: { children: ReactNode }) {
   const mounted = useMounted();
   const isSync = useIsSync();
-  const ready = useDeferredValue(mounted && isSync);
+  const ready = isSync && mounted;
 
   return (
-    <Suspense>
-      <Inter ready={ready}>{children}</Inter>
-    </Suspense>
-  );
-}
-
-function Inter({ ready, children }: { ready: boolean; children: ReactNode }) {
-  if (ready) return children;
-
-  return (
-    <div className="fixed flex items-center justify-center inset-0 bg-background z-50 text-sm text-muted-foreground gap-1">
-      <Spinner />
-      Loading
-    </div>
+    <>
+      <Activity mode={ready ? "visible" : "hidden"}>{children}</Activity>
+      {!ready && (
+        <div className="fixed flex items-center justify-center inset-0 bg-background z-50 text-sm text-muted-foreground gap-1">
+          <Spinner />
+          Loading
+        </div>
+      )}
+    </>
   );
 }

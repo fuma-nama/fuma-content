@@ -16,6 +16,11 @@ import {
 import * as Y from "yjs";
 import { Awareness } from "y-protocols/awareness";
 
+export const RootContext = createContext<{
+  wait: (provider: HocuspocusProvider) => boolean;
+  ready: (provider: HocuspocusProvider) => void;
+} | null>(null);
+
 const ProviderContext = createContext<{ provider: HocuspocusProvider; synced: boolean } | null>(
   null,
 );
@@ -49,12 +54,14 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    if (ws.status === WebSocketStatus.Disconnected) ws.connect();
-
     return () => {
       if (ws.status === WebSocketStatus.Connected) ws.disconnect();
     };
   }, []);
+
+  if (typeof window !== "undefined" && ws.status === WebSocketStatus.Disconnected) {
+    ws.connect();
+  }
 
   return <WebsocketContext value={ws}>{children}</WebsocketContext>;
 }
@@ -82,13 +89,15 @@ export function HocuspocusContextProvider({
   }, [name, ws]);
   const [synced, setSynced] = useState(() => provider.synced);
 
-  if (typeof window !== "undefined" && !provider.isAttached) provider.attach();
-
   useEffect(() => {
     return () => {
-      provider.detach();
+      if (provider.isAttached) provider.detach();
     };
   }, []);
+
+  if (typeof window !== "undefined" && !provider.isAttached) {
+    provider.attach();
+  }
 
   return (
     <ProviderContext value={useMemo(() => ({ provider, synced }), [provider, synced])}>

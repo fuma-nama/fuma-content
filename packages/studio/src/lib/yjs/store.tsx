@@ -15,15 +15,10 @@ export function useDocuments() {
   return useValue(doc.getArray("documents"), (t) => validateDocuments(t.toJSON()));
 }
 
-export function useValue<T extends Y.AbstractType<any>, R>(t: T, get: (t: T) => R): R {
+export function useValue<T extends Y.AbstractType<any>, R>(t: T, get: (t: T) => R): R | null {
   const isSync = useIsSync();
-  const [value, setValue] = useState<R>(() => get(t));
+  const [value, setValue] = useState<R | null>(() => (isSync ? get(t) : null));
   const prevSync = useRef(isSync);
-
-  if (prevSync.current !== isSync) {
-    prevSync.current = isSync;
-    if (isSync) setValue(get(t));
-  }
 
   const onChange = useEffectEvent(() => {
     setValue(get(t));
@@ -37,6 +32,14 @@ export function useValue<T extends Y.AbstractType<any>, R>(t: T, get: (t: T) => 
       t.unobserve(onChange);
     };
   }, [t, isSync]);
+
+  if (prevSync.current !== isSync) {
+    prevSync.current = isSync;
+    if (isSync) {
+      setValue(get(t));
+      return null;
+    }
+  }
 
   return value;
 }

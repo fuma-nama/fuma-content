@@ -13,7 +13,7 @@ export default function Page() {
         <h1 className="text-sm font-medium">Collections</h1>
       </SiteHeader>
       <div className="flex flex-col flex-1 p-2">
-        {collections.map((collection) => (
+        {collections?.map((collection) => (
           <CollectionActionsContext key={collection.id} collection={collection}>
             <Link
               to={`/collection/${collection.id}`}
@@ -27,7 +27,7 @@ export default function Page() {
       </div>
       <div className="flex items-center h-10 px-4 border-t">
         <Badge variant="outline" className="font-mono text-muted-foreground">
-          Collections: {collections.length}
+          Collections: {collections?.length}
         </Badge>
       </div>
     </>

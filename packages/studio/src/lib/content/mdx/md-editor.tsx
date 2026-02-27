@@ -9,6 +9,7 @@ import { RemoteCursorOverlay } from "@/components/editor/ui/remote-cursor-overla
 import { useHocuspocusProvider, useIsSync } from "@/lib/yjs/provider";
 import * as Y from "yjs";
 import { CursorEditor } from "@slate-yjs/core";
+import { generateUser } from "@/lib/yjs/auth";
 
 export function MDXEditor({
   field,
@@ -35,12 +36,8 @@ export function MDXEditor({
             afterEditable: RemoteCursorOverlay,
           },
           options: {
-            // TODO: auth system
             cursors: {
-              data: {
-                name: "User Name",
-                color: "#aabbcc",
-              },
+              data: generateUser(),
             },
             _isConnected: true,
             providers: [provider],
