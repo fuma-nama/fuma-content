@@ -1,5 +1,15 @@
 # fuma-content
 
+## 1.2.0
+
+### Minor Changes
+
+- f0762e7: Disable `remark-include` by default
+
+### Patch Changes
+
+- 4565afd: Support Vue loader
+
 ## 1.1.5
 
 ### Patch Changes
