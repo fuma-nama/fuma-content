@@ -15,6 +15,7 @@ export default defineConfig({
     "./src/collections/mdx/vue.ts",
 
     "./src/plugins/*.ts",
+    "./src/plugins/remark/*.ts",
     "./src/plugins/loader/{index,webpack}.ts",
   ],
   format: "esm",

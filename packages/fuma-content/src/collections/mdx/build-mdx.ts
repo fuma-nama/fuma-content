@@ -1,13 +1,13 @@
 import { createProcessor, type ProcessorOptions } from "@mdx-js/mdx";
 import { VFile } from "vfile";
-import { remarkInclude } from "@/collections/mdx/remark-include";
-import { type PostprocessOptions, remarkPostprocess } from "@/collections/mdx/remark-postprocess";
+import { remarkPostprocess } from "@/collections/mdx/remark-postprocess";
 import type { Core } from "@/core";
 import { createCache } from "@/utils/async-cache";
 import type { MDXContent } from "mdx/types";
 import { MDXCollection } from "../mdx";
-import type { Pluggable, PluggableList } from "unified";
+import type { PluggableList } from "unified";
 import type { Awaitable } from "@/types";
+import { pluggable } from "@/utils/unified/pluggable";
 
 type MDXProcessor = ReturnType<typeof createProcessor>;
 
@@ -35,10 +35,7 @@ interface BuildMDXOptions {
 export interface FumaContentProcessorOptions extends Omit<ProcessorOptions, "remarkPlugins"> {
   remarkPlugins?:
     | PluggableList
-    | ((plugins: {
-        remarkInclude: typeof remarkInclude;
-        remarkPostprocess: Pluggable;
-      }) => PluggableList)
+    | ((plugins: { preprocess: PluggableList; postprocess: PluggableList }) => PluggableList)
     | null
     | undefined;
 }
@@ -95,10 +92,12 @@ export async function buildMDX({
 
     return processorCache.cached(key, async () => {
       const mdxOptions = await collection?.getMDXOptions?.(environment);
-      const postprocessOptions: PostprocessOptions = {
-        _format: format,
-        ...collection?.postprocess,
-      };
+      const postprocess = [
+        pluggable(remarkPostprocess, {
+          _format: format,
+          ...collection?.postprocess,
+        }),
+      ];
 
       return createProcessor({
         outputFormat: "program",
@@ -107,14 +106,10 @@ export async function buildMDX({
         remarkPlugins:
           typeof mdxOptions?.remarkPlugins === "function"
             ? mdxOptions.remarkPlugins({
-                remarkInclude,
-                remarkPostprocess: [remarkPostprocess, postprocessOptions],
+                preprocess: [],
+                postprocess,
               })
-            : [
-                remarkInclude,
-                ...(mdxOptions?.remarkPlugins ?? []),
-                [remarkPostprocess, postprocessOptions],
-              ],
+            : [...(mdxOptions?.remarkPlugins ?? []), ...postprocess],
         format,
       });
     });

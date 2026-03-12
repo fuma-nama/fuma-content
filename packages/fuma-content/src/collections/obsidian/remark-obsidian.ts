@@ -3,11 +3,9 @@ import type { Root } from "mdast";
 import { buildStorage, normalize, VaultStorage } from "./build-storage";
 import { buildResolver, VaultResolver } from "./build-resolver";
 import path from "node:path";
-import { transformBlocks } from "./remark-block-id";
-import { transform } from "./remark-convert";
-import { removeComment } from "./remark-obsidian-comment";
-import { transformWikilinks } from "./remark-wikilinks";
+import { transform } from "./utils/transform";
 import { MDXCollection } from "../mdx";
+import { percentCommentFromMarkdown, percentCommentMicromark } from "./utils/micromark-comments";
 
 declare module "vfile" {
   interface DataMap {
@@ -23,6 +21,12 @@ export function remarkObsidian(this: Processor): Transformer<Root, Root> {
       storage: VaultStorage;
     }
   >();
+
+  const data = this.data();
+  const micromarkExtensions = (data.micromarkExtensions ??= []);
+  const fromMarkdownExtensions = (data.fromMarkdownExtensions ??= []);
+  micromarkExtensions.push(percentCommentMicromark());
+  fromMarkdownExtensions.push(percentCommentFromMarkdown());
 
   return async (tree, file) => {
     if (file.data._obsidian_transformed) return tree;
@@ -52,10 +56,7 @@ export function remarkObsidian(this: Processor): Transformer<Root, Root> {
     const vault = storage.files.get(normalizedPath);
 
     if (vault?.format === "content") {
-      tree = transformWikilinks(tree, vault, resolver);
       tree = transform(tree, vault, resolver);
-      tree = removeComment(tree);
-      tree = transformBlocks(tree);
       file.data._obsidian_transformed = true;
       return tree;
     }

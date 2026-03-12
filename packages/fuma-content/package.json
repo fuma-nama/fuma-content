@@ -44,6 +44,7 @@
     "./plugins/json-schema": "./dist/plugins/json-schema.js",
     "./plugins/loader": "./dist/plugins/loader/index.js",
     "./plugins/loader/webpack": "./dist/plugins/loader/webpack.js",
+    "./plugins/remark/include": "./dist/plugins/remark/include.js",
     "./vite": "./dist/vite/index.js",
     "./package.json": "./package.json"
   },
@@ -86,6 +87,7 @@
     "@types/react": "^19.2.14",
     "mdast-util-directive": "^3.1.0",
     "mdast-util-mdx-jsx": "^3.2.0",
+    "micromark-util-types": "^2.0.2",
     "next": "16.1.6",
     "react": "^19.2.4",
     "remark": "^15.0.1",

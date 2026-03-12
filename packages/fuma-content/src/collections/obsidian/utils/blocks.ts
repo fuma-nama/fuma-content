@@ -1,6 +1,6 @@
 import { visit } from "unist-util-visit";
 import type { Root } from "mdast";
-import { replace } from "../../utils/mdast/replace";
+import { replace } from "../../../utils/mdast/replace";
 import type { MdxJsxFlowElement } from "mdast-util-mdx-jsx";
 
 const Regex = /(?<!\\)\^(?<block_id>\w+)$/m;

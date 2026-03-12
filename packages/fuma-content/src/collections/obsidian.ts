@@ -1,6 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { mdxCollection, type MDXCollectionConfig } from "./mdx";
 import { remarkObsidian } from "./obsidian/remark-obsidian";
+import { remarkInclude } from "@/plugins/remark/include";
 
 export type MDXObsidianCollectionConfig<
   FrontmatterSchema extends StandardSchemaV1 | undefined = undefined,
@@ -17,10 +18,19 @@ export function mdxObsidianCollection<
 
       return {
         ...base,
-        remarkPlugins: ({ remarkInclude, remarkPostprocess }) =>
+        remarkPlugins: ({ preprocess, postprocess }) =>
           typeof base?.remarkPlugins === "function"
-            ? [remarkObsidian, ...base.remarkPlugins({ remarkInclude, remarkPostprocess })]
-            : [remarkObsidian, remarkInclude, ...(base?.remarkPlugins ?? []), remarkPostprocess],
+            ? base.remarkPlugins({
+                preprocess: [remarkObsidian, remarkInclude, ...preprocess],
+                postprocess,
+              })
+            : [
+                remarkObsidian,
+                remarkInclude,
+                ...preprocess,
+                ...(base?.remarkPlugins ?? []),
+                ...postprocess,
+              ],
       };
     },
   });

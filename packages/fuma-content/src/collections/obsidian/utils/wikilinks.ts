@@ -1,9 +1,9 @@
 import { visit } from "unist-util-visit";
 import type { Paragraph, Parent, PhrasingContent, Root, RootContent } from "mdast";
 import type { MdxJsxFlowElement } from "mdast-util-mdx-jsx";
-import { getFileHref, getHeadingHash } from "./get-refs";
-import { ParsedContentFile, ParsedFile } from "./build-storage";
-import { VaultResolver } from "./build-resolver";
+import { VaultResolver } from "../build-resolver";
+import { ParsedContentFile, ParsedFile } from "../build-storage";
+import { getFileHref, getHeadingHash } from "../get-refs";
 
 declare module "mdast" {
   interface LinkData {

@@ -1,11 +1,15 @@
 import type { Blockquote, PhrasingContent, Root } from "mdast";
 import { visit } from "unist-util-visit";
-import { separate } from "../../utils/mdast/separate";
-import { createCallout } from "../../utils/mdast/create";
-import { resolveInternalHref, VaultResolver } from "./build-resolver";
-import { replace } from "../../utils/mdast/replace";
-import { getFileHref, getHeadingHash } from "./get-refs";
-import { ParsedContentFile } from "./build-storage";
+import { separate } from "../../../utils/mdast/separate";
+import { createCallout } from "../../../utils/mdast/create";
+import { resolveInternalHref, VaultResolver } from "../build-resolver";
+import { replace } from "../../../utils/mdast/replace";
+import { getFileHref, getHeadingHash } from "../get-refs";
+import { ParsedContentFile } from "../build-storage";
+import { slug } from "github-slugger";
+import { flattenNode } from "@/utils/mdast/flatten";
+import { transformWikilinks } from "./wikilinks";
+import { transformBlocks } from "./blocks";
 
 const RegexCalloutHead = /^\[!(?<type>\w+)](?<collapsible>\+)?/;
 
@@ -46,6 +50,14 @@ function resolveCallout(node: Blockquote) {
 }
 
 export function transform(tree: Root, sourceFile: ParsedContentFile, resolver: VaultResolver) {
+  visit(tree, "heading", (node) => {
+    node.data ??= {};
+    node.data.hProperties ??= {};
+    node.data.hProperties.id ??= slug(flattenNode(node));
+    return "skip";
+  });
+
+  tree = transformWikilinks(tree, sourceFile, resolver);
   visit(tree, ["blockquote", "link", "image"], (node) => {
     if (node.type === "blockquote") {
       const callout = resolveCallout(node);
@@ -71,5 +83,6 @@ export function transform(tree: Root, sourceFile: ParsedContentFile, resolver: V
       return "skip";
     }
   });
+  tree = transformBlocks(tree);
   return tree;
 }
