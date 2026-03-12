@@ -11,12 +11,12 @@
     "format": "oxfmt"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
-    "@changesets/cli": "^2.29.8",
-    "bun": "^1.3.9",
+    "@biomejs/biome": "^2.4.6",
+    "@changesets/cli": "^2.30.0",
+    "bun": "^1.3.10",
     "fast-glob": "^3.3.3",
-    "oxfmt": "^0.35.0",
-    "turbo": "^2.8.10",
+    "oxfmt": "^0.39.0",
+    "turbo": "^2.8.16",
     "typescript-config": "workspace:*",
     "vitest": "^4.0.18"
   },

@@ -15,58 +15,37 @@
     "dist/*"
   ],
   "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    "./config": {
-      "types": "./dist/config/index.d.ts",
-      "import": "./dist/config/index.js"
-    },
-    "./dynamic": {
-      "types": "./dist/dynamic.d.ts",
-      "import": "./dist/dynamic.js"
-    },
-    "./next": {
-      "types": "./dist/next/index.d.ts",
-      "import": "./dist/next/index.js"
-    },
-    "./vite": {
-      "types": "./dist/vite/index.d.ts",
-      "import": "./dist/vite/index.js"
-    },
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./collections": {
-      "types": "./dist/collections/index.d.ts",
-      "import": "./dist/collections/index.js"
-    },
-    "./collections/mdx/react": {
-      "types": "./dist/collections/mdx/react.d.ts",
-      "import": "./dist/collections/mdx/react.js"
-    },
-    "./collections/*": {
-      "types": "./dist/collections/*.d.ts",
-      "import": "./dist/collections/*.js",
-      "default": "./dist/collections/*.js"
-    },
-    "./node": {
-      "types": "./dist/node/index.d.ts",
-      "import": "./dist/node/index.js"
-    },
-    "./bun": {
-      "types": "./dist/bun/index.d.ts",
-      "import": "./dist/bun/index.js"
-    },
-    "./plugins/loader": {
-      "types": "./dist/plugins/loader/index.d.ts",
-      "import": "./dist/plugins/loader/index.js"
-    },
-    "./plugins/*": {
-      "types": "./dist/plugins/*.d.ts",
-      "import": "./dist/plugins/*.js"
-    }
+    ".": "./dist/index.js",
+    "./bun": "./dist/bun/index.js",
+    "./collections": "./dist/collections/index.js",
+    "./collections/data": "./dist/collections/data.js",
+    "./collections/data/runtime": "./dist/collections/data/runtime.js",
+    "./collections/fs": "./dist/collections/fs.js",
+    "./collections/json/loader-webpack": "./dist/collections/json/loader-webpack.js",
+    "./collections/mdx": "./dist/collections/mdx.js",
+    "./collections/mdx/loader-webpack": "./dist/collections/mdx/loader-webpack.js",
+    "./collections/mdx/react": "./dist/collections/mdx/react.js",
+    "./collections/mdx/runtime": "./dist/collections/mdx/runtime.js",
+    "./collections/mdx/runtime-browser": "./dist/collections/mdx/runtime-browser.js",
+    "./collections/mdx/runtime-dynamic": "./dist/collections/mdx/runtime-dynamic.js",
+    "./collections/mdx/vue": "./dist/collections/mdx/vue.js",
+    "./collections/obsidian": "./dist/collections/obsidian.js",
+    "./collections/runtime/file-store": "./dist/collections/runtime/file-store.js",
+    "./collections/runtime/store": "./dist/collections/runtime/store.js",
+    "./collections/yaml/loader-webpack": "./dist/collections/yaml/loader-webpack.js",
+    "./config": "./dist/config/index.js",
+    "./dynamic": "./dist/dynamic.js",
+    "./next": "./dist/next/index.js",
+    "./node": "./dist/node/index.js",
+    "./node/loader": "./dist/node/loader.js",
+    "./plugins/git": "./dist/plugins/git.js",
+    "./plugins/json-schema": "./dist/plugins/json-schema.js",
+    "./plugins/loader": "./dist/plugins/loader/index.js",
+    "./plugins/loader/webpack": "./dist/plugins/loader/webpack.js",
+    "./vite": "./dist/vite/index.js",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
@@ -98,11 +77,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.9",
+    "@types/bun": "^1.3.10",
     "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
     "@types/mdx": "^2.0.13",
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.4.0",
     "@types/picomatch": "^4.0.2",
     "@types/react": "^19.2.14",
     "mdast-util-directive": "^3.1.0",
@@ -114,14 +93,14 @@
     "remark-mdx": "^3.1.1",
     "remark-stringify": "^11.0.0",
     "rollup": "^4.59.0",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.2",
     "typescript": "^5.9.3",
     "typescript-config": "workspace:*",
     "unplugin-vue": "^7.1.1",
     "vite": "^7.3.1",
-    "vue": "^3.5.29",
+    "vue": "^3.5.30",
     "vue-tsc": "^3.2.5",
-    "webpack": "^5.105.2"
+    "webpack": "^5.105.4"
   },
   "peerDependencies": {
     "@types/mdast": "*",
