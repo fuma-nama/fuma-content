@@ -1,5 +1,13 @@
 # @fuma-content/studio
 
+## 2.0.1
+
+### Patch Changes
+
+- 9f001fa: Support Vite 8
+- Updated dependencies [9f001fa]
+  - fuma-content@1.2.1
+
 ## 2.0.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.2.1
+
+### Patch Changes
+
+- 9f001fa: Support Vite 8
+
 ## 1.2.0
 
 ### Minor Changes
