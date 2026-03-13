@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.2.2
+
+### Patch Changes
+
+- f2b14e8: support custom hook id
+
 ## 1.2.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @fuma-content/studio
 
+## 2.0.2
+
+### Patch Changes
+
+- f2b14e8: support custom hook id
+- Updated dependencies [f2b14e8]
+  - fuma-content@1.2.2
+
 ## 2.0.1
 
 ### Patch Changes
