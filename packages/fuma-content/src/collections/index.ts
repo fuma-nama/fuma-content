@@ -4,7 +4,6 @@ import { asyncPipe } from "@/utils/pipe";
 
 export interface CollectionHookContext {
   core: Core;
-  collection: Collection;
 }
 
 export class Collection {
@@ -19,7 +18,14 @@ export class Collection {
    * Configure watch/dev server
    */
   readonly onServer = hook<CollectionHookContext & { server: ServerContext }>();
-  readonly onInit = asyncHook<CollectionHookContext>();
+  readonly onInit = asyncHook<
+    CollectionHookContext & {
+      /**
+       * You can add other collections to load from here
+       */
+      pendingCollections: Map<string, Collection>;
+    }
+  >();
   readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
   readonly plugins: PluginOption[] = [];
 

@@ -211,7 +211,7 @@ export class Core {
 
     await Promise.all(
       this.config.collections.values().map(async (collection) => {
-        collection.onConfig.run({ collection, core: this, config: this.config });
+        collection.onConfig.run({ core: this, config: this.config });
 
         for (const plugin of this.plugins) {
           await plugin.collection?.call(ctx, collection);
@@ -294,7 +294,7 @@ export class Core {
       plugin.configureServer?.call(ctx, server);
     }
     for (const collection of this.getCollections()) {
-      collection.onServer.run({ collection, core: this, server });
+      collection.onServer.run({ core: this, server });
     }
     for (const workspace of this.workspaces.values()) {
       await workspace.initServer(server);
@@ -393,13 +393,27 @@ export class Core {
     }
 
     globalConfig.collections ??= {};
-    await Promise.all(
-      Object.entries(globalConfig.collections).map(async ([name, collection]) => {
-        collection.name = name;
-        collections.set(name, collection);
-        await collection.onInit.run({ collection, core: this });
-      }),
+    const pendingCollections = new Map<string, Collection>(
+      Object.entries(globalConfig.collections),
     );
+    while (pendingCollections.size > 0) {
+      const entries = Array.from(pendingCollections.entries());
+      pendingCollections.clear();
+
+      await Promise.all(
+        entries.map(async ([name, collection]) => {
+          if (collections.has(name)) {
+            throw new Error(`collection name "${name}" was taken.`);
+          }
+
+          collection.name = name;
+          collections.set(name, collection);
+          // `pendingCollections` can be updated below
+          await collection.onInit.run({ core: this, pendingCollections });
+        }),
+      );
+    }
+
     return {
       ...globalConfig,
       collections,
