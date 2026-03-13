@@ -73,6 +73,7 @@ export interface ClientContext {
 }
 
 export const studioHook = defineCollectionHook<StudioHook, StudioHook | undefined>(
+  "studio",
   (collection, options) => {
     if (options) return options;
     if (collection instanceof MDXCollection) return mdxHook(collection) as unknown as StudioHook;

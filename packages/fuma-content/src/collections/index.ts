@@ -7,7 +7,7 @@ export interface CollectionHookContext {
 }
 
 export class Collection {
-  private readonly pluginHooks = new Map<symbol, unknown>();
+  private readonly pluginHooks = new Map<symbol | string, unknown>();
   name = null as unknown as string;
 
   /**
@@ -47,15 +47,32 @@ export class Collection {
 }
 
 export interface CollectionHook<T = unknown, Options = undefined> {
-  id: symbol;
+  id: string | symbol;
   create: (collection: Collection, options: Options) => T;
 }
 
 export function defineCollectionHook<T, Options = undefined>(
   init: (collection: Collection, options: Options) => T,
+): CollectionHook<T, Options>;
+
+export function defineCollectionHook<T, Options = undefined>(
+  id: string,
+  init: (collection: Collection, options: Options) => T,
+): CollectionHook<T, Options>;
+
+export function defineCollectionHook<T, Options = undefined>(
+  ...args:
+    | [init: (collection: Collection, options: Options) => T]
+    | [id: string, init: (collection: Collection, options: Options) => T]
 ): CollectionHook<T, Options> {
+  if (args.length === 1)
+    return {
+      id: Symbol(),
+      create: args[0],
+    };
+
   return {
-    id: Symbol(),
-    create: init,
+    id: args[0],
+    create: args[1],
   };
 }

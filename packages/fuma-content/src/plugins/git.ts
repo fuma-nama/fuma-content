@@ -23,7 +23,7 @@ export interface GitHook {
   onClient: AsyncHook<{ client: GitClient }>;
 }
 
-export const gitHook = defineCollectionHook<GitHook>(() => ({
+export const gitHook = defineCollectionHook<GitHook>("git", () => ({
   onClient: asyncHook(),
 }));
 

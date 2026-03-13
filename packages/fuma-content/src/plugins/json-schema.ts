@@ -27,6 +27,7 @@ export interface JSONSchemaHook {
  * Generate JSON schemas locally for collection schemas.
  */
 export const jsonSchemaHook = defineCollectionHook<JSONSchemaHook, JSONSchemaOptions>(
+  "json-schema",
   (collection, { insert = false, create }) => {
     const hook: JSONSchemaHook = {
       create,

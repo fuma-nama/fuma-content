@@ -126,14 +126,12 @@ export function loaderPlugin(): Plugin {
             };
           },
         };
-        for (const collection of this.core.getCollections()) {
+        for (const collection of this.core.getCollections(true)) {
           const hook = collection.getPluginHook(loaderHook);
           if (!hook) continue;
 
           for (const loader of hook.loaders) {
-            if (!loader.configureNext) continue;
-
-            config = loader.configureNext.call(ctx, config);
+            if (loader.configureNext) config = loader.configureNext.call(ctx, config);
           }
         }
 
@@ -170,6 +168,6 @@ export interface LoaderHook {
   loaders: LoaderConfig[];
 }
 
-export const loaderHook = defineCollectionHook<LoaderHook>(() => ({
+export const loaderHook = defineCollectionHook<LoaderHook>("loader", () => ({
   loaders: [],
 }));
