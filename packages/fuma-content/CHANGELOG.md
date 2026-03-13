@@ -1,5 +1,12 @@
 # fuma-content
 
+## 1.2.3
+
+### Patch Changes
+
+- 6058a15: drop type-level private
+- 35d4c22: Support nested collections
+
 ## 1.2.2
 
 ### Patch Changes
