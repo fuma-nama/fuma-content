@@ -7,7 +7,7 @@ export interface CollectionHookContext {
 }
 
 export class Collection {
-  private readonly pluginHooks = new Map<symbol | string, unknown>();
+  readonly #pluginHooks = new Map<symbol | string, unknown>();
   name = null as unknown as string;
 
   /**
@@ -26,16 +26,16 @@ export class Collection {
   pluginHook<T>(hook: CollectionHook<T>): T;
 
   pluginHook<T, O>(hook: CollectionHook<T, O>, options?: O): T {
-    let created = this.pluginHooks.get(hook.id) as T | undefined;
+    let created = this.#pluginHooks.get(hook.id) as T | undefined;
     if (created) return created;
 
     created = hook.create(this, options as O);
-    this.pluginHooks.set(hook.id, created);
+    this.#pluginHooks.set(hook.id, created);
     return created;
   }
 
   getPluginHook<T>(hook: CollectionHook<T>): T | undefined {
-    return this.pluginHooks.get(hook.id) as T | undefined;
+    return this.#pluginHooks.get(hook.id) as T | undefined;
   }
 }
 

@@ -16,20 +16,20 @@ export interface CollectionStore<Id, Data> {
 }
 
 export class MapCollectionStore<Id, Data> implements CollectionStore<Id, Data> {
-  private readonly dataMap: Map<Id, Data>;
-  private readonly dataList: Data[];
+  readonly #dataMap: Map<Id, Data>;
+  readonly #dataList: Data[];
 
   constructor(input: Map<Id, Data>) {
-    this.dataMap = input;
-    this.dataList = Array.from(input.values());
+    this.#dataMap = input;
+    this.#dataList = Array.from(input.values());
   }
 
   get(id: Id): Data | undefined {
-    return this.dataMap.get(id);
+    return this.#dataMap.get(id);
   }
 
   list(): Data[] {
-    return this.dataList;
+    return this.#dataList;
   }
 
   castData<T>(_cast: (input: Data) => T): MapCollectionStore<Id, T> {
@@ -42,7 +42,7 @@ export class MapCollectionStore<Id, Data> implements CollectionStore<Id, Data> {
   transform<$Id, T>(fn: (id: Id, data: Data) => [$Id, T]): MapCollectionStore<$Id, T> {
     const updated = new Map<$Id, T>();
 
-    for (const [k, v] of this.dataMap) {
+    for (const [k, v] of this.#dataMap) {
       const out = fn(k, v);
       updated.set(out[0], out[1]);
     }

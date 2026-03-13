@@ -4,21 +4,21 @@ import { Collection } from ".";
 import { createCache } from "@/utils/async-cache";
 
 export class FileSystemCollection extends Collection {
-  private matcher: picomatch.Matcher | undefined;
+  #matcher: picomatch.Matcher | undefined;
   /**
    * content directory (absolute)
    */
   dir: string;
-  private readonly filesCache = createCache<string[]>();
+  readonly #filesCache = createCache<string[]>();
   /** the glob patterns to match files in collection, this doesn't take `supportedFormats` into account. */
-  private readonly patterns: string[];
+  readonly #patterns: string[];
   readonly supportedFileFormats: string[] | undefined;
 
   constructor(config: FileSystemCollectionConfig) {
     super();
     const { files, supportedFormats } = config;
     this.dir = config.dir;
-    this.patterns = files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
+    this.#patterns = files ?? [supportedFormats ? `**/*.{${supportedFormats.join(",")}}` : `**/*`];
     this.supportedFileFormats = supportedFormats;
     this.onInit.hook(({ core }) => {
       this.dir = path.resolve(core.getOptions().cwd, this.dir);
@@ -28,7 +28,7 @@ export class FileSystemCollection extends Collection {
       server.watcher.add(this.dir);
       server.watcher.on("all", (event, file) => {
         if (event === "change" || !this.hasFile(file)) return;
-        this.filesCache.invalidate("");
+        this.#filesCache.invalidate("");
       });
     });
   }
@@ -44,10 +44,10 @@ export class FileSystemCollection extends Collection {
    * the result is cached.
    */
   async getFiles() {
-    return this.filesCache.cached("", async () => {
+    return this.#filesCache.cached("", async () => {
       const { glob } = await import("tinyglobby");
 
-      const out = await glob(this.patterns, { cwd: this.dir });
+      const out = await glob(this.#patterns, { cwd: this.dir });
       return out.filter((v) => this.isFileSupported(v));
     });
   }
@@ -58,11 +58,11 @@ export class FileSystemCollection extends Collection {
     const relativePath = path.relative(this.dir, filePath);
     if (relativePath.startsWith(`..${path.sep}`)) return false;
 
-    return (this.matcher ??= picomatch(this.patterns))(relativePath);
+    return (this.#matcher ??= picomatch(this.#patterns))(relativePath);
   }
 
   invalidateCache() {
-    this.filesCache.invalidate("");
+    this.#filesCache.invalidate("");
   }
 }
 

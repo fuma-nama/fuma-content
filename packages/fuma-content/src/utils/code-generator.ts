@@ -22,10 +22,10 @@ interface ImportInfo {
  * Code generator (one instance per file)
  */
 export class CodeGenerator {
-  private readonly lines: string[] = [];
+  readonly #lines: string[] = [];
   // specifier -> imported members/info
-  private readonly importInfos = new Map<string, ImportInfo>();
-  private eagerImportId = 0;
+  readonly #importInfos = new Map<string, ImportInfo>();
+  #eagerImportId = 0;
 
   readonly options: CodeGeneratorOptions;
   constructor({ jsExtension = false, outDir = "" }: Partial<CodeGeneratorOptions>) {
@@ -36,8 +36,8 @@ export class CodeGenerator {
   }
 
   addNamespaceImport(namespace: string, specifier: string, typeOnly = false) {
-    const info = this.importInfos.get(specifier) ?? {};
-    this.importInfos.set(specifier, info);
+    const info = this.#importInfos.get(specifier) ?? {};
+    this.#importInfos.set(specifier, info);
     if (!typeOnly) {
       info.isUsed ??= new Set();
       info.isUsed.add(namespace);
@@ -48,8 +48,8 @@ export class CodeGenerator {
   }
 
   addNamedImport(names: string[], specifier: string, typeOnly = false) {
-    const info = this.importInfos.get(specifier) ?? {};
-    this.importInfos.set(specifier, info);
+    const info = this.#importInfos.get(specifier) ?? {};
+    this.#importInfos.set(specifier, info);
     info.named ??= new Map();
 
     for (const name of names) {
@@ -63,20 +63,20 @@ export class CodeGenerator {
   }
 
   push(...insert: string[]) {
-    this.lines.push(...insert);
+    this.#lines.push(...insert);
   }
 
   async pushAsync(insert: Promise<string | undefined>[]) {
     for (const line of await Promise.all(insert)) {
       if (line === undefined) continue;
 
-      this.lines.push(line);
+      this.#lines.push(line);
     }
   }
 
   /** generate a random import name that is unique in file. */
   generateImportName(): string {
-    return `__${this.eagerImportId++}`;
+    return `__${this.#eagerImportId++}`;
   }
 
   formatDynamicImport(specifier: string, mod?: string): string {
@@ -115,7 +115,7 @@ export class CodeGenerator {
   toString() {
     const final: string[] = ["// @ts-nocheck"];
 
-    for (const [specifier, { namespaces, isUsed, named }] of this.importInfos) {
+    for (const [specifier, { namespaces, isUsed, named }] of this.#importInfos) {
       if (namespaces)
         for (const namespace of namespaces) {
           final.push(
@@ -138,7 +138,7 @@ export class CodeGenerator {
       }
     }
 
-    final.push(...this.lines);
+    final.push(...this.#lines);
     return final.join("\n");
   }
 }
