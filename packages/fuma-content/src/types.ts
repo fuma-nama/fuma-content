@@ -1,14 +1,23 @@
-import type { GlobalConfig } from "@/config";
-import { Collection } from "./collections";
+import type { CollectionsPack, GlobalConfig } from "@/config";
+import type { Collection } from "./collections";
 
 // `Config` should be an object of all exports in config file.
-export type GetCollectionConfig<Config, Name extends string> =
-  Config extends Record<Name, Collection>
-    ? Config[Name]
-    : Config extends {
-          default: GlobalConfig<infer Collections>;
-        }
-      ? Collections[Name]
+export type GetCollectionConfig<Config, Name extends string> = Config extends {
+  default: GlobalConfig<infer Collections>;
+}
+  ? Resolve<Collections, Name>
+  : Config extends CollectionsPack
+    ? Resolve<Config, Name>
+    : never;
+
+type Resolve<Map extends CollectionsPack, Name extends string> = Map[Name] extends Collection
+  ? Map[Name]
+  : Map[Name] extends { index: Collection }
+    ? Map[Name]["index"]
+    : Name extends `${infer Key}$${infer Property}`
+      ? Map[Key] extends CollectionsPack
+        ? Resolve<Map[Key], Property>
+        : never
       : never;
 
 export type Awaitable<T> = T | PromiseLike<T>;

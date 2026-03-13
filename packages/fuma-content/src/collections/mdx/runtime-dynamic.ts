@@ -19,7 +19,7 @@ export interface MDXStoreDynamicData<Frontmatter, Attached = unknown> {
 let corePromise: Promise<Core>;
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection
+  GetCollectionConfig<Config, Name> extends { $inferFrontmatter: unknown }
     ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 

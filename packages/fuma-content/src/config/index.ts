@@ -1,9 +1,11 @@
 import { Collection } from "@/collections";
 import type { PluginOption } from "@/core";
 
-export interface GlobalConfig<
-  Collections extends Record<string, Collection> = Record<string, Collection>,
-> {
+export type CollectionsPack = {
+  [key: string]: Collection | CollectionsPack;
+};
+
+export interface GlobalConfig<Collections extends CollectionsPack = CollectionsPack> {
   plugins?: PluginOption[];
   collections?: Collections;
   workspaces?: Record<string, WorkspaceConfig>;
@@ -33,8 +35,8 @@ export interface WorkspaceConfig {
   config: GlobalConfig | { default: GlobalConfig };
 }
 
-export function defineConfig<
-  Collections extends Record<string, Collection> = Record<string, Collection>,
->(config: GlobalConfig<Collections> = {}): GlobalConfig<Collections> {
+export function defineConfig<Collections extends CollectionsPack = CollectionsPack>(
+  config: GlobalConfig<Collections> = {},
+): GlobalConfig<Collections> {
   return config;
 }

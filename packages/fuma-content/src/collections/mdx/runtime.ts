@@ -1,7 +1,5 @@
 import type { GetCollectionConfig } from "@/types";
-import type { MDXCollection } from "@/collections/mdx";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
-import type { LinkReference } from "@/collections/mdx/remark-postprocess";
 import type { GitFileData } from "@/plugins/git";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
 
@@ -11,7 +9,7 @@ export interface MDXStoreData<Frontmatter, Attached = unknown> {
 }
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection
+  GetCollectionConfig<Config, Name> extends { $inferFrontmatter: unknown }
     ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 

@@ -1,18 +1,17 @@
 import type { GetCollectionConfig } from "@/types";
 import { FileCollectionStore } from "@/collections/runtime/file-store";
-import type { DataCollection } from "@/collections/data";
 
 export function dataStore<Config, Name extends string>(
   _name: Name,
   base: string,
   input: Record<string, unknown>,
 ): FileCollectionStore<{
-  data: GetCollectionConfig<Config, Name> extends DataCollection
+  data: GetCollectionConfig<Config, Name> extends { $inferOutput: unknown }
     ? GetCollectionConfig<Config, Name>["$inferOutput"]
     : never;
 }> {
   type Data =
-    GetCollectionConfig<Config, Name> extends DataCollection
+    GetCollectionConfig<Config, Name> extends { $inferOutput: unknown }
       ? GetCollectionConfig<Config, Name>["$inferOutput"]
       : never;
   const merged: Record<

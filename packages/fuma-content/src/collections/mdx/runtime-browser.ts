@@ -4,7 +4,6 @@ import type { Awaitable, GetCollectionConfig } from "@/types";
 import { MapCollectionStore } from "@/collections/runtime/store";
 import { type AsyncCache, createCache } from "@/utils/async-cache";
 import type { CompiledMDX } from "@/collections/mdx/build-mdx";
-import type { MDXCollection } from "../mdx";
 
 export interface MDXStoreBrowserData<Frontmatter, Attached = unknown> {
   id: string;
@@ -21,7 +20,7 @@ interface StoreData {
 }
 
 type GetFrontmatter<Config, Name extends string> =
-  GetCollectionConfig<Config, Name> extends MDXCollection
+  GetCollectionConfig<Config, Name> extends { $inferFrontmatter: unknown }
     ? GetCollectionConfig<Config, Name>["$inferFrontmatter"]
     : never;
 

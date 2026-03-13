@@ -7,7 +7,7 @@ import type { NextConfig } from "next";
 import type { LoadHook } from "node:module";
 import { CodeGenerator } from "@/utils/code-generator";
 import type { Awaitable } from "@/types";
-import type { GlobalConfig } from "./config";
+import type { CollectionsPack, GlobalConfig } from "./config";
 
 export interface ResolvedConfig extends Omit<GlobalConfig, "collections"> {
   collections: Map<string, Collection>;
@@ -393,7 +393,7 @@ export class Core {
     }
 
     globalConfig.collections ??= {};
-    const pendingCollections = new Map<string, Collection>(
+    const pendingCollections = new Map<string, CollectionsPack[string]>(
       Object.entries(globalConfig.collections),
     );
     while (pendingCollections.size > 0) {
@@ -402,14 +402,19 @@ export class Core {
 
       await Promise.all(
         entries.map(async ([name, collection]) => {
-          if (collections.has(name)) {
-            throw new Error(`collection name "${name}" was taken.`);
-          }
+          if (collection instanceof Collection) {
+            if (collections.has(name)) {
+              throw new Error(`duplicated collection name "${name}" is not allowed.`);
+            }
 
-          collection.name = name;
-          collections.set(name, collection);
-          // `pendingCollections` can be updated below
-          await collection.onInit.run({ core: this, pendingCollections });
+            collection.name = name;
+            collections.set(name, collection);
+            await collection.onInit.run({ core: this });
+          } else {
+            for (const [k, v] of Object.entries(collection)) {
+              pendingCollections.set(k === "index" ? name : `${name}$${k}`, v);
+            }
+          }
         }),
       );
     }

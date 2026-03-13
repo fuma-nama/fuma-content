@@ -18,14 +18,7 @@ export class Collection {
    * Configure watch/dev server
    */
   readonly onServer = hook<CollectionHookContext & { server: ServerContext }>();
-  readonly onInit = asyncHook<
-    CollectionHookContext & {
-      /**
-       * You can add other collections to load from here
-       */
-      pendingCollections: Map<string, Collection>;
-    }
-  >();
+  readonly onInit = asyncHook<CollectionHookContext>();
   readonly onEmit = asyncPipe<EmitEntry[], EmitContext>();
   readonly plugins: PluginOption[] = [];
 
