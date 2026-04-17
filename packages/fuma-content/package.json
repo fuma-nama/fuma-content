@@ -96,7 +96,7 @@
     "remark-stringify": "^11.0.0",
     "rollup": "^4.59.0",
     "tsdown": "^0.21.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.0",
     "typescript-config": "workspace:*",
     "unplugin-vue": "^7.1.1",
     "vite": "^8.0.0",
