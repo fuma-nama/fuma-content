@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.3.0
+
+### Minor Changes
+
+- 35a8ac9: Bump deps
+
 ## 1.2.3
 
 ### Patch Changes

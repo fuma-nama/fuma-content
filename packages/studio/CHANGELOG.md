@@ -1,5 +1,16 @@
 # @fuma-content/studio
 
+## 2.1.0
+
+### Minor Changes
+
+- 5276b53: Rewrite with Waku.js, reduced package size & deps significantly
+
+### Patch Changes
+
+- Updated dependencies [35a8ac9]
+  - fuma-content@1.3.0
+
 ## 2.0.2
 
 ### Patch Changes
