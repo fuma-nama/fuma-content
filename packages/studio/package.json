@@ -156,7 +156,7 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "fuma-content": "^1.2.2"
+    "fuma-content": "^1.3.0"
   },
   "inlinedDependencies": {
     "bundle-name": "4.1.0",
