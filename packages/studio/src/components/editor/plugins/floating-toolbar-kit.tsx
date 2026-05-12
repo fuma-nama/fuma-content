@@ -1,6 +1,6 @@
 "use client";
 
-import { createPlatePlugin } from "platejs/react";
+import { createPlatePlugin } from "@platejs/core/react";
 
 import { FloatingToolbar } from "@/components/editor/ui/floating-toolbar";
 import { FloatingToolbarButtons } from "@/components/editor/ui/floating-toolbar-buttons";

@@ -1,7 +1,7 @@
 "use client";
 
 import { LineHeightPlugin } from "@platejs/basic-styles/react";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 export const LineHeightKit = [
   LineHeightPlugin.configure({

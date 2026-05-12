@@ -2,7 +2,7 @@
 
 import { CaptionPlugin } from "@platejs/caption/react";
 import { ImagePlugin, PlaceholderPlugin } from "@platejs/media/react";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 import { ImageElement } from "@/components/editor/ui/media-image-node";
 import { PlaceholderElement } from "@/components/editor/ui/media-placeholder-node";

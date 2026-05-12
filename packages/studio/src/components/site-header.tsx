@@ -1,3 +1,4 @@
+"use client";
 import { Separator } from "@/components/ui/separator";
 import { ReactNode } from "react";
 import { useSidebar } from "./app-sidebar";

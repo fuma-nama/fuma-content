@@ -1,7 +1,7 @@
 "use client";
 
 import { AIChatPlugin } from "@platejs/ai/react";
-import { useEditorPlugin } from "platejs/react";
+import { useEditorPlugin } from "@platejs/core/react";
 import type * as React from "react";
 
 import { ToolbarButton } from "../../ui/toolbar";

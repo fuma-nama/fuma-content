@@ -13,8 +13,9 @@ import {
 } from "@platejs/media";
 import { SuggestionPlugin } from "@platejs/suggestion/react";
 import { TablePlugin } from "@platejs/table/react";
-import { KEYS, type NodeEntry, type Path, PathApi, type TElement } from "platejs";
-import type { PlateEditor } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { PathApi, type TElement, type Path, type NodeEntry } from "@platejs/slate";
+import type { PlateEditor } from "@platejs/core/react";
 
 const insertList = (editor: PlateEditor, type: string) => {
   editor.tf.insertNodes(

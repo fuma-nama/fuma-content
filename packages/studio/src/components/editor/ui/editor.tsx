@@ -2,8 +2,8 @@
 
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import type { PlateContentProps, PlateViewProps } from "platejs/react";
-import { PlateContainer, PlateContent, PlateView } from "platejs/react";
+import type { PlateContentProps, PlateViewProps } from "@platejs/core/react";
+import { PlateContainer, PlateContent, PlateView } from "@platejs/core/react";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 

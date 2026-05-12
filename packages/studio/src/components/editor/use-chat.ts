@@ -6,13 +6,13 @@ import { getCommentKey, getTransientCommentKey } from "@platejs/comment";
 import { deserializeMd } from "@platejs/markdown";
 import { BlockSelectionPlugin } from "@platejs/selection/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { KEYS, NodeApi, nanoid, TextApi, type TNode } from "platejs";
-import { useEditorRef, usePluginOption } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { NodeApi, TextApi, type TNode } from "@platejs/slate";
+import { useEditorRef, usePluginOption } from "@platejs/core/react";
 import * as React from "react";
-
 import { aiChatPlugin } from "@/components/editor/plugins/ai-kit";
-
 import { discussionPlugin } from "./plugins/discussion-kit";
+import { nanoid } from "@platejs/core";
 
 export type ToolName = "comment" | "edit" | "generate";
 

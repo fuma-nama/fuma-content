@@ -2,7 +2,7 @@
 
 import { insertInlineEquation } from "@platejs/math";
 import { RadicalIcon } from "lucide-react";
-import { useEditorRef } from "platejs/react";
+import { useEditorRef } from "@platejs/core/react";
 import type * as React from "react";
 
 import { ToolbarButton } from "../../ui/toolbar";

@@ -5,11 +5,12 @@ import { useControlled } from "@base-ui/utils/useControlled";
 import { useStableCallback } from "@base-ui/utils/useStableCallback";
 import { useComboboxInput, useHTMLInputCursorState } from "@platejs/combobox/react";
 import { cva } from "class-variance-authority";
-import type { Point, TElement } from "platejs";
-import { useComposedRef, useEditorRef } from "platejs/react";
+import type { Point, TElement } from "@platejs/slate";
+import { useEditorRef } from "@platejs/core/react";
 import * as React from "react";
 import { useIsCreator } from "@/hooks/editor/use-is-creator";
 import { cn } from "@/lib/utils";
+import { useComposedRef } from "@udecode/react-utils";
 
 interface InlineComboboxContextValue {
   showTrigger: boolean;

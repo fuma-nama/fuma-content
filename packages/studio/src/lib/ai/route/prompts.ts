@@ -1,5 +1,5 @@
 import type { ChatMessage } from "@/components/editor/use-chat";
-import type { SlateEditor } from "platejs";
+import type { SlateEditor } from "@platejs/core";
 
 import { getMarkdown } from "@platejs/ai";
 import dedent from "dedent";

@@ -1,8 +1,8 @@
-import { createPlatePlugin } from "platejs/react";
+import { createSlatePlugin } from "@platejs/core";
 import { MdxComponent, UnknownNodeComponent } from "../ui/mdx-component-node";
 import { ELEMENT_MDX_COMPONENT, ELEMENT_UNKNOWN_NODE } from "../types";
 
-const MdxComponentPlugin = createPlatePlugin({
+const MdxComponentPlugin = createSlatePlugin({
   key: ELEMENT_MDX_COMPONENT,
   node: {
     isElement: true,
@@ -24,7 +24,7 @@ const MdxComponentPlugin = createPlatePlugin({
   },
 });
 
-const UnknownNodePlugin = createPlatePlugin({
+const UnknownNodePlugin = createSlatePlugin({
   key: ELEMENT_UNKNOWN_NODE,
   node: {
     isVoid: true,

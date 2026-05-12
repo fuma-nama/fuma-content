@@ -1,3 +1,4 @@
+"use client";
 import {
   HocuspocusProvider as HocuspocusProviderBase,
   HocuspocusProviderWebsocket,

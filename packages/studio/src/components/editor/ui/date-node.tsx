@@ -1,9 +1,9 @@
 "use client";
 
-import type { TDateElement } from "platejs";
-import type { PlateElementProps } from "platejs/react";
+import type { TDateElement } from "@platejs/utils";
+import type { PlateElementProps } from "@platejs/core/react";
 
-import { PlateElement, useReadOnly } from "platejs/react";
+import { PlateElement, useReadOnly } from "@platejs/core/react";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

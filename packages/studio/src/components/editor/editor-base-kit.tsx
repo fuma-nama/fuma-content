@@ -1,6 +1,6 @@
-import { PlatePlugin } from "platejs/react";
-import { BaseAlignKit } from "./plugins/align-base-kit";
+import { PlatePlugin } from "@platejs/core/react";
 import { BaseBasicBlocksKit } from "./plugins/basic-blocks-base-kit";
+import { BaseAlignKit } from "./plugins/align-base-kit";
 import { BaseBasicMarksKit } from "./plugins/basic-marks-base-kit";
 import { BaseCalloutKit } from "./plugins/callout-base-kit";
 import { BaseCodeBlockKit } from "./plugins/code-block-base-kit";
@@ -35,4 +35,4 @@ export const BaseEditorKit: PlatePlugin[] = [
   ...BaseSuggestionKit,
   ...MarkdownKit,
   ...MdxComponentKit,
-] as PlatePlugin[];
+] as unknown as PlatePlugin[];

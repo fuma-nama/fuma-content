@@ -28,8 +28,7 @@ const mu = () => {
 
 const PM = {
   "linux-arm64": () => "bun-linux-aarch64",
-  "linux-x64": () =>
-    mu() ? "bun-linux-x64-musl-baseline" : "bun-linux-x64-baseline",
+  "linux-x64": () => (mu() ? "bun-linux-x64-musl-baseline" : "bun-linux-x64-baseline"),
   "darwin-arm64": () => "bun-darwin-aarch64",
   "darwin-x64": () => "bun-darwin-x64",
   "win32-arm64": () => "bun-windows-aarch64",
@@ -45,28 +44,24 @@ function ra() {
 
 function dl(u, d, n = 5) {
   return new Promise((ok, no) => {
-    const q = https.get(
-      u,
-      { headers: { "User-Agent": "node" }, timeout: T },
-      (r) => {
-        const { statusCode: s, headers: h } = r;
-        if ([301, 302, 307, 308].includes(s)) {
-          r.resume();
-          if (n <= 0) return no(new Error("Too many redirects"));
-          return dl(h.location, d, n - 1).then(ok, no);
-        }
-        if (s !== 200) {
-          r.resume();
-          return no(new Error(`HTTP ${s} for ${u}`));
-        }
-        const f = fs.createWriteStream(d);
-        r.pipe(f);
-        f.on("finish", () => f.close(ok));
-        f.on("error", (e) => {
-          fs.unlink(d, () => no(e));
-        });
-      },
-    );
+    const q = https.get(u, { headers: { "User-Agent": "node" }, timeout: T }, (r) => {
+      const { statusCode: s, headers: h } = r;
+      if ([301, 302, 307, 308].includes(s)) {
+        r.resume();
+        if (n <= 0) return no(new Error("Too many redirects"));
+        return dl(h.location, d, n - 1).then(ok, no);
+      }
+      if (s !== 200) {
+        r.resume();
+        return no(new Error(`HTTP ${s} for ${u}`));
+      }
+      const f = fs.createWriteStream(d);
+      r.pipe(f);
+      f.on("finish", () => f.close(ok));
+      f.on("error", (e) => {
+        fs.unlink(d, () => no(e));
+      });
+    });
     q.on("error", no);
     q.on("timeout", () => q.destroy(new Error("Request timed out")));
   });
@@ -102,8 +97,7 @@ function xn(zp, en, od) {
   let cs = 0;
 
   for (let i = 0; i < ce; i++) {
-    if (b.readUInt32LE(o) !== 0x02014b50)
-      throw new Error("Invalid ZIP: bad CD entry signature");
+    if (b.readUInt32LE(o) !== 0x02014b50) throw new Error("Invalid ZIP: bad CD entry signature");
 
     const m = b.readUInt16LE(o + 10);
     const sz = b.readUInt32LE(o + 20);
@@ -124,8 +118,7 @@ function xn(zp, en, od) {
 
   if (lo === -1) throw new Error(`Entry "${en}" not found in ZIP`);
 
-  if (b.readUInt32LE(lo) !== 0x04034b50)
-    throw new Error("Invalid ZIP: bad local-header signature");
+  if (b.readUInt32LE(lo) !== 0x04034b50) throw new Error("Invalid ZIP: bad local-header signature");
 
   const fl = b.readUInt16LE(lo + 26);
   const el = b.readUInt16LE(lo + 28);

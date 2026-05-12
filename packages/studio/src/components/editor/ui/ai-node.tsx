@@ -7,7 +7,7 @@ import {
   PlateElement,
   PlateText,
   usePluginOption,
-} from "platejs/react";
+} from "@platejs/core/react";
 
 import { cn } from "@/lib/utils";
 

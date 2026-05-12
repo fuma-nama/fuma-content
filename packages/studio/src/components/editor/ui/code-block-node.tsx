@@ -4,14 +4,15 @@ import * as React from "react";
 
 import { formatCodeBlock, isLangSupported } from "@platejs/code-block";
 import { BracesIcon, CheckIcon, CopyIcon } from "lucide-react";
-import { type TCodeBlockElement, type TCodeSyntaxLeaf, NodeApi } from "platejs";
+import { NodeApi } from "@platejs/slate";
+import type { TCodeBlockElement, TCodeSyntaxLeaf } from "@platejs/utils";
 import {
   type PlateElementProps,
   type PlateLeafProps,
   PlateElement,
   PlateLeaf,
-} from "platejs/react";
-import { useEditorRef, useElement, useReadOnly } from "platejs/react";
+} from "@platejs/core/react";
+import { useEditorRef, useElement, useReadOnly } from "@platejs/core/react";
 import { Button } from "@/components/ui/button";
 import { lowlight } from "@/lib/lowlight";
 import highlight from "highlight.js";

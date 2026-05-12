@@ -1,9 +1,9 @@
-import type { TCaptionProps, TImageElement, TResizableProps } from "platejs";
-import type { SlateElementProps } from "platejs/static";
+"use client";
+import type { TCaptionProps, TImageElement, TResizableProps } from "@platejs/utils";
+import type { SlateElementProps } from "@platejs/core/static";
 
-import { NodeApi } from "platejs";
-import { SlateElement } from "platejs/static";
-
+import { NodeApi } from "@platejs/slate";
+import { SlateElement } from "@platejs/core/static";
 import { cn } from "@/lib/utils";
 
 export function ImageElementStatic(

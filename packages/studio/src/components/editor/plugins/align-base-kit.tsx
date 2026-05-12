@@ -1,5 +1,5 @@
 import { BaseTextAlignPlugin } from "@platejs/basic-styles";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 export const BaseAlignKit = [
   BaseTextAlignPlugin.configure({

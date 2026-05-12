@@ -1,6 +1,6 @@
 "use client";
 
-import { Plate, usePlateEditor } from "platejs/react";
+import { Plate, usePlateEditor } from "@platejs/core/react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Editor, EditorContainer } from "@/components/editor/ui/editor";
 import { YjsPlugin } from "@platejs/yjs/react";

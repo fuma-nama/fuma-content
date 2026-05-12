@@ -1,9 +1,9 @@
 "use client";
 
 import { type BaseCommentConfig, BaseCommentPlugin, getDraftCommentKey } from "@platejs/comment";
-import type { ExtendConfig, Path } from "platejs";
-import { isSlateString } from "platejs";
-import { toTPlatePlugin } from "platejs/react";
+import type { Path } from "@platejs/slate";
+import { type ExtendConfig, isSlateString } from "@platejs/core";
+import { toTPlatePlugin } from "@platejs/core/react";
 
 import { CommentLeaf } from "@/components/editor/ui/comment-node";
 

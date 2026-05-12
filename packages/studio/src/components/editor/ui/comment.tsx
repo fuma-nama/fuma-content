@@ -11,15 +11,17 @@ import {
   TrashIcon,
   XIcon,
 } from "lucide-react";
-import { KEYS, NodeApi, nanoid, type Value } from "platejs";
-import type { CreatePlateEditorOptions } from "platejs/react";
+import { NodeApi, type Value } from "@platejs/slate";
+import { KEYS } from "@platejs/utils";
+import { nanoid } from "@platejs/core";
+import type { CreatePlateEditorOptions } from "@platejs/core/react";
 import {
   Plate,
   useEditorPlugin,
   useEditorRef,
   usePlateEditor,
   usePluginOption,
-} from "platejs/react";
+} from "@platejs/core/react";
 import * as React from "react";
 import { BasicMarksKit } from "@/components/editor/plugins/basic-marks-kit";
 import { discussionPlugin, type TDiscussion } from "@/components/editor/plugins/discussion-kit";

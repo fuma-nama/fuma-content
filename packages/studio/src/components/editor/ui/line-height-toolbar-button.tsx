@@ -1,9 +1,8 @@
 "use client";
 
 import { LineHeightPlugin } from "@platejs/basic-styles/react";
-
 import { CheckIcon, WrapText } from "lucide-react";
-import { useEditorRef, useSelectionFragmentProp } from "platejs/react";
+import { useEditorRef } from "@platejs/core/react";
 import * as React from "react";
 
 import {
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ToolbarButton } from "../../ui/toolbar";
+import { useSelectionFragmentProp } from "@platejs/utils/react";
 
 export function LineHeightToolbarButton(props: React.ComponentProps<typeof DropdownMenu>) {
   const editor = useEditorRef();

@@ -3,7 +3,7 @@ import { visit } from "unist-util-visit";
 import type { Code, Node, Root, RootContent } from "mdast";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { parseFrontmatter } from "@/utils/frontmatter";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 import { VFile } from "vfile";
 import type { Directives } from "mdast-util-directive";
@@ -234,7 +234,7 @@ export function remarkInclude(
       Root,
       Root
     >;
-    const parsed = fumaMatter(content);
+    const parsed = parseFrontmatter(content);
     const targetFile = new VFile({
       path: targetPath,
       value: parsed.content,

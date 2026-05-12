@@ -9,17 +9,16 @@ import {
 } from "@platejs/suggestion";
 import { SuggestionPlugin } from "@platejs/suggestion/react";
 import { CheckIcon, XIcon } from "lucide-react";
+import { KEYS, type TSuggestionText } from "@platejs/utils";
 import {
   ElementApi,
-  KEYS,
   type NodeEntry,
   type Path,
   PathApi,
   type TElement,
   TextApi,
-  type TSuggestionText,
-} from "platejs";
-import { useEditorPlugin, usePluginOption } from "platejs/react";
+} from "@platejs/slate";
+import { useEditorPlugin, usePluginOption } from "@platejs/core/react";
 import * as React from "react";
 import { discussionPlugin, type TDiscussion } from "@/components/editor/plugins/discussion-kit";
 import { suggestionPlugin } from "@/components/editor/plugins/suggestion-kit";

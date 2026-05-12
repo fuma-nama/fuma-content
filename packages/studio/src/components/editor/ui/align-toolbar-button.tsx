@@ -3,7 +3,7 @@
 import type { Alignment } from "@platejs/basic-styles";
 import { TextAlignPlugin } from "@platejs/basic-styles/react";
 import { AlignCenterIcon, AlignJustifyIcon, AlignLeftIcon, AlignRightIcon } from "lucide-react";
-import { useEditorPlugin, useSelectionFragmentProp } from "platejs/react";
+import { useEditorPlugin } from "@platejs/core/react";
 import * as React from "react";
 
 import {
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ToolbarButton } from "../../ui/toolbar";
+import { useSelectionFragmentProp } from "@platejs/utils/react";
 
 export const alignItems = [
   {

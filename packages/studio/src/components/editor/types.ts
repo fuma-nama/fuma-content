@@ -6,7 +6,6 @@ import type {
   TCaptionProps,
   TComboboxInputElement,
   TCommentText,
-  TElement,
   TFontMarks,
   TImageElement,
   TLineHeightProps,
@@ -16,9 +15,9 @@ import type {
   TMentionElement,
   TResizableProps,
   TTableElement,
-  TText,
   TTextAlignProps,
-} from "platejs";
+} from "@platejs/utils";
+import type { TElement, TText } from "@platejs/slate";
 import type { MdxJsxAttribute, MdxJsxExpressionAttribute } from "mdast-util-mdx";
 import type { BlockContent } from "mdast";
 

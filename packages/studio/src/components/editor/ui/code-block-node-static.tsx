@@ -1,11 +1,12 @@
-import type { TCodeBlockElement } from "platejs";
+"use client";
+import type { TCodeBlockElement } from "@platejs/utils";
 
 import {
   type SlateElementProps,
   type SlateLeafProps,
   SlateElement,
   SlateLeaf,
-} from "platejs/static";
+} from "@platejs/core/static";
 
 export function CodeBlockElementStatic(props: SlateElementProps<TCodeBlockElement>) {
   return (

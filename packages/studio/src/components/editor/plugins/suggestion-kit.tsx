@@ -1,9 +1,9 @@
 "use client";
 
 import { type BaseSuggestionConfig, BaseSuggestionPlugin } from "@platejs/suggestion";
-import type { ExtendConfig, Path } from "platejs";
-import { isSlateEditor, isSlateString } from "platejs";
-import { toTPlatePlugin } from "platejs/react";
+import { isSlateEditor, isSlateString, type ExtendConfig } from "@platejs/core";
+import { Path } from "@platejs/slate";
+import { toTPlatePlugin } from "@platejs/core/react";
 
 import { SuggestionLeaf, SuggestionLineBreak } from "@/components/editor/ui/suggestion-node";
 

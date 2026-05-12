@@ -1,5 +1,6 @@
+"use client";
 import { MdxComponentElement, UnknownNode } from "../types";
-import { PlateElement, PlateElementProps, useSelected } from "platejs/react";
+import { PlateElement, PlateElementProps, useSelected } from "@platejs/core/react";
 import {
   JSONSchemaEditorContent,
   JSONSchemaEditorProvider,

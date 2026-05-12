@@ -2,11 +2,11 @@
 
 import type React from "react";
 
-import type { TListElement } from "platejs";
+import type { TListElement } from "@platejs/utils";
 
 import { isOrderedList } from "@platejs/list";
 import { useTodoListElement, useTodoListElementState } from "@platejs/list/react";
-import { type PlateElementProps, type RenderNodeWrapper, useReadOnly } from "platejs/react";
+import { type PlateElementProps, type RenderNodeWrapper, useReadOnly } from "@platejs/core/react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";

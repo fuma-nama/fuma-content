@@ -1,7 +1,7 @@
 "use client";
 
 import { Redo2Icon, Undo2Icon } from "lucide-react";
-import { useEditorRef, useEditorSelector } from "platejs/react";
+import { useEditorRef, useEditorSelector } from "@platejs/core/react";
 import type * as React from "react";
 
 import { ToolbarButton } from "../../ui/toolbar";

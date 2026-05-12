@@ -1,4 +1,4 @@
-import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { parseFrontmatter } from "@/utils/frontmatter";
 import type { SourceMap } from "rollup";
 import { z } from "zod";
 import fs from "node:fs/promises";
@@ -29,7 +29,7 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
     async load({ getSource, development: isDevelopment, query, addDependency, filePath }) {
       let core = await getCore();
       const value = await getSource();
-      const matter = fumaMatter(value);
+      const matter = parseFrontmatter(value);
       const { collection: collectionName, workspace, only } = querySchema.parse(query);
       if (workspace) {
         core = core.getWorkspaces().get(workspace) ?? core;

@@ -2,8 +2,8 @@
 
 import { type Emoji, EmojiInlineIndexSearch, insertEmoji } from "@platejs/emoji";
 import { EmojiPlugin } from "@platejs/emoji/react";
-import type { PlateElementProps } from "platejs/react";
-import { PlateElement, usePluginOption } from "platejs/react";
+import type { PlateElementProps } from "@platejs/core/react";
+import { PlateElement, usePluginOption } from "@platejs/core/react";
 import * as React from "react";
 import {
   InlineCombobox,

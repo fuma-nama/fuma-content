@@ -1,4 +1,4 @@
-import type { TElement } from "platejs";
+import type { TElement } from "@platejs/slate";
 import { useMemo } from "react";
 import { useEditor } from "@/components/editor/editor-kit";
 

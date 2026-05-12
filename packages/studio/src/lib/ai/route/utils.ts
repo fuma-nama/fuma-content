@@ -4,7 +4,8 @@ import type { UIMessage } from "ai";
 import { getMarkdown } from "@platejs/ai";
 import { serializeMd } from "@platejs/markdown";
 import dedent from "dedent";
-import { type SlateEditor, RangeApi } from "platejs";
+import { RangeApi } from "@platejs/slate";
+import type { SlateEditor } from "@platejs/core";
 
 /**
  * Tag content split by newlines

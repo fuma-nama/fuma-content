@@ -24,9 +24,9 @@ import {
   Wand,
   X,
 } from "lucide-react";
-import { type NodeEntry, type SlateEditor, isHotkey, KEYS, NodeApi, TextApi } from "platejs";
-import { useEditorPlugin, useFocusedLast, useHotkeys, usePluginOption } from "platejs/react";
-import { type PlateEditor, useEditorRef } from "platejs/react";
+import { type NodeEntry, NodeApi, TextApi } from "@platejs/slate";
+import { useEditorPlugin, useFocusedLast, usePluginOption } from "@platejs/core/react";
+import { type PlateEditor, useEditorRef } from "@platejs/core/react";
 
 import { Button } from "@/components/ui/button";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
@@ -35,6 +35,9 @@ import { cn } from "@/lib/utils";
 import { commentPlugin } from "@/components/editor/plugins/comment-kit";
 
 import { AIChatEditor } from "./ai-chat-editor";
+import { KEYS } from "@platejs/utils";
+import { isHotkey, SlateEditor } from "@platejs/core";
+import { useHotkeys } from "@udecode/react-hotkeys";
 
 export function AIMenu() {
   const { api, editor } = useEditorPlugin(AIChatPlugin);

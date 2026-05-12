@@ -3,16 +3,22 @@ import { DocumentActionsDropdown } from "@/components/collection/document/action
 import { SiteHeader } from "@/components/site-header";
 import { useDocuments } from "@/lib/yjs/store";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useRouter } from "waku";
 
-export function Header({ collectionId, documentId }: { collectionId: string; documentId: string }) {
-  const navigate = useNavigate();
+export function CollectionViewHeader({
+  collectionId,
+  documentId,
+}: {
+  collectionId: string;
+  documentId: string;
+}) {
+  const router = useRouter();
   const docs = useDocuments();
   const doc = docs?.find((doc) => doc.collectionId === collectionId && doc.id === documentId);
 
   const isReady = docs !== null;
   useEffect(() => {
-    if (!doc && isReady) navigate(`/collection/${collectionId}`);
+    if (!doc && isReady) router.push(`/collection/${collectionId}`);
   }, [doc, collectionId, isReady]);
 
   return (

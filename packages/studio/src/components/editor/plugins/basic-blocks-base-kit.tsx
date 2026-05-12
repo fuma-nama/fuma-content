@@ -8,8 +8,7 @@ import {
   BaseH6Plugin,
   BaseHorizontalRulePlugin,
 } from "@platejs/basic-nodes";
-import { BaseParagraphPlugin } from "platejs";
-import { BlockquoteElementStatic } from "@/components/editor/ui/blockquote-node-static";
+import { BaseParagraphPlugin } from "@platejs/core";
 import {
   H1ElementStatic,
   H2ElementStatic,
@@ -17,9 +16,10 @@ import {
   H4ElementStatic,
   H5ElementStatic,
   H6ElementStatic,
-} from "@/components/editor/ui/heading-node-static";
-import { HrElementStatic } from "@/components/editor/ui/hr-node-static";
-import { ParagraphElementStatic } from "@/components/editor/ui/paragraph-node-static";
+  HrElementStatic,
+  ParagraphElementStatic,
+  BlockquoteElementStatic,
+} from "@/components/editor/ui/basic-nodes-static";
 
 export const BaseBasicBlocksKit = [
   BaseParagraphPlugin.withComponent(ParagraphElementStatic),

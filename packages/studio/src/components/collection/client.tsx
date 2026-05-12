@@ -9,9 +9,9 @@ import {
 import type { CollectionItem, DocumentItem } from "@/lib/yjs";
 import { type ReactNode, createContext, use, useMemo, useState } from "react";
 import { useClientContext } from "./context";
-import { useNavigate } from "react-router";
 import { useHocuspocusProvider } from "@/lib/yjs/provider";
 import { insertDocument } from "@/lib/yjs/store";
+import { useRouter } from "waku";
 
 const CreateDialogContext = createContext<{
   open: boolean;
@@ -29,7 +29,7 @@ export function CreateDocumentDialog({
   const Content = useClientContext(collection?.id).dialogs?.createDocument;
   const provider = useHocuspocusProvider();
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -45,7 +45,7 @@ export function CreateDocumentDialog({
                 setOpen,
                 onCreate(item) {
                   insertDocument(provider.document, item);
-                  navigate(`/collection/${item.collectionId}/${item.id}`);
+                  router.push(`/collection/${item.collectionId}/${item.id}`);
                 },
               }),
               [open, provider.document],

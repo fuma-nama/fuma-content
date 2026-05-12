@@ -1,6 +1,6 @@
 import { buildMDX, type CompiledMDX } from "@/collections/mdx/build-mdx";
 import { pathToFileURL } from "node:url";
-import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { parseFrontmatter } from "@/utils/frontmatter";
 import fs from "node:fs/promises";
 import { type CoreOptions, Core } from "@/core";
 import type { MDXContent } from "mdx/types";
@@ -55,7 +55,7 @@ export async function mdxStoreDynamic<Config, Name extends string, Attached>(
         return cache.cached(k, async () => {
           const filePath = path.join(base, k);
           let content = (await fs.readFile(filePath)).toString();
-          content = fumaMatter(content).content;
+          content = parseFrontmatter(content).content;
 
           const compiled = await buildMDX({
             core,

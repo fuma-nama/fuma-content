@@ -2,7 +2,7 @@
 
 import debounce from "lodash.debounce";
 import { EraserIcon, PlusIcon } from "lucide-react";
-import { useEditorRef, useComposedRef, useEditorSelector } from "platejs/react";
+import { useEditorRef, useEditorSelector } from "@platejs/core/react";
 import React from "react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 
 import { ToolbarButton, ToolbarMenuGroup } from "../../ui/toolbar";
+import { useComposedRef } from "@udecode/react-utils";
 
 export function FontColorToolbarButton({
   children,

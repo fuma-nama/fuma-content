@@ -6,7 +6,7 @@ import { mdxCollection } from "@/collections/mdx";
 import { defineConfig, type GlobalConfig } from "@/config";
 import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
-import { fumaMatter } from "@/collections/mdx/fuma-matter";
+import { parseFrontmatter } from "@/utils/frontmatter";
 import { dataCollection } from "@/collections/data";
 
 test("format errors", async () => {
@@ -160,8 +160,9 @@ for (const { name, config } of cases) {
 }
 
 test("parse frontmatter", () => {
-  expect(fumaMatter("---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool."))
-    .toMatchInlineSnapshot(`
+  expect(
+    parseFrontmatter("---\ntitle: hello world\ndescription: I love Fumadocs\n---\nwow looks cool."),
+  ).toMatchInlineSnapshot(`
     {
       "content": "wow looks cool.",
       "data": {
@@ -177,7 +178,7 @@ test("parse frontmatter", () => {
   `);
 
   expect(
-    fumaMatter(
+    parseFrontmatter(
       "---\r\ntitle: hello world\r\ndescription: I love Fumadocs\r\n---\r\nwow looks cool.",
     ),
   ).toMatchInlineSnapshot(`
@@ -195,7 +196,8 @@ test("parse frontmatter", () => {
     }
   `);
 
-  expect(fumaMatter("--- \ntitle: hello world\r\n---\r\nwow looks cool.")).toMatchInlineSnapshot(`
+  expect(parseFrontmatter("--- \ntitle: hello world\r\n---\r\nwow looks cool."))
+    .toMatchInlineSnapshot(`
     {
       "content": "--- 
     title: hello world

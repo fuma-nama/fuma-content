@@ -4,7 +4,8 @@ import {
   MarkdownPlugin,
   remarkMdx,
 } from "@platejs/markdown";
-import { getPluginType, KEYS, TText } from "platejs";
+import { getPluginType } from "@platejs/core";
+import { KEYS } from "@platejs/utils";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { visit } from "unist-util-visit";
@@ -17,6 +18,7 @@ import {
 import type { Transformer } from "unified";
 import type { BlockContent, Root } from "mdast";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx";
+import type { TText } from "@platejs/slate";
 
 interface UnknownNodeElement {
   type: typeof ELEMENT_UNKNOWN_NODE;

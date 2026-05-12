@@ -1,7 +1,7 @@
 "use client";
 
 import { SlashInputPlugin, SlashPlugin } from "@platejs/slash-command/react";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 import { SlashInputElement } from "@/components/editor/ui/slash-node";
 

@@ -2,8 +2,8 @@
 
 import { PlaceholderPlugin } from "@platejs/media/react";
 import { ImageIcon, LinkIcon } from "lucide-react";
-import { isUrl, KEYS } from "platejs";
-import { useEditorRef } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorRef } from "@platejs/core/react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -20,7 +20,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -31,6 +30,7 @@ import {
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
 } from "../../ui/toolbar";
+import { isUrl } from "@udecode/utils";
 
 export function MediaToolbarButton(props: React.ComponentProps<typeof DropdownMenu>) {
   const editor = useEditorRef();

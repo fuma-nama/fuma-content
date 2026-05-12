@@ -7,6 +7,7 @@ import { program } from "commander";
 import { name as appName, version as appVersion } from "../package.json";
 import { x } from "tinyexec";
 import { intro, outro, confirm, isCancel, log } from "@clack/prompts";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,9 +24,8 @@ void main();
 async function main() {
   const isCI = process.env.CI === "1";
   const { bind: HOST, port: PORT } = options;
-  const serveBinPath = path.join(__dirname, "./bin/cli.mjs");
-  // where the `pacage.json` locates
-  const rootDir = path.join(__dirname, "../");
+  // where the `package.json` locates
+  const rootDir = path.join(__dirname, "../../");
   const studioConfig = path.resolve("content.config.ts");
 
   intro(`Fuma Content ${appVersion}`);
@@ -42,7 +42,7 @@ async function main() {
     DISABLE_ANALYTICS: "true",
   };
 
-  const serverProcess = x("node", [serveBinPath, "build/server/index.js"], {
+  const serverProcess = x("node", ["./dist/waku/serve-node.js"], {
     nodeOptions: {
       stdio: ["ignore", "pipe", "pipe"],
       env,

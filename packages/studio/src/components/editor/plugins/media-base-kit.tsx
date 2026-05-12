@@ -5,7 +5,7 @@ import {
   BasePlaceholderPlugin,
   BaseVideoPlugin,
 } from "@platejs/media";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 import { ImageElementStatic } from "@/components/editor/ui/media-image-node-static";
 import { VideoElementStatic } from "@/components/editor/ui/media-video-node-static";

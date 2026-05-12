@@ -3,9 +3,9 @@
 import { useDraggable } from "@platejs/dnd";
 import { Image, ImagePlugin, useMediaState } from "@platejs/media/react";
 import { ResizableProvider, useResizableValue } from "@platejs/resizable";
-import type { TImageElement } from "platejs";
-import type { PlateElementProps } from "platejs/react";
-import { PlateElement, withHOC } from "platejs/react";
+import type { TImageElement } from "@platejs/utils";
+import type { PlateElementProps } from "@platejs/core/react";
+import { PlateElement, withHOC } from "@platejs/core/react";
 
 import { cn } from "@/lib/utils";
 

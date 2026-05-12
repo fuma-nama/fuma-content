@@ -1,10 +1,9 @@
+"use client";
 import type * as React from "react";
 
-import type { TTableCellElement, TTableElement } from "platejs";
-import type { SlateElementProps } from "platejs/static";
-
+import type { TTableCellElement, TTableElement } from "@platejs/utils";
+import { type SlateElementProps, SlateElement } from "@platejs/core/static";
 import { BaseTablePlugin } from "@platejs/table";
-import { SlateElement } from "platejs/static";
 
 import { cn } from "@/lib/utils";
 

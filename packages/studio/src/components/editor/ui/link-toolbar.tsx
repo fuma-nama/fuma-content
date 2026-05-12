@@ -2,8 +2,7 @@
 
 import * as React from "react";
 
-import type { TLinkElement } from "platejs";
-
+import type { TLinkElement } from "@platejs/utils";
 import { type UseVirtualFloatingOptions, flip, offset } from "@platejs/floating";
 import { getLinkAttributes } from "@platejs/link";
 import {
@@ -16,16 +15,12 @@ import {
 } from "@platejs/link/react";
 import { cva } from "class-variance-authority";
 import { ExternalLink, Link, Text, Unlink } from "lucide-react";
-import { KEYS } from "platejs";
-import {
-  useEditorRef,
-  useEditorSelection,
-  useFormInputProps,
-  usePluginOption,
-} from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorRef, useEditorSelection, usePluginOption } from "@platejs/core/react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useFormInputProps } from "@platejs/utils/react";
 
 const popoverVariants = cva(
   "z-50 w-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-hidden",

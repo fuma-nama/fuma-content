@@ -2,10 +2,10 @@
 
 import { AIChatPlugin } from "@platejs/ai/react";
 import { BlockSelectionPlugin } from "@platejs/selection/react";
-import { getPluginTypes, isHotkey, KEYS } from "platejs";
-
+import { getPluginTypes, isHotkey } from "@platejs/core";
+import { KEYS } from "@platejs/utils";
 import { BlockSelection } from "@/components/editor/ui/block-selection";
-import { createPlatePlugin } from "platejs/react";
+import { createPlatePlugin } from "@platejs/core/react";
 
 const InlineSelectionPlugin = createPlatePlugin((editor) => ({
   key: "inline-selection",

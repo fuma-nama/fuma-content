@@ -21,8 +21,8 @@ import {
   TableIcon,
   TableOfContentsIcon,
 } from "lucide-react";
-import { KEYS } from "platejs";
-import { type PlateEditor, useEditorRef } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { type PlateEditor, useEditorRef } from "@platejs/core/react";
 import * as React from "react";
 import { insertBlock, insertInlineElement } from "@/components/editor/transforms";
 import {

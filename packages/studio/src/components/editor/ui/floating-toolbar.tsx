@@ -7,13 +7,14 @@ import {
   useFloatingToolbar,
   useFloatingToolbarState,
 } from "@platejs/floating";
-import { KEYS } from "platejs";
-import { useEditorId, useEventEditorValue, useComposedRef, usePluginOption } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorId, useEventEditorValue, usePluginOption } from "@platejs/core/react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
 import { Toolbar } from "../../ui/toolbar";
+import { useComposedRef } from "@udecode/react-utils";
 
 export function FloatingToolbar({
   children,

@@ -8,8 +8,8 @@ import {
   BlockMenuPlugin,
   BlockSelectionPlugin,
 } from "@platejs/selection/react";
-import { KEYS } from "platejs";
-import { useEditorPlugin, usePlateState, usePluginOption } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorPlugin, usePlateState, usePluginOption } from "@platejs/core/react";
 
 import {
   ContextMenu,

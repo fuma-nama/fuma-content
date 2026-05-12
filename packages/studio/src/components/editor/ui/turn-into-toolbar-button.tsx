@@ -16,9 +16,9 @@ import {
   QuoteIcon,
   SquareIcon,
 } from "lucide-react";
-import type { TElement } from "platejs";
-import { KEYS } from "platejs";
-import { useEditorRef, useSelectionFragmentProp } from "platejs/react";
+import type { TElement } from "@platejs/slate";
+import { KEYS } from "@platejs/utils";
+import { useEditorRef } from "@platejs/core/react";
 import type { ComponentProps } from "react";
 import * as React from "react";
 import { getBlockType, setBlockType } from "@/components/editor/transforms";
@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToolbarButton, ToolbarMenuGroup } from "../../ui/toolbar";
+import { useSelectionFragmentProp } from "@platejs/utils/react";
 
 export const turnIntoItems = [
   {

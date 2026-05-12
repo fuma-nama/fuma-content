@@ -12,7 +12,7 @@ import {
   Settings,
   Wand2Icon,
 } from "lucide-react";
-import { useEditorRef } from "platejs/react";
+import { useEditorRef } from "@platejs/core/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";

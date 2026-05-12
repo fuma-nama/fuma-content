@@ -1,6 +1,7 @@
-import type { SlateLeafProps } from "platejs/static";
+"use client";
+import type { SlateLeafProps } from "@platejs/core/static";
 
-import { SlateLeaf } from "platejs/static";
+import { SlateLeaf } from "@platejs/core/static";
 
 export function HighlightLeafStatic(props: SlateLeafProps) {
   return (

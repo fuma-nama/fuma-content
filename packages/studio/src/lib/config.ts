@@ -30,14 +30,3 @@ export async function requireDocument<Doc extends StudioDocument = StudioDocumen
 
   return { collection, document: document as Doc };
 }
-
-global.HOCUSPOCUS_ENV = {
-  getCore,
-  getPluginHook() {
-    return studioHook;
-  },
-  async getRootHandler() {
-    const { rootHandler } = await import("@/lib/content/root");
-    return rootHandler;
-  },
-};

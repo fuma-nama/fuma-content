@@ -2,10 +2,10 @@
 
 import { PlaceholderPlugin, PlaceholderProvider, updateUploadHistory } from "@platejs/media/react";
 import { AudioLines, FileUp, Film, ImageIcon, Loader2Icon } from "lucide-react";
-import type { TPlaceholderElement } from "platejs";
-import { KEYS } from "platejs";
-import type { PlateElementProps } from "platejs/react";
-import { PlateElement, useEditorPlugin, withHOC } from "platejs/react";
+import type { TPlaceholderElement } from "@platejs/utils";
+import { KEYS } from "@platejs/utils";
+import type { PlateElementProps } from "@platejs/core/react";
+import { PlateElement, useEditorPlugin, withHOC } from "@platejs/core/react";
 import * as React from "react";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import { cn } from "@/lib/utils";

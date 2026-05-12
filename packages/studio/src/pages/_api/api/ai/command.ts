@@ -10,16 +10,20 @@ import {
   streamText,
   tool,
 } from "ai";
-import { type SlateEditor, createSlateEditor, nanoid } from "platejs";
+import { type SlateEditor, createSlateEditor, nanoid } from "@platejs/core";
 import { z } from "zod";
 
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 
-import { getChooseToolPrompt, getCommentPrompt, getEditPrompt, getGeneratePrompt } from "./prompts";
-import { Route } from "./+types/route";
+import {
+  getChooseToolPrompt,
+  getCommentPrompt,
+  getEditPrompt,
+  getGeneratePrompt,
+} from "@/lib/ai/route/prompts";
 
-export async function action({ request }: Route.ActionArgs) {
+export async function POST(request: Request) {
   const { apiKey: key, ctx, messages: messagesRaw = [], model } = await request.json();
 
   const { children, selection, toolName: toolNameParam } = ctx;
@@ -199,3 +203,9 @@ const getCommentTool = (
       });
     },
   });
+
+export function getConfig() {
+  return {
+    render: "dynamic",
+  };
+}

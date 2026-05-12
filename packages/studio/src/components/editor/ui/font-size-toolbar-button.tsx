@@ -3,9 +3,9 @@
 import { toUnitLess } from "@platejs/basic-styles";
 import { FontSizePlugin } from "@platejs/basic-styles/react";
 import { Minus, Plus } from "lucide-react";
-import type { TElement } from "platejs";
-import { KEYS } from "platejs";
-import { useEditorPlugin, useEditorSelector } from "platejs/react";
+import type { TElement } from "@platejs/slate";
+import { KEYS } from "@platejs/utils";
+import { useEditorPlugin, useEditorSelector } from "@platejs/core/react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";

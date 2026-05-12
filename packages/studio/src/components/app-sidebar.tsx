@@ -10,7 +10,7 @@ import { Logo } from "./icons/logo";
 import { DocumentActionsContext } from "./collection/document/actions";
 import type { CollectionItem, DocumentItem } from "@/lib/yjs";
 import { CollectionActionsContext } from "./collection/actions";
-import { Link, useLocation } from "react-router";
+import { Link, useRouter } from "waku";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cva } from "class-variance-authority";
 import { Sheet, SheetClose, SheetContent } from "./ui/sheet";
@@ -238,7 +238,7 @@ function DraggableAside({
 }
 
 function SidebarDocumentItem({ item }: { item: DocumentItem }) {
-  const pathname = useLocation().pathname;
+  const pathname = useRouter().path;
   const href = `/collection/${item.collectionId}/${item.id}`;
   const active = pathname === href;
 
@@ -255,7 +255,7 @@ function SidebarDocumentItem({ item }: { item: DocumentItem }) {
 }
 
 function SidebarCollectionItem({ item }: { item: CollectionItem }) {
-  const pathname = useLocation().pathname;
+  const pathname = useRouter().path;
   const href = `/collection/${item.id}`;
   const active = pathname === href;
   const opened = pathname.startsWith(href + "/");

@@ -16,8 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": ["./src/*"],
-      "content/*": ["./.content/*"],
+      "content/*": ["./.content/*"]
     },
-    "noEmit": true,
-  },
+    "noEmit": true
+  }
 }

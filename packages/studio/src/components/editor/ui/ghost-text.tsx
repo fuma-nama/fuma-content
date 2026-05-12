@@ -1,7 +1,7 @@
 "use client";
 
 import { CopilotPlugin } from "@platejs/ai/react";
-import { useElement, usePluginOption } from "platejs/react";
+import { useElement, usePluginOption } from "@platejs/core/react";
 
 export function GhostText() {
   const element = useElement();

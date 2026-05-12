@@ -14,8 +14,8 @@ import {
   Ungroup,
   XIcon,
 } from "lucide-react";
-import { KEYS } from "platejs";
-import { useEditorPlugin, useEditorSelector } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorPlugin, useEditorSelector } from "@platejs/core/react";
 import * as React from "react";
 
 import {

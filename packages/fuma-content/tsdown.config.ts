@@ -17,10 +17,12 @@ export default defineConfig({
     "./src/plugins/*.ts",
     "./src/plugins/remark/*.ts",
     "./src/plugins/loader/{index,webpack}.ts",
+
+    "./src/utils/frontmatter.ts",
   ],
   format: "esm",
   fixedExtension: false,
-  dts: { vue: true },
+  dts: { vue: true, sourcemap: false },
   target: "es2023",
   plugins: [Vue({ isProduction: true })],
   deps: {

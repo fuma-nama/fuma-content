@@ -1,31 +1,18 @@
 import { Server } from "@hocuspocus/server";
-import type { Application } from "express-ws";
-import type { Awaitable, studioHook } from "@/lib/content";
+import { studioHook } from "@/lib/content";
 import { DocId } from "@/lib/yjs";
-import type { Core } from "fuma-content";
 import * as Y from "yjs";
 import { applyJsonArray } from "mutative-yjs";
-import type { RootHandler } from "@/lib/content/root";
+import { rootHandler } from "@/lib/content/root";
+import { getCore } from "./lib/config";
 
-export interface HocuspocusEnv {
-  getCore: () => Awaitable<Core>;
-  getRootHandler: () => Awaitable<RootHandler>;
-  getPluginHook: () => typeof studioHook;
-}
-
-export function createHocuspocus(app: Application) {
-  const server = new Server({
+export function createHocuspocus() {
+  return new Server({
     name: "hocuspocus",
     quiet: true,
     async onLoadDocument(data) {
-      const env = global.HOCUSPOCUS_ENV;
-      if (!env) {
-        console.error("[hocuspocus] missing env");
-        return;
-      }
-
       if (DocId.root === data.documentName) {
-        const { getCollectionItems, getDocumentItems } = await env.getRootHandler();
+        const { getCollectionItems, getDocumentItems } = rootHandler;
 
         const doc = new Y.Doc();
         const collections = doc.getArray("collections");
@@ -36,7 +23,7 @@ export function createHocuspocus(app: Application) {
         return doc;
       }
 
-      const core = await env.getCore();
+      const core = await getCore();
       const docId = DocId.decodeCollectionDoc(data.documentName);
       if (!docId) return;
 
@@ -44,23 +31,17 @@ export function createHocuspocus(app: Application) {
       const collection = core.getCollection(collectionId);
       if (!collection) return;
 
-      return await collection.pluginHook(env.getPluginHook()).hocuspocus?.loadDocument?.(data, {
+      return await collection.pluginHook(studioHook).hocuspocus?.loadDocument?.(data, {
         collectionId,
         documentId,
       });
     },
     async onStoreDocument(data) {
-      const env = global.HOCUSPOCUS_ENV;
-      if (!env) {
-        console.error("[hocuspocus] missing env");
-        return;
-      }
-
       if (DocId.root === data.documentName) {
         return;
       }
 
-      const core = await env.getCore();
+      const core = await getCore();
       const docId = DocId.decodeCollectionDoc(data.documentName);
       if (!docId) return;
 
@@ -68,18 +49,10 @@ export function createHocuspocus(app: Application) {
       const collection = core.getCollection(collectionId);
       if (!collection) return;
 
-      await collection.pluginHook(env.getPluginHook()).hocuspocus?.storeDocument?.(data, {
+      await collection.pluginHook(studioHook).hocuspocus?.storeDocument?.(data, {
         collectionId,
         documentId,
       });
     },
   });
-  app.ws("/hocuspocus", (websocket, request) => {
-    server.hocuspocus.handleConnection(websocket, request as never);
-  });
-  return server;
-}
-
-declare global {
-  export var HOCUSPOCUS_ENV: HocuspocusEnv | undefined;
 }

@@ -1,9 +1,8 @@
-import type { TSuggestionText } from "platejs";
-import type { SlateLeafProps } from "platejs/static";
+"use client";
 
+import type { TSuggestionText } from "@platejs/utils";
+import { SlateLeaf, type SlateLeafProps } from "@platejs/core/static";
 import { BaseSuggestionPlugin } from "@platejs/suggestion";
-import { SlateLeaf } from "platejs/static";
-
 import { cn } from "@/lib/utils";
 
 export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
@@ -20,7 +19,7 @@ export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
       {...props}
       as={Component}
       className={cn(
-        "border-b-2 border-b-brand/[.24] bg-brand/[.08] text-brand/80 no-underline transition-colors duration-200",
+        "border-b-2 border-b-brand/24 bg-brand/8 text-brand/80 no-underline transition-colors duration-200",
         hasRemove && "border-b-gray-300 bg-gray-300/25 text-gray-400 line-through",
       )}
     >

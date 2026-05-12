@@ -1,11 +1,11 @@
 "use client";
 
-import type { TInlineSuggestionData, TLinkElement } from "platejs";
-import type { PlateElementProps } from "platejs/react";
+import type { TInlineSuggestionData, TLinkElement } from "@platejs/utils";
+import type { PlateElementProps } from "@platejs/core/react";
 
 import { getLinkAttributes } from "@platejs/link";
 import { SuggestionPlugin } from "@platejs/suggestion/react";
-import { PlateElement } from "platejs/react";
+import { PlateElement } from "@platejs/core/react";
 
 import { cn } from "@/lib/utils";
 

@@ -1,7 +1,8 @@
-import type { TDateElement } from "platejs";
-import type { SlateElementProps } from "platejs/static";
+"use client";
+import type { TDateElement } from "@platejs/utils";
+import type { SlateElementProps } from "@platejs/core/static";
 
-import { SlateElement } from "platejs/static";
+import { SlateElement } from "@platejs/core/static";
 
 export function DateElementStatic(props: SlateElementProps<TDateElement>) {
   const { element } = props;

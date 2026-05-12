@@ -1,5 +1,5 @@
 import { BaseIndentPlugin } from "@platejs/indent";
-import { KEYS } from "platejs";
+import { KEYS } from "@platejs/utils";
 
 export const BaseIndentKit = [
   BaseIndentPlugin.configure({

@@ -1,3 +1,4 @@
+"use client";
 import { Badge } from "@/components/ui/badge";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -11,20 +12,23 @@ import {
   DocumentActionsContext,
   DocumentActionsDropdown,
 } from "@/components/collection/document/actions";
-import { Link } from "react-router";
-import { Route } from "./+types/page";
-import { NotFoundError } from "@/root";
 import { cn } from "@/lib/utils";
 import { useCollections, useDocuments } from "@/lib/yjs/store";
+import { Link, useRouter } from "waku";
+import { useEffect } from "react";
 
-export default function Page(args: Route.ComponentProps) {
-  const collectionId = args.params.name;
+export function CollectionView({ collectionId }: { collectionId: string }) {
   const collections = useCollections();
   const info = collections?.find((item) => item.id === collectionId);
   const documents = useDocuments()?.filter((doc) => doc.collectionId === collectionId);
   const canCreateDoc = useCreateDocumentDialogCheck(info);
+  const router = useRouter();
+  const isPageNotFound = !info && collections;
 
-  if (!info && collections) throw new NotFoundError();
+  useEffect(() => {
+    if (isPageNotFound) router.push("/");
+  }, [isPageNotFound]);
+
   if (!info) return null;
   return (
     <>

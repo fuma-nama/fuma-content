@@ -5,18 +5,10 @@ import { CommentPlugin } from "@platejs/comment/react";
 import { getTransientSuggestionKey } from "@platejs/suggestion";
 import { SuggestionPlugin } from "@platejs/suggestion/react";
 import { MessageSquareTextIcon, MessagesSquareIcon, PencilLineIcon } from "lucide-react";
-import {
-  type AnyPluginConfig,
-  type NodeEntry,
-  type Path,
-  PathApi,
-  type TCommentText,
-  type TElement,
-  TextApi,
-  type TSuggestionText,
-} from "platejs";
-import type { PlateElementProps, RenderNodeWrapper } from "platejs/react";
-import { useEditorPlugin, useEditorRef, usePluginOption } from "platejs/react";
+import { type NodeEntry, type Path, PathApi, type TElement, TextApi } from "@platejs/slate";
+import type { TCommentText, TSuggestionText } from "@platejs/utils";
+import type { PlateElementProps, RenderNodeWrapper } from "@platejs/core/react";
+import { useEditorPlugin, useEditorRef, usePluginOption } from "@platejs/core/react";
 import * as React from "react";
 import { commentPlugin } from "@/components/editor/plugins/comment-kit";
 import { discussionPlugin, type TDiscussion } from "@/components/editor/plugins/discussion-kit";
@@ -29,6 +21,7 @@ import {
   useResolveSuggestion,
 } from "./block-suggestion";
 import { Comment, CommentCreateForm } from "./comment";
+import type { AnyPluginConfig } from "@platejs/core";
 
 export const BlockDiscussion: RenderNodeWrapper<AnyPluginConfig> = (props) => {
   const { editor, element } = props;

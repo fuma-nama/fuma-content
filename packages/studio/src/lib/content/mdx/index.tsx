@@ -3,12 +3,13 @@ import { StudioHook } from "..";
 import { FileStudioDocument } from "../file";
 import fs from "node:fs/promises";
 import path from "node:path";
-import grayMatter from "gray-matter";
+import { parseFrontmatter } from "fuma-content/utils/frontmatter";
 import { getJSONSchema } from "fuma-content";
 import * as Y from "yjs";
 import { slateNodesToInsertDelta, yTextToSlateElement } from "@slate-yjs/core";
-import type { SlateEditor } from "platejs";
-import { applyJsonObject } from "mutative-yjs";
+import type { SlateEditor } from "@platejs/core";
+import { applyJsonObject, JSONObject } from "mutative-yjs";
+import { dump } from "js-yaml";
 
 export class MDXStudioDocument extends FileStudioDocument {
   constructor(
@@ -23,12 +24,12 @@ export class MDXStudioDocument extends FileStudioDocument {
     const content = await this.read();
     if (content === undefined) return;
 
-    return grayMatter({ content });
+    return parseFrontmatter(content);
   }
 
   async updateParsed(frontmatter?: unknown, content?: string) {
     if (frontmatter != null && content != null) {
-      await this.write(grayMatter.stringify({ content }, frontmatter));
+      await this.write(`---\n${dump(frontmatter).trim()}\n---\n\n${content.trim()}`);
       return;
     }
 
@@ -39,13 +40,15 @@ export class MDXStudioDocument extends FileStudioDocument {
     const parsed = await this.readParsed();
     if (parsed) {
       await this.write(
-        grayMatter.stringify({ content: content ?? parsed.content }, frontmatter ?? parsed.data),
+        `---\n${dump(frontmatter ?? parsed.data).trim()}\n---\n\n${(content ?? parsed.content).trim()}`,
       );
       return;
     }
 
     content ??= "";
-    await this.write(frontmatter ? grayMatter.stringify({ content }, frontmatter) : content);
+    await this.write(
+      frontmatter ? `---\n${dump(frontmatter).trim()}\n---\n\n${content.trim()}` : content,
+    );
   }
 }
 
@@ -53,7 +56,7 @@ let editor: Promise<SlateEditor> | null = null;
 
 async function getEditor(): Promise<SlateEditor> {
   editor ??= (async () => {
-    const { createSlateEditor } = await import("platejs");
+    const { createSlateEditor } = await import("@platejs/core");
     const { MarkdownKit } = await import("@/components/editor/plugins/markdown-kit");
 
     return createSlateEditor({
@@ -121,7 +124,7 @@ export function mdxHook(collection: MDXCollection): StudioHook<MDXStudioDocument
         const editor = await getEditor();
         const { MarkdownPlugin } = await import("@platejs/markdown");
 
-        applyJsonObject(ydoc.getMap("frontmatter"), parsed.data);
+        applyJsonObject(ydoc.getMap("frontmatter"), parsed.data as JSONObject);
         const ycontent = ydoc.get("content", Y.XmlText);
         ycontent.delete(0, ycontent.length);
         ycontent.applyDelta(

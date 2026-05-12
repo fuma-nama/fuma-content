@@ -47,6 +47,7 @@
     "./plugins/loader": "./dist/plugins/loader/index.js",
     "./plugins/loader/webpack": "./dist/plugins/loader/webpack.js",
     "./plugins/remark/include": "./dist/plugins/remark/include.js",
+    "./utils/frontmatter": "./dist/utils/frontmatter.js",
     "./vite": "./dist/vite/index.js",
     "./package.json": "./package.json"
   },

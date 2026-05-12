@@ -8,23 +8,22 @@ import {
 } from "@platejs/media/react";
 import { cva } from "class-variance-authority";
 import { Link, Trash2Icon } from "lucide-react";
-import type { WithRequiredKey } from "platejs";
+import type { WithRequiredKey } from "@platejs/core";
 import {
   useEditorRef,
   useEditorSelector,
   useElement,
   useFocusedLast,
   useReadOnly,
-  useRemoveNodeButton,
   useSelected,
-} from "platejs/react";
+} from "@platejs/core/react";
 import * as React from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-
 import { CaptionButton } from "./caption";
+import { useRemoveNodeButton } from "@platejs/utils/react";
 
 const inputVariants = cva(
   "flex h-[28px] w-full rounded-md border-none bg-transparent px-1.5 py-1 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-transparent md:text-sm",

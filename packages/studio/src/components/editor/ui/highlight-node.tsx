@@ -1,8 +1,8 @@
 "use client";
 
-import type { PlateLeafProps } from "platejs/react";
+import type { PlateLeafProps } from "@platejs/core/react";
 
-import { PlateLeaf } from "platejs/react";
+import { PlateLeaf } from "@platejs/core/react";
 
 export function HighlightLeaf(props: PlateLeafProps) {
   return (

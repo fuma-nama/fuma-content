@@ -8,8 +8,10 @@ import {
   streamInsertChunk,
   useChatChunk,
 } from "@platejs/ai/react";
-import { getPluginType, KEYS, PathApi } from "platejs";
-import { usePluginOption } from "platejs/react";
+import { getPluginType } from "@platejs/core";
+import { KEYS } from "@platejs/utils";
+import { PathApi } from "@platejs/slate";
+import { usePluginOption } from "@platejs/core/react";
 
 import { AILoadingBar, AIMenu } from "@/components/editor/ui/ai-menu";
 import { AIAnchorElement, AILeaf } from "@/components/editor/ui/ai-node";

@@ -26,18 +26,16 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { PathApi, type TElement } from "@platejs/slate";
 import {
   KEYS,
-  PathApi,
-  type TElement,
   type TTableCellElement,
   type TTableElement,
   type TTableRowElement,
-} from "platejs";
+} from "@platejs/utils";
 import {
   PlateElement,
   type PlateElementProps,
-  useComposedRef,
   useEditorPlugin,
   useEditorRef,
   useEditorSelector,
@@ -46,10 +44,9 @@ import {
   useFocusedLast,
   usePluginOption,
   useReadOnly,
-  useRemoveNodeButton,
   useSelected,
   withHOC,
-} from "platejs/react";
+} from "@platejs/core/react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
@@ -76,6 +73,9 @@ import {
   BorderRightIcon,
   BorderTopIcon,
 } from "./table-icons";
+import { useRemoveNodeButton } from "@platejs/utils/react";
+import { useComposedRef } from "@udecode/react-utils";
+
 export const TableElement = withHOC(
   TableProvider,
   function TableElement({ children, ...props }: PlateElementProps<TTableElement>) {
@@ -139,7 +139,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
         {...props}
       >
         <Toolbar
-          className="flex w-auto max-w-[80vw] flex-row overflow-x-auto rounded-md border bg-popover p-1 shadow-md print:hidden [scrollbar-width:none]"
+          className="flex w-auto max-w-[80vw] flex-row overflow-x-auto rounded-md border bg-popover p-1 shadow-md print:hidden scrollbar-none"
           contentEditable={false}
         >
           <ToolbarGroup>

@@ -10,7 +10,7 @@ import {
   H6Plugin,
   HorizontalRulePlugin,
 } from "@platejs/basic-nodes/react";
-import { ParagraphPlugin } from "platejs/react";
+import { ParagraphPlugin } from "@platejs/core/react";
 import { BlockquoteElement } from "@/components/editor/ui/blockquote-node";
 import {
   H1Element,

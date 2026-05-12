@@ -7,8 +7,8 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 allowBuilds:
-  bun: true
   "@parcel/watcher": false
+  bun: set this to true or false
   esbuild: false
   msgpackr-extract: false
   msw: false

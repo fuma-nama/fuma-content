@@ -1,7 +1,7 @@
 "use client";
 
-import { KEYS } from "platejs";
-import { BlockPlaceholderPlugin } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { BlockPlaceholderPlugin } from "@platejs/utils/react";
 
 export const BlockPlaceholderKit = [
   BlockPlaceholderPlugin.configure({

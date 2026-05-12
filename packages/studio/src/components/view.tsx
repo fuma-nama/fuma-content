@@ -1,12 +1,14 @@
+"use client";
 import { CollectionActionsContext } from "@/components/collection/actions";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { useCollections } from "@/lib/yjs/store";
 import { ChevronRight } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "waku";
 
-export default function Page() {
+export function RootView() {
   const collections = useCollections();
+
   return (
     <>
       <SiteHeader>

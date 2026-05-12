@@ -23,9 +23,9 @@ import {
   Table,
   TableOfContentsIcon,
 } from "lucide-react";
-import { KEYS, type TComboboxInputElement } from "platejs";
-import type { PlateEditor, PlateElementProps } from "platejs/react";
-import { PlateElement } from "platejs/react";
+import { KEYS, type TComboboxInputElement } from "@platejs/utils";
+import type { PlateEditor, PlateElementProps } from "@platejs/core/react";
+import { PlateElement } from "@platejs/core/react";
 import type * as React from "react";
 import { insertBlock, insertInlineElement } from "@/components/editor/transforms";
 import {

@@ -1,7 +1,6 @@
-import type { SlateElementProps } from "platejs/static";
-
-import { SlateElement } from "platejs/static";
-
+"use client";
+import type { SlateElementProps } from "@platejs/core/static";
+import { SlateElement } from "@platejs/core/static";
 import { cn } from "@/lib/utils";
 
 export function CalloutElementStatic({ children, className, ...props }: SlateElementProps) {

@@ -1,7 +1,6 @@
 import { generateText } from "ai";
-import { Route } from "./+types/route";
 
-export async function action({ request }: Route.ActionArgs) {
+export async function POST(request: Request) {
   const { apiKey: key, model = "gpt-4o-mini", prompt, system } = await request.json();
 
   const apiKey = key || process.env.AI_GATEWAY_API_KEY;
@@ -28,4 +27,10 @@ export async function action({ request }: Route.ActionArgs) {
 
     return Response.json({ error: "Failed to process AI request" }, { status: 500 });
   }
+}
+
+export function getConfig() {
+  return {
+    render: "dynamic",
+  };
 }

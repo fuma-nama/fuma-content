@@ -8,8 +8,8 @@ import {
   UnderlineIcon,
   WandSparklesIcon,
 } from "lucide-react";
-import { KEYS } from "platejs";
-import { useEditorReadOnly } from "platejs/react";
+import { KEYS } from "@platejs/utils";
+import { useEditorReadOnly } from "@platejs/core/react";
 import { ToolbarGroup } from "../../ui/toolbar";
 import { AIToolbarButton } from "./ai-toolbar-button";
 import { CommentToolbarButton } from "./comment-toolbar-button";

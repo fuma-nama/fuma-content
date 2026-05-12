@@ -4,9 +4,10 @@ import { DndPlugin, useDraggable, useDropLine } from "@platejs/dnd";
 import { expandListItemsWithChildren } from "@platejs/list";
 import { BlockSelectionPlugin } from "@platejs/selection/react";
 import { GripVertical } from "lucide-react";
-import { getPluginByType, isType, KEYS, type TElement } from "platejs";
+import { getPluginByType, isType } from "@platejs/core";
+import { KEYS } from "@platejs/utils";
+import type { TElement } from "@platejs/slate";
 import {
-  MemoizedChildren,
   type PlateEditor,
   type PlateElementProps,
   type RenderNodeWrapper,
@@ -14,7 +15,7 @@ import {
   useElement,
   usePluginOption,
   useSelected,
-} from "platejs/react";
+} from "@platejs/core/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -166,7 +167,7 @@ function Draggable(props: PlateElementProps) {
           editor.getApi(BlockSelectionPlugin).blockSelection.addOnContextMenu({ element, event })
         }
       >
-        <MemoizedChildren>{children}</MemoizedChildren>
+        {children}
         <DropLine />
       </div>
     </div>

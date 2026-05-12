@@ -4,7 +4,7 @@ import { slug } from "github-slugger";
 import { slash } from "@/utils/code-generator";
 import { Awaitable } from "@/types";
 import { readFile } from "node:fs/promises";
-import { fumaMatter } from "../mdx/fuma-matter";
+import { parseFrontmatter } from "../../utils/frontmatter";
 
 type RenameOutputFn = (originalOutputPath: string, file: VaultFile) => string;
 type RenameOutputPreset = "ignore" | "simple";
@@ -139,7 +139,7 @@ export async function buildStorage(options: VaultStorageOptions): Promise<VaultS
       case ".md":
       case ".mdx": {
         const rawContent = await raw.read();
-        const { data, content } = fumaMatter(rawContent);
+        const { data, content } = parseFrontmatter(rawContent);
         if (enforceMdx) {
           outPath = outPath.slice(0, -path.extname(outPath).length) + ".mdx";
         }

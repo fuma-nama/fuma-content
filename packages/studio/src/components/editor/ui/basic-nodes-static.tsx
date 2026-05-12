@@ -1,9 +1,10 @@
+"use client";
 import type * as React from "react";
 
-import type { SlateElementProps } from "platejs/static";
-
+import type { SlateElementProps } from "@platejs/core/static";
+import { cn } from "@/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
-import { SlateElement } from "platejs/static";
+import { SlateElement } from "@platejs/core/static";
 
 const headingVariants = cva("relative mb-1", {
   variants: {
@@ -51,4 +52,27 @@ export function H5ElementStatic(props: React.ComponentProps<typeof HeadingElemen
 
 export function H6ElementStatic(props: React.ComponentProps<typeof HeadingElementStatic>) {
   return <HeadingElementStatic variant="h6" {...props} />;
+}
+
+export function HrElementStatic(props: SlateElementProps) {
+  return (
+    <SlateElement {...props}>
+      <div className="cursor-text py-6" contentEditable={false}>
+        <hr className={cn("h-0.5 rounded-sm border-none bg-muted bg-clip-content")} />
+      </div>
+      {props.children}
+    </SlateElement>
+  );
+}
+
+export function ParagraphElementStatic(props: SlateElementProps) {
+  return (
+    <SlateElement {...props} className={cn("m-0 px-0 py-1")}>
+      {props.children}
+    </SlateElement>
+  );
+}
+
+export function BlockquoteElementStatic(props: SlateElementProps) {
+  return <SlateElement as="blockquote" className="my-1 border-l-2 pl-6 italic" {...props} />;
 }

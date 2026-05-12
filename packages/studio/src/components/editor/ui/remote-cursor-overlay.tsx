@@ -9,7 +9,12 @@ import {
   UseRemoteCursorOverlayPositionsOptions,
   useRemoteCursorStates,
 } from "@slate-yjs/react";
-import { PlateEditor, useEditorContainerRef, useEditorRef, usePluginOption } from "platejs/react";
+import {
+  PlateEditor,
+  useEditorContainerRef,
+  useEditorRef,
+  usePluginOption,
+} from "@platejs/core/react";
 import type { CursorData } from "@/lib/yjs";
 import { FROZEN_EMPTY_ARRAY } from "@platejs/selection/react";
 
