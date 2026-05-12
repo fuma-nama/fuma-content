@@ -6,3 +6,10 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+allowBuilds:
+  bun: true
+  "@parcel/watcher": false
+  esbuild: false
+  msgpackr-extract: false
+  msw: false
+  sharp: false
