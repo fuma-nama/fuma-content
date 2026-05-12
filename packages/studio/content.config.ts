@@ -9,10 +9,6 @@ export const docs = mdxCollection({
     title: z.string(),
     description: z.string().optional(),
   }),
-  postprocess: {
-    extractLinkReferences: true,
-    includeProcessedMarkdown: true,
-  },
 });
 
 export default defineConfig({

@@ -4,7 +4,6 @@ import { TrailingBlockPlugin, type Value } from "platejs";
 import { type PlatePlugin, type TPlateEditor, useEditorRef } from "platejs/react";
 import { AIKit } from "@/components/editor/plugins/ai-kit";
 import { AlignKit } from "@/components/editor/plugins/align-kit";
-import { AutoformatKit } from "@/components/editor/plugins/autoformat-kit";
 import { BasicBlocksKit } from "@/components/editor/plugins/basic-blocks-kit";
 import { BasicMarksKit } from "@/components/editor/plugins/basic-marks-kit";
 import { BlockMenuKit } from "@/components/editor/plugins/block-menu-kit";
@@ -64,7 +63,6 @@ export const EditorKit: PlatePlugin[] = [
 
   // Editing
   ...SlashKit,
-  ...AutoformatKit,
   ...CursorOverlayKit,
   ...BlockMenuKit,
   ...DndKit,

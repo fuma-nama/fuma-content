@@ -15,16 +15,11 @@ const editorContainerVariants = cva(
     },
     variants: {
       variant: {
-        comment: cn(
-          "flex flex-row flex-wrap justify-between gap-1 px-1 py-0.5 overflow-y-auto rounded-md border-[1.5px] border-transparent bg-transparent",
-          "has-[[data-slate-editor]:focus]:border-brand/50 has-[[data-slate-editor]:focus]:ring-2 has-[[data-slate-editor]:focus]:ring-brand/30",
-          "has-aria-disabled:border-input has-aria-disabled:bg-muted",
-        ),
+        comment:
+          "flex flex-row flex-wrap justify-between gap-1 px-1 py-0.5 overflow-y-auto rounded-md border-[1.5px] border-transparent bg-transparent has-[[data-slate-editor]:focus]:border-brand/50 has-[[data-slate-editor]:focus]:ring-2 has-[[data-slate-editor]:focus]:ring-brand/30 has-aria-disabled:border-input has-aria-disabled:bg-muted",
         card: "border bg-card/50 text-card-foreground/90 rounded-xl [&_[data-heading-node]]:text-card-foreground",
-        select: cn(
-          "group overflow-y-auto rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          "has-data-readonly:w-fit has-data-readonly:cursor-default has-data-readonly:border-transparent has-data-readonly:focus-within:[box-shadow:none]",
-        ),
+        select:
+          "group overflow-y-auto rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 has-data-readonly:w-fit has-data-readonly:cursor-default has-data-readonly:border-transparent has-data-readonly:focus-within:[box-shadow:none]",
       },
     },
   },

@@ -75,7 +75,7 @@ export function createHocuspocus(app: Application) {
     },
   });
   app.ws("/hocuspocus", (websocket, request) => {
-    server.hocuspocus.handleConnection(websocket, request);
+    server.hocuspocus.handleConnection(websocket, request as never);
   });
   return server;
 }

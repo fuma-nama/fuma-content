@@ -70,7 +70,7 @@ ${page.data.compiled._markdown}`;
 export function getNodesUnderDirectory(dir: string) {
   const nodes: Item[] = [];
   visit(source.getPageTree(), (node) => {
-    if ("type" in node && node.type === "page" && node.$ref?.file.startsWith(`${dir}/`)) {
+    if ("type" in node && node.type === "page" && node.$ref?.startsWith(`${dir}/`)) {
       nodes.push(node);
     }
   });

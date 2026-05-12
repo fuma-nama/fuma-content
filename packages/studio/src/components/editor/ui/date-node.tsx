@@ -76,7 +76,7 @@ export function DateElement(props: PlateElementProps<TDateElement>) {
               editor.tf.setNodes({ date: date.toDateString() }, { at: element });
             }}
             mode="single"
-            initialFocus
+            autoFocus
           />
         </PopoverContent>
       </Popover>

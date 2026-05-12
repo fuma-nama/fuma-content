@@ -51,6 +51,7 @@ function ComboboxInput({
   showClear = false,
   ...props
 }: React.ComponentProps<typeof ComboboxPrimitive.Input> & {
+  className?: string;
   showTrigger?: boolean;
   showClear?: boolean;
 }) {

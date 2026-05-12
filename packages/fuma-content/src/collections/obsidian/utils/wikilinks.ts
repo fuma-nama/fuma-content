@@ -52,7 +52,7 @@ export function transformWikilinks(
       }
 
       if ("children" in cur && Array.isArray(cur.children)) {
-        parents.unshift(cur);
+        parents.unshift(cur as never);
         for (const child of cur.children) {
           traverse(child);
         }
