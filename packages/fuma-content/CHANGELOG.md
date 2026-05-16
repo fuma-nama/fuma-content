@@ -1,5 +1,11 @@
 # fuma-content
 
+## 1.4.0
+
+### Minor Changes
+
+- 6927592: Support comark
+
 ## 1.3.0
 
 ### Minor Changes
