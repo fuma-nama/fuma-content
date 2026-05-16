@@ -35,6 +35,12 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
         core = core.getWorkspaces().get(workspace) ?? core;
       }
 
+      let collection = collectionName ? core.getCollection(collectionName) : undefined;
+      if (!(collection instanceof MDXCollection)) {
+        if (collectionName) return null;
+        collection = undefined;
+      }
+
       let after: (() => Promise<void>) | undefined;
 
       const { experimentalBuildCache = false } = core.getConfig();
@@ -59,9 +65,6 @@ export function createMdxLoader({ getCore }: DynamicCore): Loader {
           );
         };
       }
-
-      let collection = collectionName ? core.getCollection(collectionName) : undefined;
-      if (!(collection instanceof MDXCollection)) collection = undefined;
 
       if (collection?.frontmatter) {
         matter.data = await collection.frontmatter.run(matter.data as Record<string, unknown>, {

@@ -7,10 +7,11 @@ export function toNode(loaders: { test: RegExp | undefined; loader: Loader }[]):
   return async (url, _context, nextLoad): Promise<LoadFnOutput> => {
     if (!url.startsWith("file:///")) return nextLoad(url);
 
-    const config = loaders.find((loader) => !loader.test || loader.test.test(url));
-    if (config) {
-      const parsedUrl = new URL(url);
-      const filePath = fileURLToPath(parsedUrl);
+    const parsedUrl = new URL(url);
+    const filePath = fileURLToPath(parsedUrl);
+
+    for (const config of loaders) {
+      if (config.test && !config.test.test(url)) continue;
 
       const result = await config.loader.load({
         filePath,

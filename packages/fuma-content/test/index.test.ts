@@ -8,6 +8,7 @@ import { ValidationError } from "@/utils/validation";
 import { Core } from "@/core";
 import { parseFrontmatter } from "@/utils/frontmatter";
 import { dataCollection } from "@/collections/data";
+import { comarkCollection } from "@/collections/comark";
 
 test("format errors", async () => {
   const schema = z.object({
@@ -67,6 +68,20 @@ const cases: {
       collections: {
         docs: dataCollection({
           dir: path.join(baseDir, "./fixtures/generate-index"),
+        }),
+      },
+    }),
+  },
+  {
+    name: "comark",
+    config: defineConfig({
+      collections: {
+        docs: comarkCollection({
+          dir: path.join(baseDir, "./fixtures/generate-comark"),
+        }),
+        lazyDocs: comarkCollection({
+          dir: path.join(baseDir, "./fixtures/generate-comark"),
+          lazy: true,
         }),
       },
     }),

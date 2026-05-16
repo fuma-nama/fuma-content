@@ -1,0 +1,7 @@
+---
+title: Card
+---
+
+::card
+This uses a `.mdc` file.
+::
